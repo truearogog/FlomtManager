@@ -1,0 +1,69 @@
+<UserControl    
+	xmlns="https://github.com/avaloniaui"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:i="https://github.com/projektanker/icons.avalonia"
+	xmlns:vm="using:FlomtManager.UI.ViewModels"
+	xmlns:models="using:FlomtManager.Core.Models"
+	x:DataType="vm:DevicesViewModel"
+	mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+	x:Class="FlomtManager.UI.Pages.Devices">
+	<Grid Margin="4" RowDefinitions="auto,*">
+		<StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,8">
+			<Button
+				Classes="Primary" 
+				Theme="{DynamicResource BorderlessButton}" 
+				Command="{Binding CreateDeviceCommand}">
+				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+					<i:Icon Value="fa-solid fa-plus" />
+					<TextBlock Text="Add" />
+				</StackPanel>
+			</Button>
+		</StackPanel>
+		<ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto">
+			<ItemsControl ItemsSource="{Binding Devices}">
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<StackPanel Spacing="8">
+						</StackPanel>
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
+				<ItemsControl.ItemTemplate>
+					<DataTemplate>
+						<Border Padding="12,4" Theme="{DynamicResource CardBorder}">
+							<Grid ColumnDefinitions="*, auto" VerticalAlignment="Center">
+								<TextBlock 
+									Grid.Column="0" 
+									Classes="H6" 
+									Text="{Binding Name}" 
+									Theme="{DynamicResource TitleTextBlock}"
+									VerticalAlignment="Center" />
+								<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+									<Button 
+										Classes="Primary"
+										Command="{Binding ((vm:DevicesViewModel)DataContext).ViewDeviceCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+										CommandParameter="{Binding}">
+										<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+											<i:Icon Value="fa-solid fa-eye" />
+											<TextBlock Text="View" />
+										</StackPanel>
+									</Button>
+									<Button 
+										Classes="Primary"
+										Command="{Binding ((vm:DevicesViewModel)DataContext).UpdateDeviceCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+										CommandParameter="{Binding}">
+										<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+											<i:Icon Value="fa-solid fa-pen-to-square" />
+											<TextBlock Text="Edit" />
+										</StackPanel>
+									</Button>
+								</StackPanel>
+							</Grid>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+	</Grid>
+</UserControl>

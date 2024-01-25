@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34309.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.UI", "src\FlomtManager.UI\FlomtManager.UI.csproj", "{F3C98D81-F756-4845-8806-7B46D427AE58}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F31AB9F6-3BED-46DB-A613-A13FDAC34A9D}"
+	ProjectSection(SolutionItems) = preProject
+		directory.build.props = directory.build.props
+		directory.packages.props = directory.packages.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Core", "src\FlomtManager.Core\FlomtManager.Core.csproj", "{5C5403FA-0066-4631-9F6A-4C527167A1B3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Data.EF", "src\FlomtManager.Data.EF\FlomtManager.Data.EF.csproj", "{830A2EEB-1C84-4443-A775-6D9A36FF3773}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Data.EF.SQLite", "src\FlomtManager.Data.EF.SQLite\FlomtManager.Data.EF.SQLite.csproj", "{96286E38-7561-459D-BAB0-3CAB9980543A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Services", "src\FlomtManager.Services\FlomtManager.Services.csproj", "{45D178EB-EEB8-4C36-96D2-18979EF00933}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlomtManager.Framework", "src\FlomtManager.Framework\FlomtManager.Framework.csproj", "{4868329E-18DD-421A-9D71-016324E15E7D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F3C98D81-F756-4845-8806-7B46D427AE58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3C98D81-F756-4845-8806-7B46D427AE58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3C98D81-F756-4845-8806-7B46D427AE58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3C98D81-F756-4845-8806-7B46D427AE58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C5403FA-0066-4631-9F6A-4C527167A1B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C5403FA-0066-4631-9F6A-4C527167A1B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C5403FA-0066-4631-9F6A-4C527167A1B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C5403FA-0066-4631-9F6A-4C527167A1B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{830A2EEB-1C84-4443-A775-6D9A36FF3773}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{830A2EEB-1C84-4443-A775-6D9A36FF3773}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{830A2EEB-1C84-4443-A775-6D9A36FF3773}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{830A2EEB-1C84-4443-A775-6D9A36FF3773}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96286E38-7561-459D-BAB0-3CAB9980543A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96286E38-7561-459D-BAB0-3CAB9980543A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96286E38-7561-459D-BAB0-3CAB9980543A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96286E38-7561-459D-BAB0-3CAB9980543A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45D178EB-EEB8-4C36-96D2-18979EF00933}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45D178EB-EEB8-4C36-96D2-18979EF00933}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45D178EB-EEB8-4C36-96D2-18979EF00933}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45D178EB-EEB8-4C36-96D2-18979EF00933}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4868329E-18DD-421A-9D71-016324E15E7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4868329E-18DD-421A-9D71-016324E15E7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4868329E-18DD-421A-9D71-016324E15E7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4868329E-18DD-421A-9D71-016324E15E7D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F2A5BD20-CD88-44F3-95EB-10B198E37BA7}
+	EndGlobalSection
+EndGlobal

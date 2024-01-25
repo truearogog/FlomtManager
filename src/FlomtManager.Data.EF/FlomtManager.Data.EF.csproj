@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="$(AutoMapperVersion)" />
+		<PackageReference Include="AutoMapper.Extensions.ExpressionMapping" Version="6.0.4" />
+		<PackageReference Include="EFCore.BulkExtensions" Version="$(EFCoreBulkExtensionsVersion)" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftEntityFrameworkCoreVersion)" PrivateAssets="all" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\FlomtManager.Core\FlomtManager.Core.csproj" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,73 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:FlomtManager.UI.ViewModels"
+        x:DataType="vm:DeviceCreateUpdateViewModel"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="FlomtManager.UI.Views.DeviceCreateUpdateWindow"
+        Title="{Binding Form.Id, StringFormat='{}{0} device', Converter={StaticResource AddEditConverter}}"
+		SizeToContent="WidthAndHeight">	
+	<StackPanel Spacing="10" Margin="20">
+		<StackPanel.Styles>
+			<Style Selector="StackPanel">
+				<Setter Property="Spacing" Value="8" />
+			</Style>
+		</StackPanel.Styles>
+		<TextBlock
+			Classes="H4"
+			Theme="{DynamicResource TitleTextBlock}"
+			Text="{Binding Form.Id, StringFormat='{}{0} device', Converter={StaticResource AddEditConverter}}" />
+
+		<Grid RowDefinitions="auto,10,auto,10,auto,10,auto">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="auto" MinWidth="150" />
+				<ColumnDefinition Width="*" MinWidth="200" />
+			</Grid.ColumnDefinitions>
+
+			<Label Grid.Column="0" Grid.Row="0" Classes="H6" VerticalContentAlignment="Center" Theme="{StaticResource TitleLabel}">Serial code</Label>
+			<TextBox Grid.Column="1" Grid.Row="0" Watermark="Serial code" Text="{Binding Form.SerialCode}">
+				<TextBox.Styles>
+					<Style Selector="TextBox /template/ DataValidationErrors">
+						<Setter Property="Theme" Value="{DynamicResource TooltipDataValidationErrors}" />
+					</Style>
+				</TextBox.Styles>
+			</TextBox>
+
+			<Label Grid.Column="0" Grid.Row="2" Classes="H6" VerticalContentAlignment="Center" Theme="{StaticResource TitleLabel}">Name</Label>
+			<TextBox Grid.Column="1" Grid.Row="2" Watermark="Name" Text="{Binding Form.Name}">
+				<TextBox.Styles>
+					<Style Selector="TextBox /template/ DataValidationErrors">
+						<Setter Property="Theme" Value="{DynamicResource TooltipDataValidationErrors}" />
+					</Style>
+				</TextBox.Styles>
+			</TextBox>
+
+			<Label Grid.Column="0" Grid.Row="4" Classes="H6" VerticalContentAlignment="Center" Theme="{StaticResource TitleLabel}">Address</Label>
+			<TextBox Grid.Column="1" Grid.Row="4" Watermark="Address" Text="{Binding Form.Address}">
+				<TextBox.Styles>
+					<Style Selector="TextBox /template/ DataValidationErrors">
+						<Setter Property="Theme" Value="{DynamicResource TooltipDataValidationErrors}" />
+					</Style>
+				</TextBox.Styles>
+			</TextBox>
+
+			<Label Grid.Column="0" Grid.Row="6" Classes="H6" VerticalContentAlignment="Center" Theme="{StaticResource TitleLabel}">MeterNr</Label>
+			<TextBox Grid.Column="1" Grid.Row="6" Watermark="MeterNr" Text="{Binding Form.MeterNr}">
+				<TextBox.Styles>
+					<Style Selector="TextBox /template/ DataValidationErrors">
+						<Setter Property="Theme" Value="{DynamicResource TooltipDataValidationErrors}" />
+					</Style>
+				</TextBox.Styles>
+			</TextBox>
+		</Grid>
+
+		<Grid ColumnDefinitions="*,auto">
+			<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+				<Button Classes="Danger" Command="{Binding CancelCommand}">Cancel</Button>
+				<Button Classes="Primary" IsVisible="{Binding !Form.Id}" Command="{Binding CreateDeviceCommand}">Save</Button>
+				<Button Classes="Primary" IsVisible="{Binding Form.Id}" Command="{Binding UpdateDeviceCommand}">Save</Button>
+			</StackPanel>
+		</Grid>
+	</StackPanel>
+</Window>

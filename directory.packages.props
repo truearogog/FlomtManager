@@ -1,0 +1,24 @@
+<Project>
+	<PropertyGroup>
+		<AvaloniaVersion>11.0.5</AvaloniaVersion>
+		<SemiAvaloniaVersion>11.0.1</SemiAvaloniaVersion>
+		<ProjektankerIconsAvaloniaVersion>9.0.1</ProjektankerIconsAvaloniaVersion>
+	</PropertyGroup>
+	
+	<PropertyGroup>
+		<MicrosoftEntityFrameworkCoreVersion>8.0.1</MicrosoftEntityFrameworkCoreVersion>
+		<MicrosoftExtensionsDependencyInjectionVersion>8.0.0</MicrosoftExtensionsDependencyInjectionVersion>
+		<EFCoreBulkExtensionsVersion>8.0.0-rc.1.2</EFCoreBulkExtensionsVersion>
+		<AutoMapperVersion>12.0.1</AutoMapperVersion>
+		<MicrosoftExtenstionsVersion>8.0.0</MicrosoftExtenstionsVersion>
+	</PropertyGroup>
+	
+	<PropertyGroup>
+		<SerilogVersion>3.1.1</SerilogVersion>
+		<SerilogExpressionsVersion>4.0.0</SerilogExpressionsVersion>
+		<SerilogExtensionsVersion>8.0.0</SerilogExtensionsVersion>
+		<SerilogSettingsConfigurationVersion>8.0.0</SerilogSettingsConfigurationVersion>
+		<SerilogSinksDebugVersion>2.0.0</SerilogSinksDebugVersion>
+		<SerilogSinksFileVersion>5.0.0</SerilogSinksFileVersion>
+	</PropertyGroup>
+</Project>

@@ -1,0 +1,70 @@
+<Window 
+	xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:i="https://github.com/projektanker/icons.avalonia"
+    xmlns:vm="using:FlomtManager.UI.ViewModels"
+	xmlns:pages="using:FlomtManager.UI.Pages"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="FlomtManager.UI.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    Icon="/Assets/avalonia-logo.ico"
+    Title="FlomtManager.UI">
+	<Grid RowDefinitions="auto, *">
+		<Border
+			Margin="8"
+			Padding="12,4"
+			Theme="{DynamicResource CardBorder}">
+			<Grid VerticalAlignment="Center" ColumnDefinitions="*, Auto">
+				<StackPanel Grid.Column="0" Orientation="Horizontal">
+					<TextBlock 
+						VerticalAlignment="Center"
+						Classes="H6"
+						Text="Flomt Manager"
+						Theme="{DynamicResource TitleTextBlock}" />
+					<TextBlock
+						VerticalAlignment="Center"
+						Margin="8,0"
+						Text="/" />
+					<TextBlock
+						VerticalAlignment="Center"
+						Classes="Secondary"
+						Text="{Binding #tab.((TabItem)SelectedItem).Header}" />
+				</StackPanel>
+				<ToggleSwitch
+					Grid.Column="1"
+					Padding="4"
+					IsCheckedChanged="ToggleButton_OnIsCheckedChanged"
+					Theme="{DynamicResource ButtonToggleSwitch}">
+					<ToggleSwitch.OnContent>
+						<i:Icon Value="fa-solid fa-moon" />
+					</ToggleSwitch.OnContent>
+					<ToggleSwitch.OffContent>
+						<i:Icon Value="fa-solid fa-sun" />
+					</ToggleSwitch.OffContent>
+				</ToggleSwitch>
+			</Grid>
+		</Border>
+		<TabControl
+			Name="tab"
+            Grid.Row="1"
+            Margin="8"
+            HorizontalAlignment="Stretch"
+            TabStripPlacement="Top"
+            Theme="{DynamicResource NavigationTab}">
+			<TabItem Header="Devices">
+				<pages:Devices DataContext="{Binding DevicesViewModel}" />
+			</TabItem>
+			<TabItem Header="Reports">
+				<pages:Reports />
+			</TabItem>
+			<TabItem Header="Settings">
+				<pages:Settings />
+			</TabItem>
+			<TabItem Header="About">
+				<pages:About />
+			</TabItem>
+		</TabControl>
+	</Grid>
+</Window>
