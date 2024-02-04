@@ -1,6 +1,7 @@
 ﻿using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
 using FlomtManager.Core.Services;
+using Serilog;
 
 namespace FlomtManager.Services.Services
 {
@@ -9,50 +10,30 @@ namespace FlomtManager.Services.Services
         private readonly IDeviceRepository _deviceRepository = deviceRepository;
 
         public async Task<IEnumerable<Device>> GetAll()
-        {
-            return await _deviceRepository.GetAll();
-        }
+            => await _deviceRepository.GetAll();
 
         public async Task<Device> GetById(int id)
-        {
-            return await _deviceRepository.GetById(id);
-        }
+            => await _deviceRepository.GetById(id);
 
         public async Task<bool> CreateDevice(Device device)
-        {
-            try
-            {
-                await _deviceRepository.Create(device);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+            => await Execute(_deviceRepository.Create(device));
 
         public async Task<bool> UpdateDevice(Device device)
-        {
-            try
-            {
-                await _deviceRepository.Update(device);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+            => await Execute(_deviceRepository.Update(device));
 
         public async Task<bool> DeleteDevice(int id)
+            => await Execute(_deviceRepository.Delete(id));
+
+        private static async Task<bool> Execute(Task action)
         {
             try
             {
-                await _deviceRepository.Delete(id);
+                await action;
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Error(ex, string.Empty);
                 return false;
             }
         }

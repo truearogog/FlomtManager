@@ -1,0 +1,103 @@
+<Window
+	xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:i="https://github.com/projektanker/icons.avalonia"
+	xmlns:vm="using:FlomtManager.App.ViewModels"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="FlomtManager.App.Views.DeviceWindow"
+    x:DataType="vm:DeviceViewModel"
+    Icon="/Assets/avalonia-logo.ico"
+    Title="{Binding Device.Name}">
+	<Grid RowDefinitions="auto,*">
+		<Border
+			Grid.Row="0"
+			Margin="8"
+			Padding="12,4"
+			Theme="{DynamicResource CardBorder}">
+			<StackPanel Orientation="Horizontal" Spacing="8">
+				<TextBlock
+					VerticalAlignment="Center"
+					Classes="H6"
+					Text="{Binding Device.Name}"
+					Theme="{DynamicResource TitleTextBlock}" />
+				<Button
+					Classes="Primary"
+					Theme="{DynamicResource BorderlessButton}"
+					Command="{Binding UpdateDevice}"
+					CommandParameter="{Binding Device}">
+					<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+						<i:Icon Value="fa-solid fa-pen-to-square" />
+						<TextBlock Text="Edit" />
+					</StackPanel>
+				</Button>
+			</StackPanel>
+		</Border>
+		<SplitView
+			Grid.Row="1"
+			Name="splitView"
+			CompactPaneLength="50"
+			DisplayMode="CompactInline"
+			IsPaneOpen="{Binding #toggle.IsChecked, Mode=TwoWay}"
+			OpenPaneLength="200"
+			PanePlacement="Left">
+			<SplitView.Styles>
+				<Style Selector="Border.PaneBorder">
+					<Setter Property="Padding" Value="12,6" />
+					<Setter Property="IsVisible" Value="{Binding #splitView.IsPaneOpen}" />
+					<Setter Property="Theme" Value="{DynamicResource CardBorder}" />
+				</Style>
+			</SplitView.Styles>
+			<SplitView.Pane>
+				<StackPanel Margin="4">
+					<ToggleSwitch
+						Name="toggle"
+						Padding="4"
+						IsChecked="True"
+						HorizontalAlignment="Left"
+						Theme="{DynamicResource ButtonToggleSwitch}">
+						<ToggleSwitch.OnContent>
+							<i:Icon Value="fa-solid fa-angle-left" />
+						</ToggleSwitch.OnContent>
+						<ToggleSwitch.OffContent>
+							<i:Icon Value="fa-solid fa-angle-right" />
+						</ToggleSwitch.OffContent>
+					</ToggleSwitch>
+					<Border Classes="PaneBorder">
+						<StackPanel Spacing="10">
+							<StackPanel.Styles>
+								<Style Selector="TextBlock, SelectableTextBlock">
+									<Setter Property="VerticalAlignment" Value="Center" />
+								</Style>
+							</StackPanel.Styles>
+							<StackPanel>
+								<TextBlock Classes="Tertiary" Text="Serial Code" />
+								<SelectableTextBlock Text="{Binding Device.SerialCode, Converter={StaticResource IsNullOrEmptyDashConverter}}" />
+							</StackPanel>
+							<StackPanel>
+								<TextBlock Classes="Tertiary" Text="Name" />
+								<SelectableTextBlock Text="{Binding Device.Name, Converter={StaticResource IsNullOrEmptyDashConverter}}" />
+							</StackPanel>
+							<StackPanel>
+								<TextBlock Classes="Tertiary" Text="Address" />
+								<SelectableTextBlock Text="{Binding Device.Address, Converter={StaticResource IsNullOrEmptyDashConverter}}" />
+							</StackPanel>
+							<StackPanel>
+								<TextBlock Classes="Tertiary" Text="Slave Id" />
+								<SelectableTextBlock Text="{Binding Device.SlaveId}" />
+							</StackPanel>
+						</StackPanel>
+					</Border>
+					<Button Content="Connect" Classes="Primary" IsEnabled="{Binding !ModbusProtocol}" Command="{Binding TryConnect}" />
+					<Border Classes="PaneBorder">
+						
+					</Border>
+				</StackPanel>
+			</SplitView.Pane>
+			<SplitView.Content>
+
+			</SplitView.Content>
+		</SplitView>
+	</Grid>
+</Window>

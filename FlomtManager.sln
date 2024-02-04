@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34309.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.UI", "src\FlomtManager.UI\FlomtManager.UI.csproj", "{F3C98D81-F756-4845-8806-7B46D427AE58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.App", "src\FlomtManager.App\FlomtManager.App.csproj", "{F3C98D81-F756-4845-8806-7B46D427AE58}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F31AB9F6-3BED-46DB-A613-A13FDAC34A9D}"
 	ProjectSection(SolutionItems) = preProject
@@ -19,7 +19,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Data.EF.SQLite
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Services", "src\FlomtManager.Services\FlomtManager.Services.csproj", "{45D178EB-EEB8-4C36-96D2-18979EF00933}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlomtManager.Framework", "src\FlomtManager.Framework\FlomtManager.Framework.csproj", "{4868329E-18DD-421A-9D71-016324E15E7D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Framework", "src\FlomtManager.Framework\FlomtManager.Framework.csproj", "{4868329E-18DD-421A-9D71-016324E15E7D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Modbus", "src\FlomtManager.Modbus\FlomtManager.Modbus.csproj", "{2B5BB13E-0EB6-42E9-B17F-D07C940A2D54}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.ModbusTest", "src\FlomtManager.ModbusTest\FlomtManager.ModbusTest.csproj", "{4939BF32-185B-4B5E-8921-47B4CDB70A8B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlomtManager.MemoryReader", "src\FlomtManager.MemoryReader\FlomtManager.MemoryReader.csproj", "{65688AB3-DC5C-4EA3-9C21-92C8108B0790}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{9713B9C0-506A-4157-B5A6-90E2245B3C32}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,9 +59,25 @@ Global
 		{4868329E-18DD-421A-9D71-016324E15E7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4868329E-18DD-421A-9D71-016324E15E7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4868329E-18DD-421A-9D71-016324E15E7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B5BB13E-0EB6-42E9-B17F-D07C940A2D54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B5BB13E-0EB6-42E9-B17F-D07C940A2D54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B5BB13E-0EB6-42E9-B17F-D07C940A2D54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B5BB13E-0EB6-42E9-B17F-D07C940A2D54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4939BF32-185B-4B5E-8921-47B4CDB70A8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4939BF32-185B-4B5E-8921-47B4CDB70A8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4939BF32-185B-4B5E-8921-47B4CDB70A8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4939BF32-185B-4B5E-8921-47B4CDB70A8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65688AB3-DC5C-4EA3-9C21-92C8108B0790}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65688AB3-DC5C-4EA3-9C21-92C8108B0790}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65688AB3-DC5C-4EA3-9C21-92C8108B0790}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65688AB3-DC5C-4EA3-9C21-92C8108B0790}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F3C98D81-F756-4845-8806-7B46D427AE58} = {9713B9C0-506A-4157-B5A6-90E2245B3C32}
+		{65688AB3-DC5C-4EA3-9C21-92C8108B0790} = {9713B9C0-506A-4157-B5A6-90E2245B3C32}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F2A5BD20-CD88-44F3-95EB-10B198E37BA7}

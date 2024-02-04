@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="Assets\**" />
+	</ItemGroup>
+
+    <ItemGroup>
+		<PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+		<PackageReference Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)" />
+		<!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+		<PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" Condition="'$(Configuration)' == 'Debug'" />
+		<PackageReference Include="Projektanker.Icons.Avalonia" Version="$(ProjektankerIconsAvaloniaVersion)" />
+		<PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="$(ProjektankerIconsAvaloniaVersion)" />
+
+		<PackageReference Include="Semi.Avalonia" Version="$(SemiAvaloniaVersion)" />
+
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="$(MicrosoftExtenstionsVersion)" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtenstionsVersion)" />
+		<PackageReference Include="System.IO.Ports" Version="$(SystemIOVersion)" />
+		<PackageReference Include="HexIO" Version="3.0.5" />
+
+		<PackageReference Include="Serilog" Version="$(SerilogVersion)" />
+		<PackageReference Include="Serilog.Expressions" Version="$(SerilogExpressionsVersion)" />
+		<PackageReference Include="Serilog.Extensions.Hosting" Version="$(SerilogExtensionsVersion)" />
+		<PackageReference Include="Serilog.Settings.Configuration" Version="$(SerilogSettingsConfigurationVersion)" />
+		<PackageReference Include="Serilog.Sinks.Debug" Version="$(SerilogSinksDebugVersion)" />
+		<PackageReference Include="Serilog.Sinks.File" Version="$(SerilogSinksFileVersion)" />
+	</ItemGroup>
+
+    <ItemGroup>
+		<ProjectReference Include="..\FlomtManager.Core\FlomtManager.Core.csproj" />
+		<ProjectReference Include="..\FlomtManager.Modbus\FlomtManager.Modbus.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+    </ItemGroup>
+</Project>

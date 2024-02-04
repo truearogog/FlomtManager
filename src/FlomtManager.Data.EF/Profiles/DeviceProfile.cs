@@ -4,7 +4,7 @@ using FlomtManager.Data.EF.Entities;
 
 namespace FlomtManager.Data.EF.Profiles
 {
-    public class DeviceProfile : Profile
+    internal class DeviceProfile : Profile
     {
         public DeviceProfile()
         {

@@ -2,7 +2,7 @@
 
 namespace FlomtManager.Data.EF
 {
-    public class DataMapper(IConfigurationProvider configuration) : Mapper(configuration), IDataMapper
+    internal class DataMapper(IConfigurationProvider configuration) : Mapper(configuration), IDataMapper
     {
     }
 }

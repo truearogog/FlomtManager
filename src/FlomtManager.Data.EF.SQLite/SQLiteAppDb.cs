@@ -1,5 +1,7 @@
 ﻿using FlomtManager.Data.EF.Entities;
+using FlomtManager.Data.EF.Entities.Base;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FlomtManager.Data.EF.SQLite;
 
@@ -9,7 +11,15 @@ public sealed class SQLiteAppDb(DbContextOptions<SQLiteAppDb> options) : AppDb<S
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<DeviceEntity>().Property(x => x.Created).HasDefaultValue(DateTime.UtcNow);
-        modelBuilder.Entity<DeviceEntity>().Property(x => x.Updated).HasDefaultValue(DateTime.UtcNow);
+        BasePropertyConfiguration(modelBuilder.Entity<DeviceEntity>());
+        BasePropertyConfiguration(modelBuilder.Entity<DeviceDefinitionEntity>());
+        BasePropertyConfiguration(modelBuilder.Entity<ParameterEntity>());
+    }
+
+    private static void BasePropertyConfiguration<T>(EntityTypeBuilder<T> entityTypeBuilder) where T : EntityBase
+    {
+        entityTypeBuilder.HasKey(x => x.Id);
+        entityTypeBuilder.Property(x => x.Created).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        entityTypeBuilder.Property(x => x.Updated).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
     }
 }

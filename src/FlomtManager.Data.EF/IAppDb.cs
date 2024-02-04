@@ -7,6 +7,8 @@ namespace FlomtManager.Data.EF
     public interface IAppDb
     {
         DbSet<DeviceEntity> Devices { get; set; }
+        DbSet<DeviceDefinitionEntity> DeviceDefinitions { get; set; }
+        DbSet<ParameterEntity> Parameters { get; set; }
 
         Task InsertRangeAsync<T>(IEnumerable<T> entities, BulkConfig bulkConfig = null,
             Action<decimal> progress = null, Type type = null, CancellationToken cancellationToken = default) where T : class;

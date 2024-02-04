@@ -1,5 +1,9 @@
 <Project>
 	<PropertyGroup>
+		<SystemIOVersion>8.0.0</SystemIOVersion>
+	</PropertyGroup>
+	
+	<PropertyGroup>
 		<AvaloniaVersion>11.0.5</AvaloniaVersion>
 		<SemiAvaloniaVersion>11.0.1</SemiAvaloniaVersion>
 		<ProjektankerIconsAvaloniaVersion>9.0.1</ProjektankerIconsAvaloniaVersion>

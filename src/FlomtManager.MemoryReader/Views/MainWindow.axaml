@@ -1,0 +1,185 @@
+<Window 
+	xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:i="https://github.com/projektanker/icons.avalonia"
+	xmlns:enums="using:FlomtManager.Core.Enums"
+    xmlns:vm="using:FlomtManager.MemoryReader.ViewModels"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="FlomtManager.MemoryReader.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    Icon="/Assets/avalonia-logo.ico"
+    Title="FlomtManager.MemoryReader"
+	MinWidth="600"
+	MinHeight="400"
+	SizeToContent="WidthAndHeight">
+	<ScrollViewer HorizontalScrollBarVisibility="Disabled">
+		<Grid ColumnDefinitions="*,*">
+			<Grid.Styles>
+				<Style Selector="TextBlock">
+					<Setter Property="VerticalAlignment" Value="Center" />
+				</Style>
+				<Style Selector="TextBox /template/ DataValidationErrors">
+					<Setter Property="Theme" Value="{DynamicResource TooltipDataValidationErrors}" />
+				</Style>
+				<Style Selector="StackPanel">
+					<Setter Property="Spacing" Value="4" />
+				</Style>
+				<Style Selector="ComboBox">
+					<Setter Property="HorizontalAlignment" Value="Stretch" />
+				</Style>
+			</Grid.Styles>
+
+			<StackPanel Grid.Column="0" Spacing="10" Margin="20,20,10,20">
+				<StackPanel>
+					<TextBlock Classes="Tertiary" Text="Start" />
+					<Grid ColumnDefinitions="*,auto">
+						<TextBox Grid.Column="0" Watermark="Start" Text="{Binding Form.Start}" />
+						<Button Grid.Column="1" Command="{Binding ResetStart}" Padding="8,6">
+							<i:Icon Value="fa-solid fa-rotate-left" />
+						</Button>
+					</Grid>
+				</StackPanel>
+
+				<StackPanel>
+					<TextBlock Classes="Tertiary" Text="Count" />
+					<Grid ColumnDefinitions="*,auto">
+						<TextBox Grid.Column="0" Watermark="Count" Text="{Binding Form.Count}" />
+						<Button Grid.Column="1" Command="{Binding ResetCount}" Padding="8,6">
+							<i:Icon Value="fa-solid fa-rotate-left" />
+						</Button>
+					</Grid>
+				</StackPanel>
+
+				<StackPanel>
+					<TextBlock Classes="Tertiary" Text="Data Record Length" />
+					<Grid ColumnDefinitions="*,auto">
+						<TextBox Grid.Column="0" Watermark="Data Record Length" Text="{Binding Form.DataRecordLength}" />
+						<Button Grid.Column="1" Command="{Binding ResetDataRecordLength}" Padding="8,6">
+							<i:Icon Value="fa-solid fa-rotate-left" />
+						</Button>
+					</Grid>
+				</StackPanel>
+
+				<StackPanel>
+					<TextBlock Classes="Tertiary" Text="File Name" />
+					<TextBox Watermark="File Name" Text="{Binding Form.FileName}" InnerRightContent=".hex" />
+				</StackPanel>
+
+				<StackPanel>
+					<TextBlock Classes="Tertiary" Text="Directory" />
+					<Grid ColumnDefinitions="*,auto">
+						<TextBox Grid.Column="0" Watermark="Directory" Text="{Binding Form.Directory}" IsReadOnly="True" />
+						<Button Grid.Column="1" Command="{Binding RequestDirectory}" Padding="8,6">
+							<i:Icon Value="fa-solid fa-folder-open" />
+						</Button>
+					</Grid>
+				</StackPanel>
+
+				<SelectableTextBlock
+					MaxWidth="400"
+					Classes="Danger"
+					Text="{Binding ErrorMessage}"
+					IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+				<StackPanel
+					Spacing="10">
+					<StackPanel.Styles>
+						<Style Selector="Button">
+							<Setter Property="Theme" Value="{DynamicResource SolidButton}" />
+						</Style>
+					</StackPanel.Styles>
+
+					<Button Content="Open" Classes="Primary" Command="{Binding OpenConnection}">
+						<Button.IsEnabled>
+							<MultiBinding Converter="{x:Static BoolConverters.And}">
+								<Binding Path="ModbusProtocol" Converter="{x:Static ObjectConverters.IsNull}" />
+								<Binding Path="!Reading" />
+							</MultiBinding>
+						</Button.IsEnabled>
+					</Button>
+					<Button Content="Close" Classes="Primary" Command="{Binding CloseConnection}">
+						<Button.IsEnabled>
+							<MultiBinding Converter="{x:Static BoolConverters.And}">
+								<Binding Path="ModbusProtocol" Converter="{x:Static ObjectConverters.IsNotNull}" />
+								<Binding Path="!Reading" />
+							</MultiBinding>
+						</Button.IsEnabled>
+					</Button>
+					<ProgressBar Classes="Primary" Minimum="0" Maximum="{Binding MaxProgress}" ShowProgressText="True" Value="{Binding CurrentProgress}" IsVisible="{Binding Reading}" />
+					<Button Content="Read" Classes="Primary" Command="{Binding Read}">
+						<Button.IsEnabled>
+							<MultiBinding Converter="{x:Static BoolConverters.And}">
+								<Binding Path="ModbusProtocol" Converter="{x:Static ObjectConverters.IsNotNull}" />
+								<Binding Path="!Reading" />
+							</MultiBinding>
+						</Button.IsEnabled>
+					</Button>
+					<Button Content="Stop" Classes="Primary" IsEnabled="{Binding Reading}" Command="{Binding Cancel}" />
+				</StackPanel>
+			</StackPanel>
+
+			<StackPanel Grid.Column="1" Spacing="10" Margin="10,20,20,20">
+				<StackPanel>
+					<TextBlock Classes="Tertiary" Text="Connection Type" />
+					<ListBox
+						ItemsSource="{Binding ConnectionTypes}"
+						SelectedItem="{Binding Form.ConnectionType}"
+						Classes="RadioButtonListBox" />
+				</StackPanel>
+
+				<StackPanel
+					Spacing="10"
+					IsVisible="{Binding Form.ConnectionType, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionType.Serial}}" >
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Slave Id" />
+						<TextBox Watermark="Slave Id" Text="{Binding Form.SlaveId}" />
+					</StackPanel>
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Port Name" />
+						<Grid ColumnDefinitions="*,auto">
+							<ComboBox Grid.Column="0" ItemsSource="{Binding PortNames}" SelectedItem="{Binding Form.PortName}" />
+							<Button Grid.Column="1" Command="{Binding RefreshPortNames}" Padding="8,6">
+								<i:Icon Value="fa-solid fa-arrows-rotate" />
+							</Button>
+						</Grid>
+					</StackPanel>
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Baud Rate" />
+						<ComboBox ItemsSource="{Binding BaudRates}" SelectedItem="{Binding Form.BaudRate}" />
+					</StackPanel>
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Parity" />
+						<ComboBox ItemsSource="{Binding Parities}" SelectedItem="{Binding Form.Parity}" />
+					</StackPanel>
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Data Bits" />
+						<ComboBox ItemsSource="{Binding DataBits}" SelectedItem="{Binding Form.DataBits}" />
+					</StackPanel>
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Stop Bits" />
+						<ComboBox ItemsSource="{Binding StopBits}" SelectedItem="{Binding Form.StopBits}" />
+					</StackPanel>
+				</StackPanel>
+
+				<StackPanel
+					Spacing="10"
+					IsVisible="{Binding Form.ConnectionType, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionType.Network}}" >
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Slave Id" />
+						<TextBox Watermark="Slave Id" Text="{Binding Form.SlaveId}" />
+					</StackPanel>
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Ip Address" />
+						<TextBox Watermark="Ip Address" Text="{Binding Form.IpAddress}" />
+					</StackPanel>
+					<StackPanel>
+						<TextBlock Classes="Tertiary" Text="Port" />
+						<TextBox Watermark="Port" Text="{Binding Form.Port}" />
+					</StackPanel>
+				</StackPanel>
+			</StackPanel>
+		</Grid>
+	</ScrollViewer>
+</Window>
