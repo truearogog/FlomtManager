@@ -13,7 +13,7 @@ namespace FlomtManager.ModbusTest
             for (int i = 0; i < 5;  i++)
             {
                 var start = (ushort)(i * 250);
-                var bytes = modbusProtocol.ReadRegistersBytes(1, start, count);
+                var bytes = modbusProtocol.ReadRegistersBytes(1, start, count, CancellationToken.None);
                 Console.WriteLine("{0} + {1}", start, count);
                 Console.WriteLine(string.Join(" ", bytes.Select(x => x.ToString("x2")) ?? []));
                 Console.WriteLine(Encoding.ASCII.GetString(bytes));

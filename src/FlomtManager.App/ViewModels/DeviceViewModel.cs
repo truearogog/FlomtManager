@@ -16,6 +16,8 @@ namespace FlomtManager.App.ViewModels
         private readonly DeviceStore _deviceStore;
         private readonly IModbusService _modbusService;
 
+        private CancellationTokenSource? _modbusCancellationTokenSource;
+
         public EventHandler? CloseRequested;
         public EventHandler<Device>? DeviceUpdateRequested;
 
@@ -65,7 +67,7 @@ namespace FlomtManager.App.ViewModels
             }
         }
 
-        public void TryConnect()
+        public async void TryConnect()
         {
             if (Device != null)
             {

@@ -89,9 +89,20 @@
 							</StackPanel>
 						</StackPanel>
 					</Border>
-					<Button Content="Connect" Classes="Primary" IsEnabled="{Binding !ModbusProtocol}" Command="{Binding TryConnect}" />
 					<Border Classes="PaneBorder">
-						
+						<StackPanel Spacing="10">
+							<Panel>
+								<StackPanel Spacing="10" Orientation="Horizontal" IsVisible="{Binding !!ModbusProtocol}" >
+									<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
+									<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" />
+								</StackPanel>
+								<StackPanel Spacing="10" Orientation="Horizontal" IsVisible="{Binding !ModbusProtocol}" >
+									<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
+									<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Not Connected" />
+								</StackPanel>
+							</Panel>
+							<Button Content="Connect" Classes="Primary" IsEnabled="{Binding !ModbusProtocol}" Command="{Binding TryConnect}" />
+						</StackPanel>
 					</Border>
 				</StackPanel>
 			</SplitView.Pane>
