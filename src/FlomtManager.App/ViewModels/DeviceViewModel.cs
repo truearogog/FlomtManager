@@ -7,7 +7,6 @@ using FlomtManager.Modbus;
 using ReactiveUI;
 using Serilog;
 using System;
-using System.Linq;
 using System.Threading;
 
 namespace FlomtManager.App.ViewModels

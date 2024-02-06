@@ -1,12 +1,7 @@
 ﻿namespace FlomtManager.App.ViewModels
 {
-    public class MainWindowViewModel : ViewModelBase
+    public class MainWindowViewModel(DevicesViewModel devicesViewModel) : ViewModelBase
     {
-        public DevicesViewModel DevicesViewModel { get; set; }
-
-        public MainWindowViewModel(DevicesViewModel devicesViewModel)
-        {
-            DevicesViewModel = devicesViewModel;
-        }
+        public DevicesViewModel DevicesViewModel { get; set; } = devicesViewModel;
     }
 }

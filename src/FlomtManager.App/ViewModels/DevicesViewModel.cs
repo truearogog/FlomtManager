@@ -48,20 +48,15 @@ namespace FlomtManager.App.ViewModels
         private async void AddDevices()
         {
             Devices.Clear();
-            foreach (var device in await _deviceService.GetAll())
+            await foreach (var device in _deviceService.GetAll())
             {
-                AddDevice(device);
+                Devices.Add(device);
             }
-        }
-
-        private void AddDevice(Device device)
-        {
-            Devices.Add(device);
         }
 
         private void _DeviceCreated(Device device)
         {
-            AddDevice(device);
+            Devices.Add(device);
         }
 
         private void _DeviceUpdated(Device device)

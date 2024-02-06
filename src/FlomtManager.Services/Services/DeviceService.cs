@@ -9,8 +9,8 @@ namespace FlomtManager.Services.Services
     {
         private readonly IDeviceRepository _deviceRepository = deviceRepository;
 
-        public async Task<IEnumerable<Device>> GetAll()
-            => await _deviceRepository.GetAll();
+        public IAsyncEnumerable<Device> GetAll()
+            => _deviceRepository.GetAll();
 
         public async Task<Device> GetById(int id)
             => await _deviceRepository.GetById(id);

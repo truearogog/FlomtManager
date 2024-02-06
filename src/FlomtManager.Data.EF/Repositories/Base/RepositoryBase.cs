@@ -15,21 +15,21 @@ namespace FlomtManager.Data.EF.Repositories.Base
         protected IDataMapper Mapper = mapper;
         protected IConfigurationProvider MapperConfig => Mapper.ConfigurationProvider;
 
-        public async Task<IEnumerable<TModel>> GetAll()
+        public IAsyncEnumerable<TModel> GetAll()
         {
-            return await DbSet.AsNoTracking()
+            return DbSet.AsNoTracking()
                 .OrderByDescending(x => x.Updated)
                 .ProjectTo<TModel>(MapperConfig)
-                .ToListAsync().ConfigureAwait(false);
+                .AsAsyncEnumerable();
         }
 
-        public async Task<IEnumerable<TModel>> GetAll(Expression<Func<TModel, bool>> predicate)
+        public IAsyncEnumerable<TModel> GetAll(Expression<Func<TModel, bool>> predicate)
         {
-            return await DbSet.AsNoTracking()
+            return DbSet.AsNoTracking()
                 .OrderByDescending(x => x.Updated)
                 .ProjectTo<TModel>(MapperConfig)
                 .Where(predicate)
-                .ToListAsync().ConfigureAwait(false);
+                .AsAsyncEnumerable();
         }
 
         public async Task<TModel> GetById(int id)
