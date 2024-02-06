@@ -10,7 +10,13 @@
     x:DataType="vm:DeviceViewModel"
     Icon="/Assets/avalonia-logo.ico"
     Title="{Binding Device.Name}">
-	<Grid RowDefinitions="auto,*">
+	<Window.Styles>
+		<Style Selector="TextBlock, SelectableTextBlock, i|Icon">
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+	</Window.Styles>
+	
+	<Grid RowDefinitions="auto,*,auto">
 		<Border
 			Grid.Row="0"
 			Margin="8"
@@ -44,13 +50,14 @@
 			PanePlacement="Left">
 			<SplitView.Styles>
 				<Style Selector="Border.PaneBorder">
+					<Setter Property="Margin" Value="0" />
 					<Setter Property="Padding" Value="12,6" />
 					<Setter Property="IsVisible" Value="{Binding #splitView.IsPaneOpen}" />
 					<Setter Property="Theme" Value="{DynamicResource CardBorder}" />
 				</Style>
 			</SplitView.Styles>
 			<SplitView.Pane>
-				<StackPanel Margin="4">
+				<StackPanel Spacing="10">
 					<ToggleSwitch
 						Name="toggle"
 						Padding="4"
@@ -64,24 +71,34 @@
 							<i:Icon Value="fa-solid fa-angle-right" />
 						</ToggleSwitch.OffContent>
 					</ToggleSwitch>
+					<Border Classes="PaneBorder" Padding="0">
+						<StackPanel>
+							<Panel HorizontalAlignment="Center" Margin="0,4">
+								<StackPanel Spacing="4" Orientation="Horizontal" IsVisible="{Binding !!ModbusProtocol}" >
+									<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" VerticalAlignment="Center" />
+									<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" VerticalAlignment="Center" />
+								</StackPanel>
+								<StackPanel Spacing="4" Orientation="Horizontal" IsVisible="{Binding !ModbusProtocol}" >
+									<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" VerticalAlignment="Center" />
+									<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Not Connected" VerticalAlignment="Center" />
+								</StackPanel>
+							</Panel>
+							<Button Content="Connect" Classes="Primary" IsEnabled="{Binding !ModbusProtocol}" Command="{Binding TryConnect}" />
+						</StackPanel>
+					</Border>
 					<Border Classes="PaneBorder">
 						<StackPanel Spacing="10">
-							<StackPanel.Styles>
-								<Style Selector="TextBlock, SelectableTextBlock">
-									<Setter Property="VerticalAlignment" Value="Center" />
-								</Style>
-							</StackPanel.Styles>
 							<StackPanel>
 								<TextBlock Classes="Tertiary" Text="Serial Code" />
-								<SelectableTextBlock Text="{Binding Device.SerialCode, Converter={StaticResource IsNullOrEmptyDashConverter}}" />
+								<SelectableTextBlock Text="{Binding Device.SerialCode, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
 							</StackPanel>
 							<StackPanel>
 								<TextBlock Classes="Tertiary" Text="Name" />
-								<SelectableTextBlock Text="{Binding Device.Name, Converter={StaticResource IsNullOrEmptyDashConverter}}" />
+								<SelectableTextBlock Text="{Binding Device.Name, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
 							</StackPanel>
 							<StackPanel>
 								<TextBlock Classes="Tertiary" Text="Address" />
-								<SelectableTextBlock Text="{Binding Device.Address, Converter={StaticResource IsNullOrEmptyDashConverter}}" />
+								<SelectableTextBlock Text="{Binding Device.Address, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
 							</StackPanel>
 							<StackPanel>
 								<TextBlock Classes="Tertiary" Text="Slave Id" />
@@ -89,26 +106,25 @@
 							</StackPanel>
 						</StackPanel>
 					</Border>
-					<Border Classes="PaneBorder">
-						<StackPanel Spacing="10">
-							<Panel>
-								<StackPanel Spacing="10" Orientation="Horizontal" IsVisible="{Binding !!ModbusProtocol}" >
-									<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
-									<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" />
-								</StackPanel>
-								<StackPanel Spacing="10" Orientation="Horizontal" IsVisible="{Binding !ModbusProtocol}" >
-									<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
-									<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Not Connected" />
-								</StackPanel>
-							</Panel>
-							<Button Content="Connect" Classes="Primary" IsEnabled="{Binding !ModbusProtocol}" Command="{Binding TryConnect}" />
-						</StackPanel>
-					</Border>
 				</StackPanel>
 			</SplitView.Pane>
 			<SplitView.Content>
-
+				
 			</SplitView.Content>
 		</SplitView>
+		<Panel Grid.Row="2">
+			<Border Theme="{DynamicResource CardBorder}" Padding="4" CornerRadius="0" Margin="0">
+				<StackPanel Orientation="Horizontal">
+					<StackPanel Spacing="4" Orientation="Horizontal" IsVisible="{Binding !!ModbusProtocol}" >
+						<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
+						<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" FontSize="12" />
+					</StackPanel>
+					<StackPanel Spacing="4" Orientation="Horizontal" IsVisible="{Binding !ModbusProtocol}" >
+						<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
+						<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Not Connected" FontSize="12" />
+					</StackPanel>
+				</StackPanel>
+			</Border>
+		</Panel>
 	</Grid>
 </Window>

@@ -22,7 +22,7 @@
 	<Application.Resources>
 		<conv:AddEditConverter x:Key="AddEditConverter" />
 		<conv:EqualsConverter x:Key="EqualsConverter" />
-		<conv:IsNullOrEmptyDashConverter x:Key="IsNullOrEmptyDashConverter" />
+		<conv:IsNullOrEmptyElseConverter x:Key="IsNullOrEmptyElseConverter" />
 	</Application.Resources>
 	
 	<TrayIcon.Icons>
