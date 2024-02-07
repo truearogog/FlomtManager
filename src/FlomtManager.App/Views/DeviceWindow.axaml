@@ -5,11 +5,12 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
 	xmlns:vm="using:FlomtManager.App.ViewModels"
-    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
     x:Class="FlomtManager.App.Views.DeviceWindow"
     x:DataType="vm:DeviceViewModel"
     Icon="/Assets/avalonia-logo.ico"
     Title="{Binding Device.Name}">
+	
 	<Window.Styles>
 		<Style Selector="TextBlock, SelectableTextBlock, i|Icon">
 			<Setter Property="VerticalAlignment" Value="Center" />
@@ -57,7 +58,7 @@
 				</Style>
 			</SplitView.Styles>
 			<SplitView.Pane>
-				<StackPanel Spacing="10">
+				<StackPanel>
 					<ToggleSwitch
 						Name="toggle"
 						Padding="4"
@@ -71,41 +72,51 @@
 							<i:Icon Value="fa-solid fa-angle-right" />
 						</ToggleSwitch.OffContent>
 					</ToggleSwitch>
-					<Border Classes="PaneBorder" Padding="0">
-						<StackPanel>
-							<Panel HorizontalAlignment="Center" Margin="0,4">
-								<StackPanel Spacing="4" Orientation="Horizontal" IsVisible="{Binding !!ModbusProtocol}" >
-									<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" VerticalAlignment="Center" />
-									<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" VerticalAlignment="Center" />
+					<ScrollViewer HorizontalScrollBarVisibility="Hidden">
+						<StackPanel Spacing="10" Margin="4">
+							<Border Classes="PaneBorder" Padding="0">
+								<StackPanel>
+									<StackPanel.Styles>
+										<Style Selector="StackPanel.statusStackPanel">
+											<Setter Property="HorizontalAlignment" Value="Center" />
+											<Setter Property="Margin" Value="0,4" />
+											<Setter Property="Spacing" Value="4" />
+											<Setter Property="Orientation" Value="Horizontal" />
+										</Style>
+									</StackPanel.Styles>
+									<StackPanel Classes="statusStackPanel" IsVisible="{Binding !!ModbusProtocol}" >
+										<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
+										<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" />
+									</StackPanel>
+									<StackPanel Classes="statusStackPanel" IsVisible="{Binding !ModbusProtocol}" >
+										<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
+										<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Not Connected" />
+									</StackPanel>
+									<Button Content="Connect" Classes="Primary" IsEnabled="{Binding !ModbusProtocol}" Command="{Binding TryConnect}" />
 								</StackPanel>
-								<StackPanel Spacing="4" Orientation="Horizontal" IsVisible="{Binding !ModbusProtocol}" >
-									<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" VerticalAlignment="Center" />
-									<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Not Connected" VerticalAlignment="Center" />
+							</Border>
+							<Border Classes="PaneBorder">
+								<StackPanel Spacing="10">
+									<StackPanel>
+										<TextBlock Classes="Tertiary" Text="Serial Code" />
+										<SelectableTextBlock Text="{Binding Device.SerialCode, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+									</StackPanel>
+									<StackPanel>
+										<TextBlock Classes="Tertiary" Text="Name" />
+										<SelectableTextBlock Text="{Binding Device.Name, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+									</StackPanel>
+									<StackPanel>
+										<TextBlock Classes="Tertiary" Text="Address" />
+										<SelectableTextBlock Text="{Binding Device.Address, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+									</StackPanel>
+									<StackPanel>
+										<TextBlock Classes="Tertiary" Text="Slave Id" />
+										<SelectableTextBlock Text="{Binding Device.SlaveId}" />
+									</StackPanel>
 								</StackPanel>
-							</Panel>
-							<Button Content="Connect" Classes="Primary" IsEnabled="{Binding !ModbusProtocol}" Command="{Binding TryConnect}" />
+							</Border>
 						</StackPanel>
-					</Border>
-					<Border Classes="PaneBorder">
-						<StackPanel Spacing="10">
-							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Serial Code" />
-								<SelectableTextBlock Text="{Binding Device.SerialCode, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-							</StackPanel>
-							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Name" />
-								<SelectableTextBlock Text="{Binding Device.Name, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-							</StackPanel>
-							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Address" />
-								<SelectableTextBlock Text="{Binding Device.Address, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-							</StackPanel>
-							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Slave Id" />
-								<SelectableTextBlock Text="{Binding Device.SlaveId}" />
-							</StackPanel>
-						</StackPanel>
-					</Border>
+					</ScrollViewer>
 				</StackPanel>
 			</SplitView.Pane>
 			<SplitView.Content>

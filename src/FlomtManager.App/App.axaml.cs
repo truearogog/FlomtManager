@@ -16,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
+using Avalonia.Controls;
 
 namespace FlomtManager.App
 {
@@ -53,8 +54,12 @@ namespace FlomtManager.App
                 .Build();
             Host.Start();
 
-            var db = Host.Services.GetRequiredService<IAppDb>() as DbContext;
-            db.Database.Migrate();
+            if (!Design.IsDesignMode)
+            {
+                var db = Host.Services.GetRequiredService<IAppDb>() as DbContext
+                    ?? throw new InvalidOperationException($"{nameof(IAppDb)} must implement {nameof(DbContext)}.");
+                db.Database.Migrate();
+            }
 
             DataContext = new ApplicationViewModel();
         }
