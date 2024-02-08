@@ -3,7 +3,7 @@
     public interface IModbusProtocol
     {
         bool IsOpen { get; }
-        Task<bool> OpenAsync();
+        void Open();
         void Close();
         ushort[] ReadRegisters(byte slaveId, ushort start, ushort count, CancellationToken ct);
         byte[] ReadRegistersBytes(byte slaveId, ushort start, ushort count, CancellationToken ct);
