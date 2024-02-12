@@ -4,6 +4,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
+	xmlns:enums="using:FlomtManager.Core.Enums"
 	xmlns:vm="using:FlomtManager.App.ViewModels"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
     x:Class="FlomtManager.App.Views.DeviceWindow"
@@ -83,16 +84,24 @@
 											<Setter Property="Spacing" Value="4" />
 											<Setter Property="Orientation" Value="Horizontal" />
 										</Style>
-									</StackPanel.Styles>
-									<StackPanel Classes="statusStackPanel" IsVisible="{Binding !!ModbusProtocol}" >
+									</StackPanel.Styles>									
+									<StackPanel Classes="statusStackPanel"
+												IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connected}}" >
 										<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
 										<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" />
 									</StackPanel>
-									<StackPanel Classes="statusStackPanel" IsVisible="{Binding !ModbusProtocol}" >
-										<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
-										<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Not Connected" />
+									<StackPanel Classes="statusStackPanel"
+												IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connecting}}" >
+										<i:Icon Foreground="{DynamicResource SemiColorWarning}" Value="fa-solid fa-rss" />
+										<TextBlock Foreground="{DynamicResource SemiColorWarning}" Text="Connecting" />
 									</StackPanel>
-									<Button Content="Connect" Classes="Primary" IsEnabled="{Binding !ModbusProtocol}" Command="{Binding TryConnect}" />
+									<StackPanel Classes="statusStackPanel"
+												IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}" >
+										<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
+										<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Disconnected" />
+									</StackPanel>
+									<Button Content="Connect" Classes="Primary"  Command="{Binding TryConnect}"
+											IsEnabled="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}"/>
 								</StackPanel>
 							</Border>
 							<Border Classes="PaneBorder">
@@ -120,19 +129,38 @@
 				</StackPanel>
 			</SplitView.Pane>
 			<SplitView.Content>
-				
+				<ItemsControl ItemsSource="{Binding CurrentParameters}" Margin="20">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<StackPanel>
+								<TextBlock Classes="Tertiary" Text="{Binding Name}" />
+								<StackPanel Orientation="Horizontal" Spacing="4">
+									<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+									<TextBlock Text="{Binding Unit}" />
+								</StackPanel>
+							</StackPanel>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
 			</SplitView.Content>
 		</SplitView>
 		<Panel Grid.Row="2">
 			<Border Theme="{DynamicResource CardBorder}" Padding="4" CornerRadius="0" Margin="0">
 				<StackPanel Orientation="Horizontal">
-					<StackPanel Spacing="4" Orientation="Horizontal" IsVisible="{Binding !!ModbusProtocol}" >
+					<StackPanel Spacing="4" Orientation="Horizontal" 
+						IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connected}}" >
 						<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
 						<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" FontSize="12" />
 					</StackPanel>
-					<StackPanel Spacing="4" Orientation="Horizontal" IsVisible="{Binding !ModbusProtocol}" >
+					<StackPanel Spacing="4" Orientation="Horizontal" 
+						IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connecting}}" >
+						<i:Icon Foreground="{DynamicResource SemiColorWarning}" Value="fa-solid fa-rss" />
+						<TextBlock Foreground="{DynamicResource SemiColorWarning}" Text="Connecting" FontSize="12" />
+					</StackPanel>
+					<StackPanel Spacing="4" Orientation="Horizontal"
+						IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}" >
 						<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
-						<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Not Connected" FontSize="12" />
+						<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Disconnected" FontSize="12" />
 					</StackPanel>
 				</StackPanel>
 			</Border>

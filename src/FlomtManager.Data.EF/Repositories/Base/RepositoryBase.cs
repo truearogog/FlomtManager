@@ -15,24 +15,46 @@ namespace FlomtManager.Data.EF.Repositories.Base
         protected IDataMapper Mapper = mapper;
         protected IConfigurationProvider MapperConfig => Mapper.ConfigurationProvider;
 
-        public IAsyncEnumerable<TModel> GetAll()
+        public async Task<IEnumerable<TModel>> GetAll()
+        {
+            return await GetAllQueryable()
+                .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<TModel>> GetAll(Expression<Func<TModel, bool>> predicate)
+        {
+            return await GetAllQueryable(predicate)
+                .ToListAsync()
+                .ConfigureAwait(false);
+        }
+
+        public virtual IQueryable<TModel> GetAllQueryable()
+        {
+            return DbSet.AsNoTracking()
+                .OrderByDescending(x => x.Updated)
+                .ProjectTo<TModel>(MapperConfig);
+        }
+
+        public virtual IQueryable<TModel> GetAllQueryable(Expression<Func<TModel, bool>> predicate)
         {
             return DbSet.AsNoTracking()
                 .OrderByDescending(x => x.Updated)
                 .ProjectTo<TModel>(MapperConfig)
-                .AsAsyncEnumerable();
+                .Where(predicate);
         }
 
-        public IAsyncEnumerable<TModel> GetAll(Expression<Func<TModel, bool>> predicate)
+        public IAsyncEnumerable<TModel> GetAllAsync()
         {
-            return DbSet.AsNoTracking()
-                .OrderByDescending(x => x.Updated)
-                .ProjectTo<TModel>(MapperConfig)
-                .Where(predicate)
-                .AsAsyncEnumerable();
+            return GetAllQueryable().AsAsyncEnumerable();
         }
 
-        public async Task<TModel> GetById(int id)
+        public IAsyncEnumerable<TModel> GetAllAsync(Expression<Func<TModel, bool>> predicate)
+        {
+            return GetAllQueryable(predicate).AsAsyncEnumerable();
+        }
+
+        public async Task<TModel?> GetById(int id)
         {
             return await DbSet.AsNoTracking()
                 .Where(x => x.Id == id)
@@ -40,11 +62,12 @@ namespace FlomtManager.Data.EF.Repositories.Base
                 .FirstOrDefaultAsync().ConfigureAwait(false);
         }
 
-        public async Task Create(TModel model)
+        public async Task<int> Create(TModel model)
         {
             var entity = Mapper.Map<TEntity>(model);
             await DbSet.AddAsync(entity).ConfigureAwait(false);
             await Db.SaveChangesAsync().ConfigureAwait(false);
+            return entity.Id;
         }
 
         public async Task CreateRange(IEnumerable<TModel> models)
@@ -54,12 +77,13 @@ namespace FlomtManager.Data.EF.Repositories.Base
             await Db.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public async Task Update(TModel model)
+        public async Task<int> Update(TModel model)
         {
             var entity = Mapper.Map<TEntity>(model);
             entity.Updated = DateTime.UtcNow;
             DbSet.Update(entity);
             await Db.SaveChangesAsync().ConfigureAwait(false);
+            return entity.Id;
         }
 
         public async Task UpdateRange(IEnumerable<TModel> models)

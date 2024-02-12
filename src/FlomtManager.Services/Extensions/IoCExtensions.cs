@@ -9,7 +9,6 @@ namespace FlomtManager.Services.Extensions
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             // Register services
-            services.Add(new ServiceDescriptor(typeof(IDeviceService), typeof(DeviceService), ServiceLifetime.Transient));
             services.Add(new ServiceDescriptor(typeof(IModbusService), typeof(ModbusService), ServiceLifetime.Transient));
 
             return services;

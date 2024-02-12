@@ -1,28 +1,30 @@
 using AutoMapper;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using FlomtManager.Data.EF;
-using FlomtManager.Data.EF.Extensions;
-using FlomtManager.Data.EF.SQLite;
-using FlomtManager.Services.Extensions;
+using FlomtManager.App.Models;
 using FlomtManager.App.Profiles;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
 using FlomtManager.App.Views;
+using FlomtManager.Data.EF;
+using FlomtManager.Data.EF.Extensions;
+using FlomtManager.Data.EF.SQLite;
+using FlomtManager.Services.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using System;
-using Avalonia.Controls;
 
 namespace FlomtManager.App
 {
     public partial class App : Application
     {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public static IHost Host;
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         public App()
         {
@@ -35,6 +37,7 @@ namespace FlomtManager.App
                     services.AddServices();
 
                     // register stores
+                    services.AddSingleton<DeviceConnectionStore>();
                     services.AddSingleton<DeviceStore>();
 
                     // register views and viewmodels
@@ -43,6 +46,8 @@ namespace FlomtManager.App
                     services.AddSingleton<DevicesViewModel>();
                     services.AddTransient<DeviceViewModel>();
                     services.AddTransient<DeviceCreateUpdateViewModel>();
+
+                    services.AddTransient<DeviceConnection>();
 
                     // register mapper
                     var config = new MapperConfiguration(cfg =>

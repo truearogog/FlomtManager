@@ -77,7 +77,7 @@ namespace FlomtManager.MemoryReader.ViewModels
             DirectoryRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        public void OpenConnection()
+        public async void OpenConnection()
         {
             ErrorMessage = null;
             try
@@ -88,7 +88,7 @@ namespace FlomtManager.MemoryReader.ViewModels
                     ConnectionType.Network => new ModbusProtocolTcp(Form.IpAddress ?? string.Empty, Form.Port),
                     _ => throw new NotSupportedException()
                 };
-                ModbusProtocol.Open();
+                await ModbusProtocol.OpenAsync(CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -98,11 +98,14 @@ namespace FlomtManager.MemoryReader.ViewModels
             }
         }
 
-        public void CloseConnection()
+        public async void CloseConnection()
         {
             _cancellationTokenSource?.Cancel();
-            ModbusProtocol?.Close();
-            ModbusProtocol = null;
+            if (ModbusProtocol != null)
+            {
+                await ModbusProtocol.CloseAsync(CancellationToken.None);
+                ModbusProtocol = null;
+            }
         }
 
         public async void Read()
@@ -128,7 +131,7 @@ namespace FlomtManager.MemoryReader.ViewModels
             try
             {
                 await Task
-                    .Run(() =>
+                    .Run(async () =>
                 {
                     var max = 250;
                     var byteCount = Form.Count * 2;
@@ -139,7 +142,7 @@ namespace FlomtManager.MemoryReader.ViewModels
                     while (left > 0 && !_cancellationTokenSource.Token.IsCancellationRequested)
                     {
                         var count = int.Min(left, max);
-                        var read = ModbusProtocol.ReadRegistersBytes(Form.SlaveId, current, (ushort)(count / 2), _cancellationTokenSource.Token);
+                        var read = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, current, (ushort)(count / 2), _cancellationTokenSource.Token);
                         read.CopyTo(bytes, current - Form.Start);
                         left -= count;
                         current += (ushort)count;
@@ -147,13 +150,12 @@ namespace FlomtManager.MemoryReader.ViewModels
                     }
 
                     using var writer = new IntelHexStreamWriter(Path.Combine(Form.Directory, Form.FileName) + ".hex");
-                    var byteSpan = bytes.AsSpan();
                     left = byteCount;
                     current = Form.Start;
                     while (left > 0)
                     {
                         var count = int.Min(left, Form.DataRecordLength);
-                        writer.WriteDataRecord(current, byteSpan.Slice(current, count).ToArray());
+                        writer.WriteDataRecord(current, bytes.Skip(current).Take(count).ToArray());
                         left -= count;
                         current += (ushort)count;
                     }

@@ -9,11 +9,11 @@ namespace FlomtManager.Data.EF.Entities
         public byte IntegrationNumber { get; set; }
         public ushort ErrorMask { get; set; }
         [MaxLength(4)]
-        public string Name { get; set; }
+        public required string Name { get; set; }
         [MaxLength(6)]
-        public string Unit { get; set; }
+        public required string Unit { get; set; }
 
         public int DeviceId { get; set; }
-        public DeviceEntity Device { get; set; }
+        public DeviceEntity? Device { get; set; }
     }
 }

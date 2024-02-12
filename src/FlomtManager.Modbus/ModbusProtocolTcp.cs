@@ -1,5 +1,5 @@
-﻿using System.Net.Sockets;
-using System.Net;
+﻿using System.Net;
+using System.Net.Sockets;
 
 namespace FlomtManager.Modbus
 {
@@ -11,45 +11,70 @@ namespace FlomtManager.Modbus
 
         public override bool IsOpen => _socket?.Connected ?? false;
 
-        public override void Open()
-        {
-            var endPoint = new IPEndPoint(_ipAddress, _port);
-            _socket = new Socket(_ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _socket.Connect(endPoint);
-        }
-
-        public override void Close()
+        public override void Dispose()
         {
             _socket?.Shutdown(SocketShutdown.Both);
             _socket?.Close();
         }
 
-        protected override void Send(byte[] message)
+        public override ValueTask OpenAsync(CancellationToken cancellationToken)
         {
-            _socket?.Send(message);
+            cancellationToken.ThrowIfCancellationRequested();
+            _socket = new Socket(_ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            return _socket.ConnectAsync(_ipAddress, _port, cancellationToken);
         }
 
-        protected override byte[]? Receive(int count)
+        public override ValueTask CloseAsync(CancellationToken cancellationToken)
         {
-            if (_socket is null)
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfSocketIsNull();
+            _socket!.Shutdown(SocketShutdown.Both);
+            _socket!.Close();
+            _socket = null;
+            return ValueTask.CompletedTask;
+        }
+
+        protected override async ValueTask SendAsync(byte[] message, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfSocketIsNull();
+            if (_socket!.Poll(TimeSpan.FromMilliseconds(50), SelectMode.SelectWrite))
             {
-                return null;
+                await _socket!.SendAsync(message, SocketFlags.None, cancellationToken);
             }
-
-            var size = count * 2 + 5;
-            var recv = new byte[size];
-            var totalRecv = 0;
-            do
+            else
             {
-                totalRecv += _socket.Receive(recv, totalRecv, size - totalRecv, SocketFlags.None);
-            } while (totalRecv < size);
-
-            return recv;
+                throw new TimeoutException("Socket send timed out.");
+            }
         }
 
-        public override void Dispose()
+        protected override async ValueTask<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
         {
-            Close();
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfSocketIsNull();
+            int size = count * 2 + 5, left = size;
+            var result = new byte[size];
+            while (left > 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (_socket!.Poll(TimeSpan.FromSeconds(1), SelectMode.SelectRead))
+                {
+                    left -= await _socket!.ReceiveAsync(result.AsMemory(size - left), cancellationToken);
+                }
+                else
+                {
+                    throw new TimeoutException("Socket receive timed out.");
+                }
+            }
+            return result;
+        }
+
+        private void ThrowIfSocketIsNull()
+        {
+            if (_socket == null)
+            {
+                throw new InvalidOperationException("Socket is null.");
+            }
         }
     }
 }

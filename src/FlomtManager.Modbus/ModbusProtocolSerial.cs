@@ -13,51 +13,64 @@ namespace FlomtManager.Modbus
 
         public override bool IsOpen => _serialPort?.IsOpen ?? false;
 
-        public override void Open()
+        public override void Dispose()
         {
-            _serialPort = new()
+            _serialPort?.Close();
+        }
+
+        public override ValueTask OpenAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _serialPort = new SerialPort()
             {
                 PortName = _portName,
                 BaudRate = _baudRate,
                 Parity = _parity,
                 DataBits = _dataBits,
                 StopBits = _stopBits,
-                Handshake = Handshake.None,
-                WriteTimeout = 500
+                ReadTimeout = 1000,
+                WriteTimeout = 1000,
             };
             _serialPort.Open();
+            return ValueTask.CompletedTask;
         }
 
-        public override void Close()
+        public override ValueTask CloseAsync(CancellationToken cancellationToken)
         {
-            _serialPort?.Close();
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfSerialPortIsNull();
+            _serialPort!.Close();
+            return ValueTask.CompletedTask;
         }
 
-        protected override void Send(byte[] message)
+        protected override ValueTask SendAsync(byte[] message, CancellationToken cancellationToken)
         {
-            _serialPort?.Write(message, 0, message.Length);
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfSerialPortIsNull();
+            _serialPort!.Write(message, 0, message.Length);
+            return ValueTask.CompletedTask;
         }
 
-        protected override byte[]? Receive(int count)
+        protected override ValueTask<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
         {
-            if (_serialPort is null)
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfSerialPortIsNull();
+            int size = count * 2 + 5, left = size;
+            var result = new byte[size];
+            while (left > 0)
             {
-                return null;
+                cancellationToken.ThrowIfCancellationRequested();
+                left -= _serialPort!.Read(result, size - left, left);
             }
-
-            var size = count * 2 + 5;
-            var recv = new byte[size];
-            for (int i = 0; i < size; ++i)
-            {
-                recv[i] = (byte)_serialPort.ReadByte();
-            }
-
-            return recv;
+            return ValueTask.FromResult(result);
         }
 
-        public override void Dispose()
+        private void ThrowIfSerialPortIsNull()
         {
-            Close();
+            if (_serialPort == null)
+            {
+                throw new InvalidOperationException("Serial port is null.");
+            }
         }
     }
 }

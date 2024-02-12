@@ -32,6 +32,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<byte[]>("CurrentParameterLineDefinition")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<ushort>("CurrentParameterLineDefinitionStart")
@@ -53,6 +54,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("IntegralParameterLineDefinition")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<ushort>("IntegralParameterLineDefinitionStart")
@@ -119,6 +121,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Parity")
@@ -131,6 +134,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SerialCode")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<byte>("SlaveId")
@@ -170,6 +174,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasMaxLength(4)
                         .HasColumnType("TEXT");
 
@@ -177,6 +182,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Unit")
+                        .IsRequired()
                         .HasMaxLength(6)
                         .HasColumnType("TEXT");
 

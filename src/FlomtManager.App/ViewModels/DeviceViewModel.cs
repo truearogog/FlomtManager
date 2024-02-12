@@ -1,49 +1,102 @@
 ﻿using Avalonia.Controls.Notifications;
+using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
 using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
+using FlomtManager.Core.Repositories;
 using FlomtManager.Core.Services;
 using FlomtManager.Modbus;
 using ReactiveUI;
 using Serilog;
-using System;
-using System.Threading;
+using System.Collections.ObjectModel;
 
 namespace FlomtManager.App.ViewModels
 {
     public class DeviceViewModel : ViewModelBase
     {
         private readonly DeviceStore _deviceStore;
+        private readonly DeviceConnectionStore _deviceConnectionStore;
         private readonly IModbusService _modbusService;
+        private readonly IDeviceDefinitionRepository _deviceDefinitionRepository;
+        private readonly IParameterRepository _parameterRepository;
 
         private CancellationTokenSource? _modbusCancellationTokenSource;
 
-        public EventHandler? CloseRequested;
-        public EventHandler<Device>? DeviceUpdateRequested;
+        public event EventHandler? CloseRequested;
+        public event EventHandler<Device>? DeviceUpdateRequested;
+        public event EventHandler<(NotificationType, string)>? NotificationRequested;
 
         private Device? _device;
         public Device? Device
         {
             get => _device;
-            set => this.RaiseAndSetIfChanged(ref _device, value);
+            set 
+            {
+                this.RaiseAndSetIfChanged(ref _device, value);
+                if (Device != null)
+                {
+                    ConnectionState = _deviceConnectionStore.GetConnectionState(Device.Id);
+                    AddParameters();
+                }
+            }
         }
 
-        private IModbusProtocol? _modbusProtocol;
-        public IModbusProtocol? ModbusProtocol
+        private ConnectionState _connectionState;
+        public ConnectionState ConnectionState
         {
-            get => _modbusProtocol;
-            set => this.RaiseAndSetIfChanged(ref _modbusProtocol, value);
+            get => _connectionState;
+            set => this.RaiseAndSetIfChanged(ref _connectionState, value);
         }
 
-        public EventHandler<(NotificationType, string)>? NotificationRequested { get; set; }
+        public ObservableCollection<ParameterViewModel> CurrentParameters { get; set; } = [];
+        public ObservableCollection<ParameterViewModel> IntegralParameters { get; set; } = [];
 
-        public DeviceViewModel(DeviceStore deviceStore, IModbusService modbusService)
+        public DeviceViewModel(DeviceStore deviceStore, DeviceConnectionStore deviceConnectionStore, IModbusService modbusService, 
+            IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository)
         {
             _deviceStore = deviceStore;
+            _deviceConnectionStore = deviceConnectionStore;
             _modbusService = modbusService;
+            _deviceDefinitionRepository = deviceDefinitionRepository;
+            _parameterRepository = parameterRepository;
 
             _deviceStore.DeviceUpdated += _DeviceUpdated;
             _deviceStore.DeviceDeleted += _DeviceDeleted;
+
+            _deviceConnectionStore.OnDeviceConnectionState += _OnDeviceConnectionState;
+            _deviceConnectionStore.OnDeviceConnectionError += _OnDeviceConnectionError;
+        }
+
+        private void _OnDeviceConnectionState(object? sender, DeviceConnectionStateEventArgs e)
+        {
+            if (e.DeviceId == Device?.Id)
+            {
+                ConnectionState = e.ConnectionState;
+            }
+        }
+
+        private void _OnDeviceConnectionError(object? sender, DeviceConnectionErrorEventArgs e)
+        {
+            if (e.DeviceId == Device?.Id)
+            {
+                NotificationRequested?.Invoke(this, (NotificationType.Error, "Connection error."));
+            }
+        }
+
+        private async void AddParameters()
+        {
+            if (Device == null)
+            {
+                return;
+            }
+
+            var deviceDefinition = Device.DeviceDefinition ?? _deviceDefinitionRepository.GetAllQueryable(x => x.DeviceId == Device.Id).FirstOrDefault();
+            if (deviceDefinition == null)
+            {
+                return;
+            }
+
+            CurrentParameters.Clear();
         }
 
         public void UpdateDevice(Device device)
@@ -69,38 +122,26 @@ namespace FlomtManager.App.ViewModels
 
         public async void TryConnect()
         {
-            if (Device != null)
+            if (Device == null)
             {
-                try
-                {
-                    ModbusProtocol = Device.ConnectionType switch
-                    {
-                        ConnectionType.Serial => new ModbusProtocolSerial(Device.PortName, Device.BaudRate, Device.Parity, Device.DataBits, Device.StopBits),
-                        ConnectionType.Network => new ModbusProtocolTcp(Device.IpAddress, Device.Port),
-                        _ => throw new NotSupportedException("Not supported device connection type.")
-                    };
-                    ModbusProtocol.Open();
-                    ModbusProtocol.Close();
-                    NotificationRequested?.Invoke(this, (NotificationType.Success, "Connected."));
-                }
-                catch (Exception ex)
-                {
-                    ModbusProtocol = null;
-                    NotificationRequested?.Invoke(this, (NotificationType.Error, "Can't connect to device."));
-                    Log.Error(ex, string.Empty);
-                    return;
-                }
+                return;
+            }
 
-                if (Device.DeviceDefinitionId == 0)
-                {
-                    ModbusProtocol.Open();
-
-                    var deviceDefinitions = _modbusService.ReadDeviceDefinitions(ModbusProtocol, Device.SlaveId, CancellationToken.None);
-                    var parameters = _modbusService.ReadParameterDefinitions(ModbusProtocol, Device.SlaveId, deviceDefinitions, CancellationToken.None);
-                    var currentParameters = _modbusService.ReadCurrentParameters(ModbusProtocol, Device.SlaveId, deviceDefinitions, CancellationToken.None);
-
-                    ModbusProtocol.Close();
-                }
+            try
+            {
+                await _deviceConnectionStore.TryConnect(Device);
+                NotificationRequested?.Invoke(this, (NotificationType.Success, "Connected."));
+                AddParameters();
+            }
+            catch (ModbusException ex)
+            {
+                NotificationRequested?.Invoke(this, (NotificationType.Error, ex.Message));
+                Log.Error(ex, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                NotificationRequested?.Invoke(this, (NotificationType.Error, "Can't connect to device."));
+                Log.Error(ex, string.Empty);
             }
         }
     }

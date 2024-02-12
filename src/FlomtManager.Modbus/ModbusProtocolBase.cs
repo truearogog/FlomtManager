@@ -1,15 +1,21 @@
-﻿namespace FlomtManager.Modbus
+﻿
+using System.Buffers;
+using System.Net.Http.Headers;
+
+namespace FlomtManager.Modbus
 {
     public abstract class ModbusProtocolBase : IModbusProtocol, IDisposable
     {
+        private const ushort MAX_REQUEST_SIZE = 250;
+
         public abstract bool IsOpen { get; }
 
-        public abstract void Open();
-        public abstract void Close();
+        public abstract ValueTask OpenAsync(CancellationToken cancellationToken);
+        public abstract ValueTask CloseAsync(CancellationToken cancellationToken);
 
-        public ushort[] ReadRegisters(byte slaveId, ushort start, ushort count, CancellationToken ct)
+        public async Task<ushort[]> ReadRegistersAsync(byte slaveId, ushort start, ushort count, CancellationToken cancellationToken)
         {
-            var bytes = ReadRegistersBytes(slaveId, start, count, ct);
+            var bytes = await ReadRegistersBytesAsync(slaveId, start, count, cancellationToken);
             var registers = new ushort[count];
             for (int i = 0; i < count; i++)
             {
@@ -20,18 +26,15 @@
             return registers;
         }
 
-        private const ushort MAX_REQUEST_SIZE = 250;
-
-        public byte[] ReadRegistersBytes(byte slaveId, ushort start, ushort count, CancellationToken ct)
+        public async Task<byte[]> ReadRegistersBytesAsync(byte slaveId, ushort start, ushort count, CancellationToken cancellationToken)
         {
-            var byteCount = count * 2;
+            int byteCount = count * 2, left = byteCount;
             var result = new byte[byteCount];
-            var left = byteCount;
             ushort current = start;
-            while (left > 0 && !ct.IsCancellationRequested)
+            while (left > 0 && !cancellationToken.IsCancellationRequested)
             {
                 var toRead = int.Min(left, MAX_REQUEST_SIZE);
-                var read = ReadRegistersBytes(slaveId, current, (ushort)(toRead / 2));
+                var read = await ReadRegistersBytesAsyncInternal(slaveId, current, (ushort)(toRead / 2), cancellationToken);
                 read.CopyTo(result, current - start);
                 left -= toRead;
                 current += (ushort)toRead;
@@ -39,19 +42,20 @@
             return result;
         }
 
-        private byte[] ReadRegistersBytes(byte slaveId, ushort start, ushort count)
+        private async Task<byte[]> ReadRegistersBytesAsyncInternal(byte slaveId, ushort start, ushort count, CancellationToken cancellationToken)
         {
-            var message = new byte[8];
+            var message = ArrayPool<byte>.Shared.Rent(8);
             BuildMessage(slaveId, 3, start, count, ref message);
-            Send(message);
+            await SendAsync(message, cancellationToken);
+            ArrayPool<byte>.Shared.Return(message);
             Thread.Sleep(50);
-            var bytes = Receive(count);
-            var result = Array.Empty<byte>();
-            if (bytes is not null && CheckResponse(bytes))
+            var bytes = await ReceiveAsync(count, cancellationToken);
+            if (bytes is [.., _, _] && CheckResponse(bytes))
             {
-                result = bytes.Skip(3).SkipLast(2).ToArray();
+                return bytes.Skip(3).SkipLast(2).ToArray();
             }
-            return result;
+
+            throw new Exception("Wrong message CRC.");
         }
 
         private static void BuildMessage(byte slaveId, byte type, ushort start, ushort count, ref byte[] message)
@@ -74,8 +78,8 @@
             return crc[0] == response[^2] && crc[1] == response[^1];
         }
 
-        protected abstract void Send(byte[] message);
-        protected abstract byte[]? Receive(int count);
+        protected abstract ValueTask SendAsync(byte[] message, CancellationToken cancellationToken);
+        protected abstract ValueTask<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken);
 
         public abstract void Dispose();
     }

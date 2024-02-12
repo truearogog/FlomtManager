@@ -1,7 +1,5 @@
 ﻿using FlomtManager.Core.Models;
-using FlomtManager.Core.Services;
-using System;
-using System.Threading.Tasks;
+using FlomtManager.Core.Repositories;
 
 namespace FlomtManager.App.Stores
 {
@@ -11,34 +9,26 @@ namespace FlomtManager.App.Stores
         public event Action<Device>? DeviceUpdated;
         public event Action<int>? DeviceDeleted;
 
-        public async Task<bool> CreateDevice(IDeviceService service, Device device)
+        public async Task<int> CreateDevice(IDeviceRepository deviceRepository, Device device)
         {
-            var created = await service.CreateDevice(device);
-            if (created)
-            {
-                DeviceCreated?.Invoke(device);
-            }
-            return created;
+            var id = await deviceRepository.Create(device);
+            device.Id = id;
+            DeviceCreated?.Invoke(device);
+            return id;
         }
 
-        public async Task<bool> UpdateDevice(IDeviceService service, Device device)
+        public async Task<int> UpdateDevice(IDeviceRepository deviceRepository, Device device)
         {
-            var updated = await service.UpdateDevice(device);
-            if (updated)
-            {
-                DeviceUpdated?.Invoke(device);
-            }
-            return updated;
+            var id = await deviceRepository.Update(device);
+            device.Id = id;
+            DeviceUpdated?.Invoke(device);
+            return id;
         }
 
-        public async Task<bool> DeleteDevice(IDeviceService service, int id)
+        public async Task DeleteDevice(IDeviceRepository deviceRepository, int id)
         {
-            var deleted = await service.DeleteDevice(id);
-            if (deleted)
-            {
-                DeviceDeleted?.Invoke(id);
-            }
-            return deleted;
+            await deviceRepository.Delete(id);
+            DeviceDeleted?.Invoke(id);
         }
     }
 }

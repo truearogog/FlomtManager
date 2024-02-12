@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using FlomtManager.App.Extensions;
@@ -30,9 +31,21 @@ namespace FlomtManager.App.Views
 
             if (DataContext is DeviceViewModel viewModel)
             {
-                viewModel.CloseRequested = _CloseRequested;
-                viewModel.DeviceUpdateRequested = _DeviceUpdateRequested;
-                viewModel.NotificationRequested = _NotificationRequested;
+                viewModel.CloseRequested += _CloseRequested;
+                viewModel.DeviceUpdateRequested += _DeviceUpdateRequested;
+                viewModel.NotificationRequested += _NotificationRequested;
+            }
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+
+            if (DataContext is DeviceViewModel viewModel)
+            {
+                viewModel.CloseRequested -= _CloseRequested;
+                viewModel.DeviceUpdateRequested -= _DeviceUpdateRequested;
+                viewModel.NotificationRequested -= _NotificationRequested;
             }
         }
 

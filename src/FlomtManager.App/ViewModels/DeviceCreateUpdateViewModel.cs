@@ -4,20 +4,20 @@ using AutoMapper;
 using FlomtManager.App.Stores;
 using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
-using FlomtManager.Core.Services;
+using FlomtManager.Core.Repositories;
 using FlomtManager.Framework.Helpers;
 using ReactiveUI;
+using Serilog;
 using System;
 using System.Collections.ObjectModel;
 using System.IO.Ports;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace FlomtManager.App.ViewModels
 {
     public class DeviceCreateUpdateViewModel : ViewModelBase
     {
-        private readonly IDeviceService _deviceService;
+        private readonly IDeviceRepository _deviceRepository;
         private readonly DeviceStore _deviceStore;
         private readonly IMapper _mapper;
 
@@ -39,9 +39,9 @@ namespace FlomtManager.App.ViewModels
 
         public EventHandler CloseRequested;
 
-        public DeviceCreateUpdateViewModel(IDeviceService deviceService, DeviceStore deviceStore, IMapper mapper)
+        public DeviceCreateUpdateViewModel(IDeviceRepository deviceRepository, DeviceStore deviceStore, IMapper mapper)
         {
-            _deviceService = deviceService;
+            _deviceRepository = deviceRepository;
             _deviceStore = deviceStore;
             _mapper = mapper;
 
@@ -64,7 +64,7 @@ namespace FlomtManager.App.ViewModels
             CloseRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        public async Task CreateDevice()
+        public async void CreateDevice()
         {
             var validationErrors = ValidationHelper.Validate(Form);
             if (validationErrors.Any())
@@ -73,20 +73,19 @@ namespace FlomtManager.App.ViewModels
             }
 
             var model = _mapper.Map<Device>(Form);
-            var result = await _deviceStore.CreateDevice(_deviceService, model);
-
-            if (result)
+            try
             {
+                await _deviceStore.CreateDevice(_deviceRepository, model);
                 Close();
-                ErrorMessage = string.Empty;
             }
-            else
+            catch (Exception ex)
             {
+                Log.Error(string.Empty, ex);
                 ErrorMessage = "Couldn't add new device.";
             }
         }
 
-        public async Task UpdateDevice()
+        public async void UpdateDevice()
         {
             var validationErrors = ValidationHelper.Validate(Form);
             if (validationErrors.Any())
@@ -95,15 +94,14 @@ namespace FlomtManager.App.ViewModels
             }
 
             var model = _mapper.Map<Device>(Form);
-            var result = await _deviceStore.UpdateDevice(_deviceService, model);
-
-            if (result)
+            try
             {
+                await _deviceStore.UpdateDevice(_deviceRepository, model);
                 Close();
-                ErrorMessage = string.Empty;
             }
-            else
+            catch (Exception ex)
             {
+                Log.Error(string.Empty, ex);
                 ErrorMessage = "Couldn't edit device.";
             }
         }

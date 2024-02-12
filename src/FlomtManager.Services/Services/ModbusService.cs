@@ -4,23 +4,18 @@ using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Services;
 using FlomtManager.Modbus;
-using System.Collections;
 using System.Collections.Frozen;
 using System.Reflection;
 using System.Text;
+using FlomtManager.Framework.Extensions;
 
 namespace FlomtManager.Services.Services
 {
     internal class ModbusService : IModbusService
     {
-        public DeviceDefinition? ReadDeviceDefinitions(IModbusProtocol modbusProtocol, byte slaveId, CancellationToken ct)
+        public async Task<DeviceDefinition> ReadDeviceDefinition(IModbusProtocol modbusProtocol, byte slaveId, CancellationToken cancellationToken)
         {
-            if (modbusProtocol == null || !modbusProtocol.IsOpen)
-            {
-                return null;
-            }
-
-            var registers = modbusProtocol.ReadRegisters(slaveId, 116, 42, ct);
+            var registers = await modbusProtocol.ReadRegistersAsync(slaveId, 116, 42, cancellationToken);
             var deviceDefinition = new DeviceDefinition
             {
                 ParameterDefinitionStart = registers[0],
@@ -39,13 +34,16 @@ namespace FlomtManager.Services.Services
                 IntegralParameterLineStart = registers[9],
             };
 
-            var currentParameterDefinition =
-                modbusProtocol.ReadRegistersBytes(slaveId, deviceDefinition.CurrentParameterLineDefinitionStart, (ushort)(deviceDefinition.CurrentParameterLineLength / 2), ct);
+            var currentParameterDefinition = await modbusProtocol.ReadRegistersBytesAsync(
+                slaveId, deviceDefinition.CurrentParameterLineDefinitionStart, (ushort)(deviceDefinition.CurrentParameterLineLength / 2), cancellationToken);
             deviceDefinition.CurrentParameterLineDefinition = currentParameterDefinition;
 
-            var integralParameterDefinition =
-                modbusProtocol.ReadRegistersBytes(slaveId, deviceDefinition.IntegralParameterLineDefinitionStart, (ushort)(deviceDefinition.IntegralParameterLineLength / 2), ct);
+            var integralParameterDefinition = await modbusProtocol.ReadRegistersBytesAsync(
+                slaveId, deviceDefinition.IntegralParameterLineDefinitionStart, (ushort)(deviceDefinition.IntegralParameterLineLength / 2), cancellationToken);
             deviceDefinition.IntegralParameterLineDefinition = integralParameterDefinition;
+
+            var bytes = deviceDefinition.GetBytes();
+            deviceDefinition.CRC = ModbusHelper.GetCRC(bytes);
 
             return deviceDefinition;
         }
@@ -62,19 +60,14 @@ namespace FlomtManager.Services.Services
             6...9 -'Q',0,0,0 - symbolic name of the parameter - 4 characters max or up to 0
             10...15 - 'm3/h',0,0 - parameter units - 6 characters max or up to 0
         */
-        public IEnumerable<Parameter>? ReadParameterDefinitions(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct)
+        public async Task<IEnumerable<Parameter>> ReadParameterDefinitions(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct)
         {
-            if (modbusProtocol == null || !modbusProtocol.IsOpen)
-            {
-                return null;
-            }
-
-            var bytes = modbusProtocol.ReadRegistersBytes(slaveId, deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * 16, ct);
+            var bytes = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * 16, ct);
 
             var parameters = new List<Parameter>();
             for (var i = 0; i < DeviceConstants.MAX_PARAMETER_COUNT; ++i)
             {
-                var parameterBytes = bytes.AsSpan().Slice(i * 16, 16);
+                var parameterBytes = bytes.Skip(i * 16).Take(16).ToArray();
                 if (parameterBytes[0] == 0)
                     continue;
 
@@ -83,8 +76,8 @@ namespace FlomtManager.Services.Services
                     Number = parameterBytes[0],
                     IntegrationNumber = parameterBytes[1],
                     ErrorMask = (ushort)(parameterBytes[2] + parameterBytes[3] * 256),
-                    Name = Encoding.ASCII.GetString(parameterBytes.Slice(6, 4).ToArray().TakeWhile(x => x != '\0').ToArray()),
-                    Unit = Encoding.ASCII.GetString(parameterBytes.Slice(10, 6).ToArray().TakeWhile(x => x != '\0').ToArray()),
+                    Name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray()),
+                    Unit = Encoding.ASCII.GetString(parameterBytes.Skip(10).TakeWhile(x => x != '\0').ToArray()),
                 };
 
                 parameters.Add(parameter);
@@ -92,13 +85,8 @@ namespace FlomtManager.Services.Services
             return parameters;
         }
 
-        public float[]? ReadCurrentParameters(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct)
+        public async Task<float[]?> ReadCurrentParameters(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct)
         {
-            if (modbusProtocol == null || !modbusProtocol.IsOpen)
-            {
-                return null;
-            }
-
             var parameterType = typeof(ParameterType);
             FrozenDictionary<ParameterType, byte> parameterTypeSizes = Enum.GetValues<ParameterType>()
                 .ToFrozenDictionary(
@@ -107,7 +95,7 @@ namespace FlomtManager.Services.Services
 
             var byteCount = 0;
             List<(byte number, ParameterType type, float comma, byte size)> parameterTypes = [];
-            var bytes = deviceDefinition.CurrentParameterLineDefinition.AsSpan();
+            var bytes = deviceDefinition.CurrentParameterLineDefinition;
             for (var i = 0; i < bytes.Length; i += 2)
             {
                 var (type, comma) = ParseParameterTypeByte(bytes[i + 1]);
@@ -116,8 +104,7 @@ namespace FlomtManager.Services.Services
                 parameterTypes.Add((bytes[i], type, comma, parameterTypeSizes[type]));
             }
 
-            var currentParameterLine = modbusProtocol.ReadRegistersBytes(slaveId, deviceDefinition.CurrentParameterLineStart, (ushort)(byteCount / 2), ct);
-            var span = currentParameterLine.AsSpan();
+            var currentParameterLine = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.CurrentParameterLineStart, (ushort)(byteCount / 2), ct);
             var current = 0;
             List<float> result = [];
             foreach (var (number, type, comma, size) in parameterTypes)
@@ -129,11 +116,10 @@ namespace FlomtManager.Services.Services
                 }
                 else
                 {
-                    var parameterByteSpan = span.Slice(current, size);
+                    var parameterByteSpan = currentParameterLine[current..(current + size)];
                     //parameterByteSpan.Reverse();
                     result.Add(ParseBytesToParameter(parameterByteSpan, type, comma));
                     current += size;
-
                 }
             }
 

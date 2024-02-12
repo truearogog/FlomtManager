@@ -1,8 +1,9 @@
+using Avalonia;
 using Avalonia.Controls;
-using FlomtManager.Core.Models;
 using FlomtManager.App.Extensions;
 using FlomtManager.App.ViewModels;
 using FlomtManager.App.Views;
+using FlomtManager.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
@@ -21,9 +22,9 @@ namespace FlomtManager.App.Pages
 
             if (DataContext is DevicesViewModel viewModel)
             {
-                viewModel.DeviceCreateRequested = _DeviceCreateRequested;
-                viewModel.DeviceUpdateRequested = _DeviceUpdateRequested;
-                viewModel.DeviceViewRequested = _DeviceViewRequested;
+                viewModel.DeviceCreateRequested += _DeviceCreateRequested;
+                viewModel.DeviceUpdateRequested += _DeviceUpdateRequested;
+                viewModel.DeviceViewRequested += _DeviceViewRequested;
             }
         }
 

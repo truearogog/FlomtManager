@@ -2,7 +2,7 @@
 
 namespace FlomtManager.Core.Enums
 {
-    public enum  ParameterType
+    public enum ParameterType
     {
         // b 0...2 comma position 0=0, 1=0.0, 2=0.00, 3=0.000, 4=0.0000, 5x, 6x, 7=*10
         // b 3..6 type
