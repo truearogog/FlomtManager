@@ -40,7 +40,7 @@ namespace FlomtManager.App.Stores
             return ConnectionState.Disconnected;
         }
 
-        public async Task TryConnect(Device device, CancellationToken cancellationToken = default)
+        public async Task TryConnect(Device device, EventHandler<DeviceConnectionDataEventArgs> dataEventHandler, CancellationToken cancellationToken = default)
         {
             IModbusProtocol? modbusProtocol = null;
             try
@@ -68,11 +68,11 @@ namespace FlomtManager.App.Stores
 
                 await modbusProtocol.OpenAsync(cancellationToken);
                 var deviceDefinition = await _modbusService.ReadDeviceDefinition(modbusProtocol, device.SlaveId, cancellationToken);
+                deviceDefinition.DeviceId = device.Id;
 
                 // if first time - read device definition and parameter definitions
                 if (device.DeviceDefinitionId == 0)
                 {
-                    deviceDefinition.DeviceId = device.Id;
                     var deviceDefinitionId = await _deviceDefinitionRepository.Create(deviceDefinition);
                     device.DeviceDefinitionId = deviceDefinitionId;
                     await _deviceStore.UpdateDevice(_deviceRepository, device);
@@ -98,9 +98,11 @@ namespace FlomtManager.App.Stores
 
                 // start device connection
                 var deviceConnection = App.Host.Services.GetRequiredService<DeviceConnection>();
+                deviceConnection.SlaveId = device.SlaveId;
+                deviceConnection.DeviceDefinition = deviceDefinition;
                 deviceConnection.ModbusProtocol = modbusProtocol;
-                deviceConnection.DeviceId = device.Id;
                 deviceConnection.OnConnectionError += _OnConnectionError;
+                deviceConnection.OnConnectionData += dataEventHandler;
 
                 deviceConnection.TryStart(TimeSpan.FromSeconds(5));
                 _deviceConnections.TryAdd(device.Id, deviceConnection);
@@ -114,7 +116,7 @@ namespace FlomtManager.App.Stores
             // cleanup
             catch (Exception ex)
             {
-                if (modbusProtocol != null)
+                if (modbusProtocol?.IsOpen == true)
                 {
                     await modbusProtocol.CloseAsync(CancellationToken.None);
                 }
@@ -137,7 +139,12 @@ namespace FlomtManager.App.Stores
 
         private void _OnConnectionError(object? sender, DeviceConnectionErrorEventArgs e)
         {
-            _deviceConnections.Remove(e.DeviceId, out _);
+            _deviceConnections.Remove(e.DeviceId, out var connection);
+            if (connection != null)
+            {
+                connection.TryStop();
+                connection.OnConnectionError -= _OnConnectionError;
+            }
             OnDeviceConnectionState?.Invoke(this, new DeviceConnectionStateEventArgs
             {
                 DeviceId = e.DeviceId,
@@ -148,6 +155,11 @@ namespace FlomtManager.App.Stores
                 DeviceId = e.DeviceId,
                 Exception = e.Exception,
             });
+        }
+
+        private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)
+        {
+
         }
     }
 }

@@ -38,7 +38,7 @@ namespace FlomtManager.Modbus
         public override ValueTask CloseAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ThrowIfSerialPortIsNull();
+            ArgumentNullException.ThrowIfNull(_serialPort);
             _serialPort!.Close();
             return ValueTask.CompletedTask;
         }
@@ -46,7 +46,7 @@ namespace FlomtManager.Modbus
         protected override ValueTask SendAsync(byte[] message, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ThrowIfSerialPortIsNull();
+            ArgumentNullException.ThrowIfNull(_serialPort);
             _serialPort!.Write(message, 0, message.Length);
             return ValueTask.CompletedTask;
         }
@@ -54,7 +54,7 @@ namespace FlomtManager.Modbus
         protected override ValueTask<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ThrowIfSerialPortIsNull();
+            ArgumentNullException.ThrowIfNull(_serialPort);
             int size = count * 2 + 5, left = size;
             var result = new byte[size];
             while (left > 0)
@@ -63,14 +63,6 @@ namespace FlomtManager.Modbus
                 left -= _serialPort!.Read(result, size - left, left);
             }
             return ValueTask.FromResult(result);
-        }
-
-        private void ThrowIfSerialPortIsNull()
-        {
-            if (_serialPort == null)
-            {
-                throw new InvalidOperationException("Serial port is null.");
-            }
         }
     }
 }

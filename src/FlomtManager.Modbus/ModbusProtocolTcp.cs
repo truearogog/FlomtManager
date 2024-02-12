@@ -27,7 +27,7 @@ namespace FlomtManager.Modbus
         public override ValueTask CloseAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ThrowIfSocketIsNull();
+            ArgumentNullException.ThrowIfNull(_socket);
             _socket!.Shutdown(SocketShutdown.Both);
             _socket!.Close();
             _socket = null;
@@ -37,7 +37,7 @@ namespace FlomtManager.Modbus
         protected override async ValueTask SendAsync(byte[] message, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ThrowIfSocketIsNull();
+            ArgumentNullException.ThrowIfNull(_socket);
             if (_socket!.Poll(TimeSpan.FromMilliseconds(50), SelectMode.SelectWrite))
             {
                 await _socket!.SendAsync(message, SocketFlags.None, cancellationToken);
@@ -51,12 +51,12 @@ namespace FlomtManager.Modbus
         protected override async ValueTask<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ThrowIfSocketIsNull();
+            ArgumentNullException.ThrowIfNull(_socket);
             int size = count * 2 + 5, left = size;
             var result = new byte[size];
             while (left > 0)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                cancellationToken.ThrowIfCancellationRequested();                
                 if (_socket!.Poll(TimeSpan.FromSeconds(1), SelectMode.SelectRead))
                 {
                     left -= await _socket!.ReceiveAsync(result.AsMemory(size - left), cancellationToken);
@@ -64,17 +64,9 @@ namespace FlomtManager.Modbus
                 else
                 {
                     throw new TimeoutException("Socket receive timed out.");
-                }
+                }   
             }
             return result;
-        }
-
-        private void ThrowIfSocketIsNull()
-        {
-            if (_socket == null)
-            {
-                throw new InvalidOperationException("Socket is null.");
-            }
         }
     }
 }

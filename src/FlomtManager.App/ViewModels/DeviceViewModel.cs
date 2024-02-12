@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls.Notifications;
+using Avalonia.Threading;
 using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
 using FlomtManager.Core.Enums;
@@ -71,7 +72,10 @@ namespace FlomtManager.App.ViewModels
         {
             if (e.DeviceId == Device?.Id)
             {
-                ConnectionState = e.ConnectionState;
+                Dispatcher.UIThread.Invoke(() =>
+                {
+                    ConnectionState = e.ConnectionState;
+                });
             }
         }
 
@@ -79,7 +83,14 @@ namespace FlomtManager.App.ViewModels
         {
             if (e.DeviceId == Device?.Id)
             {
-                NotificationRequested?.Invoke(this, (NotificationType.Error, "Connection error."));
+                if (e.Exception is ModbusException ex)
+                {
+                    NotificationRequested?.Invoke(this, (NotificationType.Error, ex.Message));
+                }
+                else
+                {
+                    NotificationRequested?.Invoke(this, (NotificationType.Error, "Connection error."));
+                }
             }
         }
 
@@ -90,13 +101,43 @@ namespace FlomtManager.App.ViewModels
                 return;
             }
 
+            var parameters = await _parameterRepository.GetAll(x => x.DeviceId == Device.Id);
+
             var deviceDefinition = Device.DeviceDefinition ?? _deviceDefinitionRepository.GetAllQueryable(x => x.DeviceId == Device.Id).FirstOrDefault();
             if (deviceDefinition == null)
             {
                 return;
             }
 
+            var currentParameters = deviceDefinition.CurrentParameterLineDefinition
+                .Where((_, i) => i % 2 == 0)
+                .Where(x => x != 0);
             CurrentParameters.Clear();
+            foreach (var currentParameter in currentParameters)
+            {
+                var parameter = parameters.First(x => x.Number == currentParameter);
+                CurrentParameters.Add(new ParameterViewModel
+                {
+                    Number = parameter.Number,
+                    Name = parameter.Name,
+                    Unit = parameter.Unit,
+                });
+            }
+
+            var integralParameters = deviceDefinition.IntegralParameterLineDefinition
+                .Where((_, i) => i % 2 == 0)
+                .Where(x => x != 0);
+            IntegralParameters.Clear();
+            foreach (var integralParameter in integralParameters)
+            {
+                var parameter = parameters.First(x => x.Number == integralParameter);
+                IntegralParameters.Add(new ParameterViewModel
+                {
+                    Number = parameter.Number,
+                    Name = parameter.Name,
+                    Unit = parameter.Unit,
+                });
+            }
         }
 
         public void UpdateDevice(Device device)
@@ -129,7 +170,7 @@ namespace FlomtManager.App.ViewModels
 
             try
             {
-                await _deviceConnectionStore.TryConnect(Device);
+                await _deviceConnectionStore.TryConnect(Device, _OnConnectionData);
                 NotificationRequested?.Invoke(this, (NotificationType.Success, "Connected."));
                 AddParameters();
             }
@@ -143,6 +184,11 @@ namespace FlomtManager.App.ViewModels
                 NotificationRequested?.Invoke(this, (NotificationType.Error, "Can't connect to device."));
                 Log.Error(ex, string.Empty);
             }
+        }
+
+        private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)
+        {
+
         }
     }
 }

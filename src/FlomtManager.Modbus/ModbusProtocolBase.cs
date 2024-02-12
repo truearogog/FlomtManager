@@ -48,7 +48,7 @@ namespace FlomtManager.Modbus
             BuildMessage(slaveId, 3, start, count, ref message);
             await SendAsync(message, cancellationToken);
             ArrayPool<byte>.Shared.Return(message);
-            Thread.Sleep(50);
+            Thread.Sleep(100);
             var bytes = await ReceiveAsync(count, cancellationToken);
             if (bytes is [.., _, _] && CheckResponse(bytes))
             {
