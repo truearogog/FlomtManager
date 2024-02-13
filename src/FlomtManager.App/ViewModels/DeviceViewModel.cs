@@ -188,7 +188,14 @@ namespace FlomtManager.App.ViewModels
 
         private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)
         {
-
+            foreach (var currentParameter in CurrentParameters)
+            {
+                currentParameter.Value = e.CurrentParameters.TryGetValue(currentParameter.Number, out var value) ? value : string.Empty;
+            }
+            foreach (var integralParameter in IntegralParameters)
+            {
+                integralParameter.Value = e.IntegralParameters.TryGetValue(integralParameter.Number, out var value) ? value : string.Empty;
+            }
         }
     }
 }

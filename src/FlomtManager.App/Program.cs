@@ -6,9 +6,7 @@ using Projektanker.Icons.Avalonia;
 using Projektanker.Icons.Avalonia.FontAwesome;
 using Serilog;
 using Serilog.Templates;
-using System;
 using System.Reflection;
-using System.Threading;
 
 namespace FlomtManager.App
 {
