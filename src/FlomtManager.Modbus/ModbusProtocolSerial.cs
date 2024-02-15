@@ -43,15 +43,15 @@ namespace FlomtManager.Modbus
             return ValueTask.CompletedTask;
         }
 
-        protected override ValueTask SendAsync(byte[] message, CancellationToken cancellationToken)
+        protected override Task SendAsync(byte[] message, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_serialPort);
             _serialPort!.Write(message, 0, message.Length);
-            return ValueTask.CompletedTask;
+            return Task.CompletedTask;
         }
 
-        protected override ValueTask<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
+        protected override Task<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_serialPort);
@@ -62,7 +62,7 @@ namespace FlomtManager.Modbus
                 cancellationToken.ThrowIfCancellationRequested();
                 left -= _serialPort!.Read(result, size - left, left);
             }
-            return ValueTask.FromResult(result);
+            return Task.FromResult(result);
         }
     }
 }

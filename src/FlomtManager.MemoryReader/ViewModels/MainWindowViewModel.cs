@@ -1,25 +1,29 @@
-﻿using FlomtManager.Core.Constants;
+﻿using Avalonia.Controls.Notifications;
+using Avalonia.Threading;
+using FlomtManager.Core.Constants;
 using FlomtManager.Core.Enums;
 using FlomtManager.Modbus;
 using HexIO;
 using ReactiveUI;
 using Serilog;
-using System;
 using System.Buffers;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.IO.Ports;
-using System.Linq;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace FlomtManager.MemoryReader.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
         public FormViewModel Form { get; set; } = new();
+
+        private string? _successMessage;
+        public string? SuccessMessage
+        {
+            get => _successMessage;
+            set => this.RaiseAndSetIfChanged(ref _successMessage, value);
+        }
 
         private string? _errorMessage;
         public string? ErrorMessage
@@ -65,7 +69,8 @@ namespace FlomtManager.MemoryReader.ViewModels
 
         private CancellationTokenSource? _cancellationTokenSource;
 
-        public EventHandler? DirectoryRequested;
+        public event EventHandler? DirectoryRequested;
+        public event EventHandler<(NotificationType, string)>? NotificationRequested;
 
         public MainWindowViewModel()
         {
@@ -75,6 +80,11 @@ namespace FlomtManager.MemoryReader.ViewModels
         public void RequestDirectory()
         {
             DirectoryRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void RequestNotification(NotificationType type, string message)
+        {
+            NotificationRequested?.Invoke(this, (type, message));
         }
 
         public async void OpenConnection()
@@ -110,69 +120,87 @@ namespace FlomtManager.MemoryReader.ViewModels
 
         public async void Read()
         {
-            if (ModbusProtocol == null || string.IsNullOrEmpty(Form.Directory) || string.IsNullOrEmpty(Form.FileName))
+            if (ModbusProtocol == null || string.IsNullOrEmpty(Form.Directory))
             {
                 return;
             }
 
-            if (Form.Count == 0 || 
-                Form.Count < 0 || 
-                Form.Count > DeviceConstants.MEMORY_SIZE_REGISTERS || 
-                Form.Start < 0 || 
-                Form.Start + Form.Count * 2 > DeviceConstants.MEMORY_SIZE_BYTES)
+            if (Form.Count == 0 ||
+                Form.Count < 0 ||
+                Form.Count > DeviceConstants.MEMORY_SIZE_BYTES ||
+                Form.Start < 0 ||
+                Form.Start + Form.Count > DeviceConstants.MEMORY_SIZE_BYTES)
             {
-                ErrorMessage = "Can't read address start and count is invalid.";
+                ErrorMessage = "Invalid start address and length in bytes.";
                 return;
             }
 
+            MaxProgress = 1;
             ErrorMessage = null;
+            SuccessMessage = null;
             Reading = true;
             _cancellationTokenSource = new();
-            try
+
+            await Task.Run(async () =>
             {
-                await Task
-                    .Run(async () =>
+                try
                 {
-                    var max = 250;
-                    var byteCount = Form.Count * 2;
-                    var left = byteCount;
-                    ushort current = Form.Start;
-                    MaxProgress = byteCount;
-                    var bytes = ArrayPool<byte>.Shared.Rent(byteCount);
-                    while (left > 0 && !_cancellationTokenSource.Token.IsCancellationRequested)
+                    var fileName = Form.FileName;
+                    if (string.IsNullOrEmpty(fileName))
                     {
-                        var count = int.Min(left, max);
-                        var read = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, current, (ushort)(count / 2), _cancellationTokenSource.Token);
-                        read.CopyTo(bytes, current - Form.Start);
-                        left -= count;
-                        current += (ushort)count;
-                        CurrentProgress = current - Form.Start;
+                        var deviceNumber = (await ModbusProtocol.ReadRegistersAsync(Form.SlaveId, 100, 1, cancellationToken: _cancellationTokenSource.Token)).First();
+                        if (Form.DateTime.Date != DateTime.Now.Date)
+                        {
+                            Form.DateTime = DateTime.Now;
+                            Form.Number = 1;
+                        }
+                        else
+                        {
+                            Form.Number++;
+                        }
+                        fileName = $"flomt_{Form.DateTime:yyMMdd}_{deviceNumber}_S{Form.Start}_L{Form.Count}_No{Form.Number}.hex";
                     }
 
-                    using var writer = new IntelHexStreamWriter(Path.Combine(Form.Directory, Form.FileName) + ".hex");
-                    left = byteCount;
-                    current = Form.Start;
+                    var bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)(Form.Count / 2), (current, total) =>
+                    {
+                        CurrentProgress = current;
+                        MaxProgress = total;
+                    }, _cancellationTokenSource.Token);
+
+                    using var writer = new IntelHexStreamWriter(Path.Combine(Form.Directory, fileName));
+                    int current = Form.Start, left = bytes.Length;
                     while (left > 0)
                     {
+                        _cancellationTokenSource.Token.ThrowIfCancellationRequested();
                         var count = int.Min(left, Form.DataRecordLength);
-                        writer.WriteDataRecord(current, bytes.Skip(current).Take(count).ToArray());
+                        writer.WriteDataRecord((ushort)current, bytes.Skip(current).Take(count).ToArray());
                         left -= count;
                         current += (ushort)count;
                     }
                     writer.Write(":00000001FF");
-                    ArrayPool<byte>.Shared.Return(bytes);
-                })
-                    .ContinueWith(_ =>
+                    RequestNotification(NotificationType.Success, $"Created {fileName}");
+                    SuccessMessage = $"Read {Form.Count} bytes starting from {Form.Start}.";
+                }
+                catch (ModbusException ex)
+                {
+                    ErrorMessage = ex.Message;
+                    Log.Error(ex, string.Empty);
+                }
+                catch (OperationCanceledException ex)
+                {
+                    ErrorMessage = "Canceled.";
+                    Log.Error(ex, string.Empty);
+                }
+                catch (Exception ex)
+                {
+                    ErrorMessage = "Can't read device memory.";
+                    Log.Error(ex, string.Empty);
+                }
+                finally
                 {
                     Reading = false;
-                })
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = "Can't read device memory.";
-                Log.Error(ex, string.Empty);
-            }
+                }
+            }).ConfigureAwait(false);
         }
 
         public void Cancel()
@@ -193,12 +221,12 @@ namespace FlomtManager.MemoryReader.ViewModels
 
         public void ResetStart()
         {
-            Form.Start = typeof(FormViewModel).GetProperty(nameof(Form.Start))?.GetCustomAttribute<DefaultValueAttribute>()?.Value as ushort? ?? 0;
+            Form.Start = typeof(FormViewModel).GetProperty(nameof(Form.Start))?.GetCustomAttribute<DefaultValueAttribute>()?.Value as int? ?? 0;
         }
 
         public void ResetCount()
         {
-            Form.Count = typeof(FormViewModel).GetProperty(nameof(Form.Count))?.GetCustomAttribute<DefaultValueAttribute>()?.Value as ushort? ?? 0;
+            Form.Count = typeof(FormViewModel).GetProperty(nameof(Form.Count))?.GetCustomAttribute<DefaultValueAttribute>()?.Value as int? ?? 0;
         }
 
         public void ResetDataRecordLength()

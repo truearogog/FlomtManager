@@ -1,12 +1,7 @@
 ﻿namespace FlomtManager.Core.Attributes
 {
-    public class SizeAttribute : Attribute
+    public class SizeAttribute(byte size) : Attribute
     {
-        public byte Size { get; }
-
-        public SizeAttribute(byte size)
-        {
-            Size = size;
-        }
+        public byte Size { get; } = size;
     }
 }

@@ -6,7 +6,6 @@ using FlomtManager.Framework.Extensions;
 using FlomtManager.Modbus;
 using Serilog;
 using System.Collections.Frozen;
-using System.Diagnostics;
 using System.Reflection;
 using System.Timers;
 using Timer = System.Timers.Timer;
@@ -30,13 +29,14 @@ namespace FlomtManager.App.Models
 
         private ushort _currentParameterLineSize;
         // parameter number, size, comma multiplier
-        private IReadOnlyCollection<(byte number, ParameterType type, float comma)> _currentParameterLineDefinition;
+        private IReadOnlyCollection<(byte number, ParameterType type, float comma)>? _currentParameterLineDefinition;
 
         private ushort _integralParameterLineSize;
         // parameter number, size, comma multiplier
-        private IReadOnlyCollection<(byte number, ParameterType type, float comma)> _integralParameterLineDefinition;
+        private IReadOnlyCollection<(byte number, ParameterType type, float comma)>? _integralParameterLineDefinition;
 
         private Timer? _dataReadTimer;
+        private CancellationTokenSource _cancellationTokenSource;
 
         public DeviceConnection(IModbusService modbusService)
         {
@@ -46,38 +46,40 @@ namespace FlomtManager.App.Models
             _parameterTypeSizes = Enum.GetValues<ParameterType>().ToFrozenDictionary(
                 x => x,
                 x => parameterTypeType.GetMember(x.ToString()).First().GetCustomAttribute<SizeAttribute>()?.Size ?? throw new Exception("Wrong parameter size."));
+
+            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         private int _lockFlag = 0; // 0 - free
         private async void _dataReadTimer_Elapsed(object? sender, ElapsedEventArgs e)
         {
-            Debug.WriteLine("read");
             if (Interlocked.CompareExchange(ref _lockFlag, 1, 0) == 0)
             {
-                Debug.WriteLine("read unlocked");
                 try
                 {
                     ArgumentNullException.ThrowIfNull(ModbusProtocol);
                     ArgumentNullException.ThrowIfNull(DeviceDefinition);
 
-                    await ModbusProtocol.OpenAsync(CancellationToken.None);
+                    var currentParameters = await ReadParameterLine(_currentParameterLineDefinition!, DeviceDefinition.CurrentParameterLineStart, 
+                        _currentParameterLineSize, _cancellationTokenSource.Token);
+                    var integralParameters = await ReadParameterLine(_integralParameterLineDefinition!, DeviceDefinition.IntegralParameterLineStart, 
+                        _integralParameterLineSize, _cancellationTokenSource.Token);
 
-                    var currentParameters = await ReadParameterLine(_currentParameterLineDefinition, DeviceDefinition.CurrentParameterLineStart, _currentParameterLineSize);
-                    var integralParameters = await ReadParameterLine(_integralParameterLineDefinition, DeviceDefinition.IntegralParameterLineStart, _integralParameterLineSize);
+                    OnConnectionData?.Invoke(this, new DeviceConnectionDataEventArgs
+                    {
+                        DeviceId = DeviceDefinition.DeviceId,
+                        CurrentParameters = currentParameters,
+                        IntegralParameters = integralParameters
+                    });
 
-                    Debug.WriteLine(DateTime.UtcNow);
-                    Debug.WriteLine(string.Join(' ', currentParameters.Select(x => x.Value)));
-                    Debug.WriteLine(string.Join(' ', integralParameters.Select(x => x.Value)));
-
-                    await ModbusProtocol.CloseAsync(CancellationToken.None);
+                }
+                catch (OperationCanceledException)
+                {
+                    await TryStop();
                 }
                 catch (Exception ex)
                 {
-                    if (ModbusProtocol!.IsOpen)
-                    {
-                        await ModbusProtocol.CloseAsync(CancellationToken.None);
-                    }
-                    TryStop();
+                    await TryStop();
                     OnConnectionError?.Invoke(this, new DeviceConnectionErrorEventArgs
                     {
                         DeviceId = DeviceDefinition!.DeviceId,
@@ -90,18 +92,15 @@ namespace FlomtManager.App.Models
                     Interlocked.Decrement(ref _lockFlag);
                 }
             }
-            else
-            {
-                Debug.WriteLine("read locked");
-            }
         }
 
-        public bool TryStart(TimeSpan dataReadInterval)
+        public async Task<bool> TryStart(TimeSpan dataReadInterval)
         {
             if (ModbusProtocol == null || DeviceDefinition == null)
             {
                 return false;
             }
+            await ModbusProtocol.OpenAsync(CancellationToken.None);
 
             // create current parameter line data
             _currentParameterLineDefinition = ParseParameterLineDefinition(DeviceDefinition.CurrentParameterLineDefinition);
@@ -117,15 +116,24 @@ namespace FlomtManager.App.Models
             return true;
         }
 
-        public bool TryStop()
+        public async Task<bool> TryStop()
         {
-            if (_dataReadTimer == null)
+            if (_dataReadTimer == null || ModbusProtocol == null)
             {
                 return false;
             }
-
             _dataReadTimer.Stop();
+            await ModbusProtocol.CloseAsync(CancellationToken.None);
             return true;
+        }
+
+        public async Task<bool> TryStopIfNoListeners()
+        {
+            if (OnConnectionData?.GetInvocationList().Length == 0)
+            {
+                return await TryStop();
+            }
+            return false;
         }
 
         private IReadOnlyCollection<(byte, ParameterType, float)> ParseParameterLineDefinition(byte[] bytes)
@@ -145,7 +153,7 @@ namespace FlomtManager.App.Models
             ArgumentNullException.ThrowIfNull(ModbusProtocol);
             ArgumentNullException.ThrowIfNull(DeviceDefinition);
 
-            var parameterLine = await ModbusProtocol.ReadRegistersBytesAsync(SlaveId, lineStart, (ushort)(lineSize / 2), cancellationToken);
+            var parameterLine = await ModbusProtocol.ReadRegistersBytesAsync(SlaveId, lineStart, (ushort)(lineSize / 2), cancellationToken: cancellationToken);
             var current = 0;
             Dictionary<byte, string> result = [];
             foreach (var (number, type, comma) in parameterLineDefinition)
@@ -153,7 +161,7 @@ namespace FlomtManager.App.Models
                 cancellationToken.ThrowIfCancellationRequested();
                 if (number != 0)
                 {
-                    var value = ParseBytesToValue(parameterLine.AsSpan(current, current + _parameterTypeSizes[type]), type, comma);
+                    var value = ParseBytesToValue(parameterLine.AsSpan(current, _parameterTypeSizes[type]), type, comma);
                     result.Add(number, value);
                 }
                 current += _parameterTypeSizes[type];
@@ -173,6 +181,7 @@ namespace FlomtManager.App.Models
                 ParameterType.S32CD1 => BitConverter.ToSingle(bytes).TrimDecimalPlaces(1).ToString(),
                 ParameterType.S32CD2 => BitConverter.ToSingle(bytes).TrimDecimalPlaces(2).ToString(),
                 ParameterType.S32CD3 => BitConverter.ToSingle(bytes).TrimDecimalPlaces(1).ToString(),
+                ParameterType.Error => BitConverter.ToUInt16(bytes).ToString(),
                 _ => string.Empty
             };
         }

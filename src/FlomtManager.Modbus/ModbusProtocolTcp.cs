@@ -34,21 +34,14 @@ namespace FlomtManager.Modbus
             return ValueTask.CompletedTask;
         }
 
-        protected override async ValueTask SendAsync(byte[] message, CancellationToken cancellationToken)
+        protected override async Task SendAsync(byte[] message, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_socket);
-            if (_socket!.Poll(TimeSpan.FromMilliseconds(50), SelectMode.SelectWrite))
-            {
-                await _socket!.SendAsync(message, SocketFlags.None, cancellationToken);
-            }
-            else
-            {
-                throw new TimeoutException("Socket send timed out.");
-            }
+            await _socket!.SendAsync(message, SocketFlags.None, cancellationToken);
         }
 
-        protected override async ValueTask<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
+        protected override async Task<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_socket);
@@ -56,7 +49,7 @@ namespace FlomtManager.Modbus
             var result = new byte[size];
             while (left > 0)
             {
-                cancellationToken.ThrowIfCancellationRequested();                
+                cancellationToken.ThrowIfCancellationRequested();
                 if (_socket!.Poll(TimeSpan.FromSeconds(1), SelectMode.SelectRead))
                 {
                     left -= await _socket!.ReceiveAsync(result.AsMemory(size - left), cancellationToken);
@@ -64,7 +57,7 @@ namespace FlomtManager.Modbus
                 else
                 {
                     throw new TimeoutException("Socket receive timed out.");
-                }   
+                }
             }
             return result;
         }

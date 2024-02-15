@@ -33,9 +33,9 @@
 
 			<StackPanel Grid.Column="0" Spacing="10" Margin="20,20,10,20">
 				<StackPanel>
-					<TextBlock Classes="Tertiary" Text="Start" />
+					<TextBlock Classes="Tertiary" Text="Start address" />
 					<Grid ColumnDefinitions="*,auto">
-						<TextBox Grid.Column="0" Watermark="Start" Text="{Binding Form.Start}" />
+						<TextBox Grid.Column="0" Watermark="Start address" Text="{Binding Form.Start}" />
 						<Button Grid.Column="1" Command="{Binding ResetStart}" Padding="8,6">
 							<i:Icon Value="fa-solid fa-rotate-left" />
 						</Button>
@@ -43,9 +43,9 @@
 				</StackPanel>
 
 				<StackPanel>
-					<TextBlock Classes="Tertiary" Text="Count" />
+					<TextBlock Classes="Tertiary" Text="Length in bytes" />
 					<Grid ColumnDefinitions="*,auto">
-						<TextBox Grid.Column="0" Watermark="Count" Text="{Binding Form.Count}" />
+						<TextBox Grid.Column="0" Watermark="Length in bytes" Text="{Binding Form.Count}" />
 						<Button Grid.Column="1" Command="{Binding ResetCount}" Padding="8,6">
 							<i:Icon Value="fa-solid fa-rotate-left" />
 						</Button>
@@ -53,9 +53,9 @@
 				</StackPanel>
 
 				<StackPanel>
-					<TextBlock Classes="Tertiary" Text="Data Record Length" />
+					<TextBlock Classes="Tertiary" Text="Bytes in string" />
 					<Grid ColumnDefinitions="*,auto">
-						<TextBox Grid.Column="0" Watermark="Data Record Length" Text="{Binding Form.DataRecordLength}" />
+						<TextBox Grid.Column="0" Watermark="Bytes in string" Text="{Binding Form.DataRecordLength}" />
 						<Button Grid.Column="1" Command="{Binding ResetDataRecordLength}" Padding="8,6">
 							<i:Icon Value="fa-solid fa-rotate-left" />
 						</Button>
@@ -77,11 +77,19 @@
 					</Grid>
 				</StackPanel>
 
-				<SelectableTextBlock
-					MaxWidth="400"
-					Classes="Danger"
-					Text="{Binding ErrorMessage}"
-					IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}" />
+				<StackPanel>
+					<SelectableTextBlock
+						MaxWidth="400"
+						Classes="Danger"
+						Text="{Binding ErrorMessage}"
+						IsVisible="{Binding !!ErrorMessage}" />
+
+					<SelectableTextBlock
+						MaxWidth="400"
+						Classes="Success"
+						Text="{Binding SuccessMessage}"
+						IsVisible="{Binding !!SuccessMessage}" />
+				</StackPanel>
 
 				<StackPanel
 					Spacing="10">
@@ -107,6 +115,12 @@
 							</MultiBinding>
 						</Button.IsEnabled>
 					</Button>
+					<TextBlock IsVisible="{Binding Reading}" Foreground="{DynamicResource SemiColorTertiary}">
+						<Run Text="{Binding CurrentProgress}" />
+						<Run Text="/" />
+						<Run Text="{Binding MaxProgress}" />
+						<Run Text="bytes" />
+					</TextBlock>
 					<ProgressBar Classes="Primary" Minimum="0" Maximum="{Binding MaxProgress}" ShowProgressText="True" Value="{Binding CurrentProgress}" IsVisible="{Binding Reading}" />
 					<Button Content="Read" Classes="Primary" Command="{Binding Read}">
 						<Button.IsEnabled>

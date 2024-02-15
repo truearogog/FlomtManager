@@ -37,7 +37,7 @@ namespace FlomtManager.App
                     services.AddServices();
 
                     // register stores
-                    services.AddSingleton<DeviceConnectionStore>();
+                    services.AddSingleton<DeviceWindowStore>();
                     services.AddSingleton<DeviceStore>();
 
                     // register views and viewmodels

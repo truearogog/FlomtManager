@@ -5,7 +5,6 @@ using FlomtManager.App.Stores;
 using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
-using FlomtManager.Core.Services;
 using FlomtManager.Modbus;
 using ReactiveUI;
 using Serilog;
@@ -16,12 +15,8 @@ namespace FlomtManager.App.ViewModels
     public class DeviceViewModel : ViewModelBase
     {
         private readonly DeviceStore _deviceStore;
-        private readonly DeviceConnectionStore _deviceConnectionStore;
-        private readonly IModbusService _modbusService;
         private readonly IDeviceDefinitionRepository _deviceDefinitionRepository;
         private readonly IParameterRepository _parameterRepository;
-
-        private CancellationTokenSource? _modbusCancellationTokenSource;
 
         public event EventHandler? CloseRequested;
         public event EventHandler<Device>? DeviceUpdateRequested;
@@ -34,11 +29,6 @@ namespace FlomtManager.App.ViewModels
             set 
             {
                 this.RaiseAndSetIfChanged(ref _device, value);
-                if (Device != null)
-                {
-                    ConnectionState = _deviceConnectionStore.GetConnectionState(Device.Id);
-                    AddParameters();
-                }
             }
         }
 
@@ -52,46 +42,14 @@ namespace FlomtManager.App.ViewModels
         public ObservableCollection<ParameterViewModel> CurrentParameters { get; set; } = [];
         public ObservableCollection<ParameterViewModel> IntegralParameters { get; set; } = [];
 
-        public DeviceViewModel(DeviceStore deviceStore, DeviceConnectionStore deviceConnectionStore, IModbusService modbusService, 
-            IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository)
+        public DeviceViewModel(DeviceStore deviceStore, IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository)
         {
             _deviceStore = deviceStore;
-            _deviceConnectionStore = deviceConnectionStore;
-            _modbusService = modbusService;
             _deviceDefinitionRepository = deviceDefinitionRepository;
             _parameterRepository = parameterRepository;
 
             _deviceStore.DeviceUpdated += _DeviceUpdated;
             _deviceStore.DeviceDeleted += _DeviceDeleted;
-
-            _deviceConnectionStore.OnDeviceConnectionState += _OnDeviceConnectionState;
-            _deviceConnectionStore.OnDeviceConnectionError += _OnDeviceConnectionError;
-        }
-
-        private void _OnDeviceConnectionState(object? sender, DeviceConnectionStateEventArgs e)
-        {
-            if (e.DeviceId == Device?.Id)
-            {
-                Dispatcher.UIThread.Invoke(() =>
-                {
-                    ConnectionState = e.ConnectionState;
-                });
-            }
-        }
-
-        private void _OnDeviceConnectionError(object? sender, DeviceConnectionErrorEventArgs e)
-        {
-            if (e.DeviceId == Device?.Id)
-            {
-                if (e.Exception is ModbusException ex)
-                {
-                    NotificationRequested?.Invoke(this, (NotificationType.Error, ex.Message));
-                }
-                else
-                {
-                    NotificationRequested?.Invoke(this, (NotificationType.Error, "Connection error."));
-                }
-            }
         }
 
         private async void AddParameters()
@@ -170,32 +128,46 @@ namespace FlomtManager.App.ViewModels
 
             try
             {
-                await _deviceConnectionStore.TryConnect(Device, _OnConnectionData);
-                NotificationRequested?.Invoke(this, (NotificationType.Success, "Connected."));
-                AddParameters();
+
             }
             catch (ModbusException ex)
             {
-                NotificationRequested?.Invoke(this, (NotificationType.Error, ex.Message));
+                RequestNotification(NotificationType.Error, ex.Message);
                 Log.Error(ex, string.Empty);
             }
             catch (Exception ex)
             {
-                NotificationRequested?.Invoke(this, (NotificationType.Error, "Can't connect to device."));
+                RequestNotification(NotificationType.Error, "Can't connect to device.");
                 Log.Error(ex, string.Empty);
             }
         }
 
+        public async void TryDisconnect()
+        {
+
+        }
+
         private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)
         {
-            foreach (var currentParameter in CurrentParameters)
+            Dispatcher.UIThread.Invoke(() =>
             {
-                currentParameter.Value = e.CurrentParameters.TryGetValue(currentParameter.Number, out var value) ? value : string.Empty;
-            }
-            foreach (var integralParameter in IntegralParameters)
+                foreach (var currentParameter in CurrentParameters)
+                {
+                    currentParameter.Value = e.CurrentParameters.TryGetValue(currentParameter.Number, out var value) ? value : string.Empty;
+                }
+                foreach (var integralParameter in IntegralParameters)
+                {
+                    integralParameter.Value = e.IntegralParameters.TryGetValue(integralParameter.Number, out var value) ? value : string.Empty;
+                }
+            });
+        }
+
+        private void RequestNotification(NotificationType type, string message)
+        {
+            Dispatcher.UIThread.Invoke(() =>
             {
-                integralParameter.Value = e.IntegralParameters.TryGetValue(integralParameter.Number, out var value) ? value : string.Empty;
-            }
+                NotificationRequested?.Invoke(this, (type, message));
+            });
         }
     }
 }

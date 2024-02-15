@@ -1,11 +1,10 @@
-using Avalonia;
 using Avalonia.Controls;
 using FlomtManager.App.Extensions;
+using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
 using FlomtManager.App.Views;
 using FlomtManager.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 namespace FlomtManager.App.Pages
 {
@@ -55,14 +54,22 @@ namespace FlomtManager.App.Pages
 
         private void _DeviceViewRequested(object? sender, Device device)
         {
+            var deviceWindowStore = App.Host.Services.GetRequiredService<DeviceWindowStore>();
+            if (deviceWindowStore.TryGetWindow(device.Id, out var window))
+            {
+                window!.Activate();
+                return;
+            }
+
             var viewModel = App.Host.Services.GetRequiredService<DeviceViewModel>();
             viewModel.Device = device;
 
-            var window = new DeviceWindow
+            var newWindow = new DeviceWindow
             {
                 DataContext = viewModel
             };
-            window.Show();
+            deviceWindowStore.AddWindow(device.Id, newWindow);
+            newWindow.Show();
         }
     }
 }

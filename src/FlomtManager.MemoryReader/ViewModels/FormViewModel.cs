@@ -19,24 +19,23 @@ namespace FlomtManager.MemoryReader.ViewModels
         }
 
         private string? _fileName;
-        [Required]
         public string? FileName
         {
             get => _fileName;
             set => this.RaiseAndSetIfChanged(ref _fileName, value);
         }
 
-        private ushort _start = 0;
+        private int _start = 0;
         [Range(0, DeviceConstants.MEMORY_SIZE_BYTES - 1), DefaultValue(0)]
-        public ushort Start
+        public int Start
         {
             get => _start;
             set => this.RaiseAndSetIfChanged(ref _start, value);
         }
 
-        private ushort _count = DeviceConstants.MEMORY_SIZE_REGISTERS;
-        [Range(0, DeviceConstants.MEMORY_SIZE_REGISTERS), DefaultValue(DeviceConstants.MEMORY_SIZE_REGISTERS)]
-        public ushort Count
+        private int _count = (int)DeviceConstants.MEMORY_SIZE_BYTES;
+        [Range(2, DeviceConstants.MEMORY_SIZE_BYTES), DefaultValue(DeviceConstants.MEMORY_SIZE_BYTES)]
+        public int Count
         {
             get => _count;
             set => this.RaiseAndSetIfChanged(ref _count, value);
@@ -113,5 +112,8 @@ namespace FlomtManager.MemoryReader.ViewModels
             get => _port;
             set => this.RaiseAndSetIfChanged(ref _port, value);
         }
+
+        public DateTime DateTime { get; set; }
+        public int Number { get; set; } = 1;
     }
 }

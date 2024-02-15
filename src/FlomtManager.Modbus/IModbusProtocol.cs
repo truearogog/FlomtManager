@@ -6,7 +6,7 @@
 
         ValueTask OpenAsync(CancellationToken cancellationToken);
         ValueTask CloseAsync(CancellationToken cancellationToken);
-        Task<ushort[]> ReadRegistersAsync(byte slaveId, ushort start, ushort count, CancellationToken cancellationToken);
-        Task<byte[]> ReadRegistersBytesAsync(byte slaveId, ushort start, ushort count, CancellationToken cancellationToken);
+        Task<ushort[]> ReadRegistersAsync(byte slaveId, ushort start, ushort count, Action<int, int>? progressHandler = null, CancellationToken cancellationToken = default);
+        Task<byte[]> ReadRegistersBytesAsync(byte slaveId, ushort start, ushort count, Action<int, int>? progressHandler = null, CancellationToken cancellationToken = default);
     }
 }

@@ -1,21 +1,20 @@
-﻿
-using System.Buffers;
-using System.Net.Http.Headers;
+﻿using System.Buffers;
 
 namespace FlomtManager.Modbus
 {
     public abstract class ModbusProtocolBase : IModbusProtocol, IDisposable
     {
         private const ushort MAX_REQUEST_SIZE = 250;
-
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
         public abstract bool IsOpen { get; }
 
         public abstract ValueTask OpenAsync(CancellationToken cancellationToken);
         public abstract ValueTask CloseAsync(CancellationToken cancellationToken);
 
-        public async Task<ushort[]> ReadRegistersAsync(byte slaveId, ushort start, ushort count, CancellationToken cancellationToken)
+        public async Task<ushort[]> ReadRegistersAsync(byte slaveId, ushort start, ushort count,
+            Action<int, int>? progressHandler = null, CancellationToken cancellationToken = default)
         {
-            var bytes = await ReadRegistersBytesAsync(slaveId, start, count, cancellationToken);
+            var bytes = await ReadRegistersBytesAsync(slaveId, start, count, progressHandler, cancellationToken);
             var registers = new ushort[count];
             for (int i = 0; i < count; i++)
             {
@@ -26,29 +25,46 @@ namespace FlomtManager.Modbus
             return registers;
         }
 
-        public async Task<byte[]> ReadRegistersBytesAsync(byte slaveId, ushort start, ushort count, CancellationToken cancellationToken)
+        public async Task<byte[]> ReadRegistersBytesAsync(byte slaveId, ushort start, ushort count,
+            Action<int, int>? progressHandler = null, CancellationToken cancellationToken = default)
         {
             int byteCount = count * 2, left = byteCount;
             var result = new byte[byteCount];
-            ushort current = start;
-            while (left > 0 && !cancellationToken.IsCancellationRequested)
+            try
             {
-                var toRead = int.Min(left, MAX_REQUEST_SIZE);
-                var read = await ReadRegistersBytesAsyncInternal(slaveId, current, (ushort)(toRead / 2), cancellationToken);
-                read.CopyTo(result, current - start);
-                left -= toRead;
-                current += (ushort)toRead;
+                await _semaphore.WaitAsync(cancellationToken);
+                ushort current = start;
+                while (left > 0 && !cancellationToken.IsCancellationRequested)
+                {
+                    var toRead = int.Min(left, MAX_REQUEST_SIZE);
+                    var read = await ReadRegistersBytesAsyncInternal(slaveId, current, (ushort)(toRead / 2), cancellationToken);
+                    read.CopyTo(result, current - start);
+                    left -= toRead;
+                    current += (ushort)toRead;
+                    progressHandler?.Invoke(current, byteCount);
+                }
+            }
+            catch
+            {
+                _semaphore.Release();
+                throw;
+            }
+            finally
+            {
+                if (_semaphore.CurrentCount == 0)
+                {
+                    _semaphore.Release();
+                }
             }
             return result;
         }
 
         private async Task<byte[]> ReadRegistersBytesAsyncInternal(byte slaveId, ushort start, ushort count, CancellationToken cancellationToken)
         {
-            var message = ArrayPool<byte>.Shared.Rent(8);
+            var message = new byte[8];
             BuildMessage(slaveId, 3, start, count, ref message);
             await SendAsync(message, cancellationToken);
-            ArrayPool<byte>.Shared.Return(message);
-            Thread.Sleep(100);
+            await Task.Delay(TimeSpan.FromMilliseconds(10), cancellationToken);
             var bytes = await ReceiveAsync(count, cancellationToken);
             if (bytes is [.., _, _] && CheckResponse(bytes))
             {
@@ -78,8 +94,8 @@ namespace FlomtManager.Modbus
             return crc[0] == response[^2] && crc[1] == response[^1];
         }
 
-        protected abstract ValueTask SendAsync(byte[] message, CancellationToken cancellationToken);
-        protected abstract ValueTask<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken);
+        protected abstract Task SendAsync(byte[] message, CancellationToken cancellationToken);
+        protected abstract Task<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken);
 
         public abstract void Dispose();
     }

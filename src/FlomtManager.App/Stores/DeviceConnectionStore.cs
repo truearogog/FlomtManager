@@ -40,7 +40,7 @@ namespace FlomtManager.App.Stores
             return ConnectionState.Disconnected;
         }
 
-        public async Task TryConnect(Device device, EventHandler<DeviceConnectionDataEventArgs> dataEventHandler, CancellationToken cancellationToken = default)
+        public async Task Connect(Device device, EventHandler<DeviceConnectionDataEventArgs> dataEventHandler, CancellationToken cancellationToken = default)
         {
             IModbusProtocol? modbusProtocol = null;
             try
@@ -104,7 +104,7 @@ namespace FlomtManager.App.Stores
                 deviceConnection.OnConnectionError += _OnConnectionError;
                 deviceConnection.OnConnectionData += dataEventHandler;
 
-                deviceConnection.TryStart(TimeSpan.FromSeconds(5));
+                await deviceConnection.TryStart(TimeSpan.FromSeconds(10));
                 _deviceConnections.TryAdd(device.Id, deviceConnection);
 
                 OnDeviceConnectionState?.Invoke(this, new DeviceConnectionStateEventArgs
@@ -137,12 +137,21 @@ namespace FlomtManager.App.Stores
             }
         }
 
-        private void _OnConnectionError(object? sender, DeviceConnectionErrorEventArgs e)
+        public async Task Disconnect(int deviceId, EventHandler<DeviceConnectionDataEventArgs> dataEventHandler)
+        {
+            if (_deviceConnections.TryGetValue(deviceId, out var connection))
+            {
+                connection.OnConnectionData -= dataEventHandler;
+                await connection.TryStopIfNoListeners();
+            }
+        }
+
+        private async void _OnConnectionError(object? sender, DeviceConnectionErrorEventArgs e)
         {
             _deviceConnections.Remove(e.DeviceId, out var connection);
             if (connection != null)
             {
-                connection.TryStop();
+                await connection.TryStop();
                 connection.OnConnectionError -= _OnConnectionError;
             }
             OnDeviceConnectionState?.Invoke(this, new DeviceConnectionStateEventArgs
@@ -155,11 +164,6 @@ namespace FlomtManager.App.Stores
                 DeviceId = e.DeviceId,
                 Exception = e.Exception,
             });
-        }
-
-        private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)
-        {
-
         }
     }
 }
