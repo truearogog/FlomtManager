@@ -55,14 +55,17 @@ namespace FlomtManager.Modbus
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_serialPort);
-            int size = count * 2 + 5, left = size;
-            var result = new byte[size];
-            while (left > 0)
+            return Task.Run(() =>
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                left -= _serialPort!.Read(result, size - left, left);
-            }
-            return Task.FromResult(result);
+                int size = count * 2 + 5, left = size;
+                var result = new byte[size];
+                while (left > 0)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    left -= _serialPort!.Read(result, size - left, left);
+                }
+                return result;
+            }, cancellationToken);
         }
     }
 }

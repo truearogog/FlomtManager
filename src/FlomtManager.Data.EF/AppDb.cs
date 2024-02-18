@@ -10,18 +10,18 @@ namespace FlomtManager.Data.EF
         public DbSet<DeviceDefinitionEntity> DeviceDefinitions { get; set; }
         public DbSet<ParameterEntity> Parameters { get; set; }
 
-        public async Task InsertRangeAsync<T>(IEnumerable<T> entities, BulkConfig bulkConfig = null,
-            Action<decimal> progress = null, Type type = null, CancellationToken cancellationToken = default) where T : class
+        public async Task InsertRangeAsync<T>(IEnumerable<T> entities, BulkConfig? bulkConfig = null,
+            Action<decimal>? progress = null, Type? type = null, CancellationToken cancellationToken = default) where T : class
         {
             await this.BulkInsertAsync(entities, bulkConfig, progress, type, cancellationToken);
         }
-        public async Task InsertOrUpdateRangeAsync<T>(IEnumerable<T> entities, BulkConfig bulkConfig = null,
-            Action<decimal> progress = null, Type type = null, CancellationToken cancellationToken = default) where T : class
+        public async Task InsertOrUpdateRangeAsync<T>(IEnumerable<T> entities, BulkConfig? bulkConfig = null,
+            Action<decimal>? progress = null, Type? type = null, CancellationToken cancellationToken = default) where T : class
         {
             await this.BulkInsertOrUpdateAsync(entities, bulkConfig, progress, type, cancellationToken);
         }
-        public async Task UpdateRangeAsync<T>(IEnumerable<T> entities, BulkConfig bulkConfig = null,
-            Action<decimal> progress = null, Type type = null) where T : class
+        public async Task UpdateRangeAsync<T>(IEnumerable<T> entities, BulkConfig? bulkConfig = null,
+            Action<decimal>? progress = null, Type? type = null) where T : class
         {
             await this.BulkUpdateAsync(entities, bulkConfig, progress, type);
         }

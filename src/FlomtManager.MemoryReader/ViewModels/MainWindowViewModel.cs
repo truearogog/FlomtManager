@@ -1,5 +1,4 @@
 ﻿using Avalonia.Controls.Notifications;
-using Avalonia.Threading;
 using FlomtManager.Core.Constants;
 using FlomtManager.Core.Enums;
 using FlomtManager.Modbus;
@@ -140,67 +139,63 @@ namespace FlomtManager.MemoryReader.ViewModels
             SuccessMessage = null;
             Reading = true;
             _cancellationTokenSource = new();
-
-            await Task.Run(async () =>
+            try
             {
-                try
+                var fileName = Form.FileName;
+                if (string.IsNullOrEmpty(fileName))
                 {
-                    var fileName = Form.FileName;
-                    if (string.IsNullOrEmpty(fileName))
+                    var deviceNumber = (await ModbusProtocol.ReadRegistersAsync(Form.SlaveId, 100, 1, cancellationToken: _cancellationTokenSource.Token)).First();
+                    if (Form.DateTime.Date != DateTime.Now.Date)
                     {
-                        var deviceNumber = (await ModbusProtocol.ReadRegistersAsync(Form.SlaveId, 100, 1, cancellationToken: _cancellationTokenSource.Token)).First();
-                        if (Form.DateTime.Date != DateTime.Now.Date)
-                        {
-                            Form.DateTime = DateTime.Now;
-                            Form.Number = 1;
-                        }
-                        else
-                        {
-                            Form.Number++;
-                        }
-                        fileName = $"flomt_{Form.DateTime:yyMMdd}_{deviceNumber}_S{Form.Start}_L{Form.Count}_No{Form.Number}.hex";
+                        Form.DateTime = DateTime.Now;
+                        Form.Number = 1;
                     }
-
-                    var bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)(Form.Count / 2), (current, total) =>
+                    else
                     {
-                        CurrentProgress = current;
-                        MaxProgress = total;
-                    }, _cancellationTokenSource.Token);
-
-                    using var writer = new IntelHexStreamWriter(Path.Combine(Form.Directory, fileName));
-                    int current = Form.Start, left = bytes.Length;
-                    while (left > 0)
-                    {
-                        _cancellationTokenSource.Token.ThrowIfCancellationRequested();
-                        var count = int.Min(left, Form.DataRecordLength);
-                        writer.WriteDataRecord((ushort)current, bytes.Skip(current).Take(count).ToArray());
-                        left -= count;
-                        current += (ushort)count;
+                        Form.Number++;
                     }
-                    writer.Write(":00000001FF");
-                    RequestNotification(NotificationType.Success, $"Created {fileName}");
-                    SuccessMessage = $"Read {Form.Count} bytes starting from {Form.Start}.";
+                    fileName = $"flomt_{Form.DateTime:yyMMdd}_{deviceNumber}_S{Form.Start}_L{Form.Count}_No{Form.Number}.hex";
                 }
-                catch (ModbusException ex)
+
+                var bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)(Form.Count / 2), (current, total) =>
                 {
-                    ErrorMessage = ex.Message;
-                    Log.Error(ex, string.Empty);
-                }
-                catch (OperationCanceledException ex)
+                    CurrentProgress = current;
+                    MaxProgress = total;
+                }, _cancellationTokenSource.Token);
+
+                using var writer = new IntelHexStreamWriter(Path.Combine(Form.Directory, fileName));
+                int current = 0, left = bytes.Length;
+                while (left > 0)
                 {
-                    ErrorMessage = "Canceled.";
-                    Log.Error(ex, string.Empty);
+                    _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                    var count = int.Min(left, Form.DataRecordLength);
+                    writer.WriteDataRecord((ushort)(Form.Start + current), bytes.Skip(current).Take(count).ToArray());
+                    left -= count;
+                    current += (ushort)count;
                 }
-                catch (Exception ex)
-                {
-                    ErrorMessage = "Can't read device memory.";
-                    Log.Error(ex, string.Empty);
-                }
-                finally
-                {
-                    Reading = false;
-                }
-            }).ConfigureAwait(false);
+                writer.Write(":00000001FF");
+                RequestNotification(NotificationType.Success, $"Created {fileName}");
+                SuccessMessage = $"Read {Form.Count} bytes starting from {Form.Start}.";
+            }
+            catch (ModbusException ex)
+            {
+                ErrorMessage = ex.Message;
+                Log.Error(ex, string.Empty);
+            }
+            catch (OperationCanceledException ex)
+            {
+                ErrorMessage = "Canceled.";
+                Log.Error(ex, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Can't read device memory.";
+                Log.Error(ex, string.Empty);
+            }
+            finally
+            {
+                Reading = false;
+            }
         }
 
         public void Cancel()

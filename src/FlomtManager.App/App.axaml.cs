@@ -46,8 +46,7 @@ namespace FlomtManager.App
                     services.AddSingleton<DevicesViewModel>();
                     services.AddTransient<DeviceViewModel>();
                     services.AddTransient<DeviceCreateUpdateViewModel>();
-
-                    services.AddTransient<DeviceConnection>();
+                    services.AddTransient<DeviceConnectionViewModel>();
 
                     // register mapper
                     var config = new MapperConfiguration(cfg =>

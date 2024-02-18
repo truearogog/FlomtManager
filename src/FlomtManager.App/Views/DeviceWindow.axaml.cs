@@ -33,6 +33,7 @@ namespace FlomtManager.App.Views
             {
                 var deviceWindowStore = App.Host.Services.GetRequiredService<DeviceWindowStore>();
                 deviceWindowStore.RemoveWindow(viewModel.Device!.Id);
+                viewModel.TryDisconnect();
             }
         }
 

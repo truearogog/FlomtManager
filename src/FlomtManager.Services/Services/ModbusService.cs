@@ -62,7 +62,7 @@ namespace FlomtManager.Services.Services
         */
         public async Task<IEnumerable<Parameter>> ReadParameterDefinitions(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct)
         {
-            var bytes = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * 16, cancellationToken: ct);
+            var bytes = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * 16 / 2, cancellationToken: ct);
 
             var parameters = new List<Parameter>();
             for (var i = 0; i < DeviceConstants.MAX_PARAMETER_COUNT; ++i)
@@ -83,47 +83,6 @@ namespace FlomtManager.Services.Services
                 parameters.Add(parameter);
             }
             return parameters;
-        }
-
-        public async Task<float[]?> ReadCurrentParameters(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct)
-        {
-            var parameterType = typeof(ParameterType);
-            FrozenDictionary<ParameterType, byte> parameterTypeSizes = Enum.GetValues<ParameterType>()
-                .ToFrozenDictionary(
-                    x => x, 
-                    x => parameterType.GetMember(x.ToString())[0].GetCustomAttribute<SizeAttribute>()?.Size ?? throw new Exception("Wrong parameter size."));
-
-            var byteCount = 0;
-            List<(byte number, ParameterType type, float comma, byte size)> parameterTypes = [];
-            var bytes = deviceDefinition.CurrentParameterLineDefinition;
-            for (var i = 0; i < bytes.Length; i += 2)
-            {
-                var (type, comma) = ParseParameterTypeByte(bytes[i + 1]);
-                byteCount += parameterTypeSizes[type];
-
-                parameterTypes.Add((bytes[i], type, comma, parameterTypeSizes[type]));
-            }
-
-            var currentParameterLine = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.CurrentParameterLineStart, (ushort)(byteCount / 2), cancellationToken: ct);
-            var current = 0;
-            List<float> result = [];
-            foreach (var (number, type, comma, size) in parameterTypes)
-            {
-                if (number == 0)
-                {
-                    current += size;
-                    continue;
-                }
-                else
-                {
-                    var parameterByteSpan = currentParameterLine[current..(current + size)];
-                    //parameterByteSpan.Reverse();
-                    result.Add(ParseBytesToParameter(parameterByteSpan, type, comma));
-                    current += size;
-                }
-            }
-
-            return [.. result];
         }
 
         /*

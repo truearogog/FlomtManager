@@ -84,24 +84,31 @@
 											<Setter Property="Spacing" Value="4" />
 											<Setter Property="Orientation" Value="Horizontal" />
 										</Style>
-									</StackPanel.Styles>									
-									<StackPanel Classes="statusStackPanel"
-												IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connected}}" >
-										<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
-										<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" />
+									</StackPanel.Styles>
+
+									<StackPanel IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}">
+										<StackPanel Classes="statusStackPanel">
+											<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
+											<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Disconnected" />
+										</StackPanel>
+										<Button Content="Connect" Classes="Primary" Command="{Binding TryConnect}" />
 									</StackPanel>
-									<StackPanel Classes="statusStackPanel"
-												IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connecting}}" >
-										<i:Icon Foreground="{DynamicResource SemiColorWarning}" Value="fa-solid fa-rss" />
-										<TextBlock Foreground="{DynamicResource SemiColorWarning}" Text="Connecting" />
+
+									<StackPanel IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connecting}}">
+										<StackPanel Classes="statusStackPanel">
+											<i:Icon Foreground="{DynamicResource SemiColorWarning}" Value="fa-solid fa-rss" />
+											<TextBlock Foreground="{DynamicResource SemiColorWarning}" Text="Connecting" />
+										</StackPanel>
+										<Button Content="Cancel" Classes="Primary" Command="{Binding TryCancelConnect}" />
 									</StackPanel>
-									<StackPanel Classes="statusStackPanel"
-												IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}" >
-										<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
-										<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Disconnected" />
+
+									<StackPanel IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connected}}">
+										<StackPanel Classes="statusStackPanel">
+											<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
+											<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" />
+										</StackPanel>
+										<Button Content="Disconnect" Classes="Primary" Command="{Binding TryDisconnect}" />
 									</StackPanel>
-									<Button Content="Connect" Classes="Primary"  Command="{Binding TryConnect}"
-											IsEnabled="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}"/>
 								</StackPanel>
 							</Border>
 							<Border Classes="PaneBorder">
@@ -129,36 +136,54 @@
 				</StackPanel>
 			</SplitView.Pane>
 			<SplitView.Content>
-				<ItemsControl ItemsSource="{Binding CurrentParameters}" Margin="20">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate>
-							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="{Binding Name}" />
-								<StackPanel Orientation="Horizontal" Spacing="4">
-									<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-									<TextBlock Text="{Binding Unit}" />
+				<StackPanel Orientation="Horizontal">
+					
+					<ItemsControl ItemsSource="{Binding CurrentParameters}" Margin="20">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<StackPanel>
+									<TextBlock Classes="Tertiary" Text="{Binding Name}" />
+									<StackPanel Orientation="Horizontal" Spacing="4">
+										<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+										<TextBlock Text="{Binding Unit}" />
+									</StackPanel>
 								</StackPanel>
-							</StackPanel>
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+					
+					<ItemsControl ItemsSource="{Binding IntegralParameters}" Margin="20">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<StackPanel>
+									<TextBlock Classes="Tertiary" Text="{Binding Name}" />
+									<StackPanel Orientation="Horizontal" Spacing="4">
+										<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+										<TextBlock Text="{Binding Unit}" />
+									</StackPanel>
+								</StackPanel>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+					
+				</StackPanel>
 			</SplitView.Content>
 		</SplitView>
 		<Panel Grid.Row="2">
 			<Border Theme="{DynamicResource CardBorder}" Padding="4" CornerRadius="0" Margin="0">
 				<StackPanel Orientation="Horizontal">
 					<StackPanel Spacing="4" Orientation="Horizontal" 
-						IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connected}}" >
+						IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connected}}" >
 						<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
 						<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" FontSize="12" />
 					</StackPanel>
 					<StackPanel Spacing="4" Orientation="Horizontal" 
-						IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connecting}}" >
+						IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connecting}}" >
 						<i:Icon Foreground="{DynamicResource SemiColorWarning}" Value="fa-solid fa-rss" />
 						<TextBlock Foreground="{DynamicResource SemiColorWarning}" Text="Connecting" FontSize="12" />
 					</StackPanel>
 					<StackPanel Spacing="4" Orientation="Horizontal"
-						IsVisible="{Binding ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}" >
+						IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}" >
 						<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
 						<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Disconnected" FontSize="12" />
 					</StackPanel>

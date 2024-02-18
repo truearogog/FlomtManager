@@ -2,12 +2,11 @@
 using Avalonia.Threading;
 using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
-using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
 using FlomtManager.Modbus;
+using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
-using Serilog;
 using System.Collections.ObjectModel;
 
 namespace FlomtManager.App.ViewModels
@@ -32,15 +31,10 @@ namespace FlomtManager.App.ViewModels
             }
         }
 
-        private ConnectionState _connectionState;
-        public ConnectionState ConnectionState
-        {
-            get => _connectionState;
-            set => this.RaiseAndSetIfChanged(ref _connectionState, value);
-        }
-
         public ObservableCollection<ParameterViewModel> CurrentParameters { get; set; } = [];
         public ObservableCollection<ParameterViewModel> IntegralParameters { get; set; } = [];
+
+        public DeviceConnectionViewModel? DeviceConnection { get; set; }
 
         public DeviceViewModel(DeviceStore deviceStore, IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository)
         {
@@ -50,6 +44,10 @@ namespace FlomtManager.App.ViewModels
 
             _deviceStore.DeviceUpdated += _DeviceUpdated;
             _deviceStore.DeviceDeleted += _DeviceDeleted;
+
+            DeviceConnection = App.Host.Services.GetRequiredService<DeviceConnectionViewModel>();
+            DeviceConnection.OnConnectionData += _OnConnectionData;
+            DeviceConnection.OnConnectionError += _OnConnectionError;
         }
 
         private async void AddParameters()
@@ -116,35 +114,46 @@ namespace FlomtManager.App.ViewModels
             if (Device?.Id == id)
             {
                 CloseRequested?.Invoke(this, EventArgs.Empty);
+                TryDisconnect();
             }
         }
 
+        private CancellationTokenSource? _connectionCancellationTokenSource;
         public async void TryConnect()
         {
-            if (Device == null)
-            {
-                return;
-            }
-
             try
             {
-
+                ArgumentNullException.ThrowIfNull(Device);
+                ArgumentNullException.ThrowIfNull(DeviceConnection);
+                _connectionCancellationTokenSource = new CancellationTokenSource();
+                await DeviceConnection.Connect(Device, _connectionCancellationTokenSource.Token);
+                AddParameters();
             }
             catch (ModbusException ex)
             {
                 RequestNotification(NotificationType.Error, ex.Message);
-                Log.Error(ex, string.Empty);
             }
-            catch (Exception ex)
+            catch (OperationCanceledException)
             {
-                RequestNotification(NotificationType.Error, "Can't connect to device.");
-                Log.Error(ex, string.Empty);
+                RequestNotification(NotificationType.Warning, "Connection cancelled.");
             }
+            catch
+            {
+                RequestNotification(NotificationType.Error, "Connection error.");
+            }
+        }
+
+        public void TryCancelConnect()
+        {
+            ArgumentNullException.ThrowIfNull(_connectionCancellationTokenSource);
+            _connectionCancellationTokenSource.Cancel();
         }
 
         public async void TryDisconnect()
         {
-
+            _connectionCancellationTokenSource?.Cancel();
+            ArgumentNullException.ThrowIfNull(DeviceConnection);
+            await DeviceConnection.Disconnect();
         }
 
         private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)
@@ -160,6 +169,22 @@ namespace FlomtManager.App.ViewModels
                     integralParameter.Value = e.IntegralParameters.TryGetValue(integralParameter.Number, out var value) ? value : string.Empty;
                 }
             });
+        }
+
+        private void _OnConnectionError(object? sender, DeviceConnectionErrorEventArgs e)
+        {
+            if (e.Exception is ModbusException ex)
+            {
+                RequestNotification(NotificationType.Error, ex.Message);
+            }
+            else if (e.Exception is OperationCanceledException)
+            {
+                RequestNotification(NotificationType.Error, "Connection cancelled.");
+            }
+            else
+            {
+                RequestNotification(NotificationType.Error, "Connection error.");
+            }
         }
 
         private void RequestNotification(NotificationType type, string message)
