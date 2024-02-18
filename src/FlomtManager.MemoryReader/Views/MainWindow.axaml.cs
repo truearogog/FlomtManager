@@ -21,6 +21,16 @@ namespace FlomtManager.MemoryReader.Views
             _windowNotificationManager = new WindowNotificationManager(topLevel) { MaxItems = 1 };
         }
 
+        protected override void OnClosing(WindowClosingEventArgs e)
+        {
+            base.OnClosing(e);
+
+            if (DataContext is MainWindowViewModel viewModel)
+            {
+                viewModel.CloseConnection();
+            }
+        }
+
         protected override void OnDataContextChanged(EventArgs e)
         {
             base.OnDataContextChanged(e);
