@@ -154,7 +154,7 @@ namespace FlomtManager.MemoryReader.ViewModels
                     {
                         Form.Number++;
                     }
-                    fileName = $"flomt_{Form.DateTime:yyMMdd}_{deviceNumber}_S{Form.Start}_L{Form.Count}_No{Form.Number}.hex";
+                    fileName = $"flomt_{deviceNumber}_{Form.DateTime:yyMMdd}_{Form.Number:D2}_S{Form.Start}_L{Form.Count}.hex";
                 }
 
                 var bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)(Form.Count / 2), (current, total) =>

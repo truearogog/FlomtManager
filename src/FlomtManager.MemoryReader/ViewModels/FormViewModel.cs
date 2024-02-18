@@ -41,8 +41,8 @@ namespace FlomtManager.MemoryReader.ViewModels
             set => this.RaiseAndSetIfChanged(ref _count, value);
         }
 
-        private byte _dataRecordLength = 100;
-        [Range(1, 255), DefaultValue((byte)100)]
+        private byte _dataRecordLength = 64;
+        [Range(1, 255), DefaultValue((byte)64)]
         public byte DataRecordLength
         {
             get => _dataRecordLength;

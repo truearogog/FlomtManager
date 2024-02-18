@@ -1,13 +1,10 @@
-﻿using FlomtManager.Core.Attributes;
-using FlomtManager.Core.Constants;
+﻿using FlomtManager.Core.Constants;
 using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Services;
-using FlomtManager.Modbus;
-using System.Collections.Frozen;
-using System.Reflection;
-using System.Text;
 using FlomtManager.Framework.Extensions;
+using FlomtManager.Modbus;
+using System.Text;
 
 namespace FlomtManager.Services.Services
 {
@@ -35,11 +32,11 @@ namespace FlomtManager.Services.Services
             };
 
             var currentParameterDefinition = await modbusProtocol.ReadRegistersBytesAsync(
-                slaveId, deviceDefinition.CurrentParameterLineDefinitionStart, (ushort)(deviceDefinition.CurrentParameterLineLength / 2), cancellationToken: cancellationToken);
+                slaveId, deviceDefinition.CurrentParameterLineDefinitionStart, deviceDefinition.CurrentParameterLineNumber, cancellationToken: cancellationToken);
             deviceDefinition.CurrentParameterLineDefinition = currentParameterDefinition;
 
             var integralParameterDefinition = await modbusProtocol.ReadRegistersBytesAsync(
-                slaveId, deviceDefinition.IntegralParameterLineDefinitionStart, (ushort)(deviceDefinition.IntegralParameterLineLength / 2), cancellationToken: cancellationToken);
+                slaveId, deviceDefinition.IntegralParameterLineDefinitionStart, deviceDefinition.IntegralParameterLineNumber, cancellationToken: cancellationToken);
             deviceDefinition.IntegralParameterLineDefinition = integralParameterDefinition;
 
             var bytes = deviceDefinition.GetBytes();
