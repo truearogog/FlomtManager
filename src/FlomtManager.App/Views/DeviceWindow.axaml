@@ -111,6 +111,7 @@
 									</StackPanel>
 								</StackPanel>
 							</Border>
+							
 							<Border Classes="PaneBorder">
 								<StackPanel Spacing="10">
 									<StackPanel>
@@ -131,42 +132,50 @@
 									</StackPanel>
 								</StackPanel>
 							</Border>
+
+							<Border Classes="PaneBorder">
+								<StackPanel Spacing="10">
+									<TextBlock Text="Integral" Classes="H6" Theme="{StaticResource TitleTextBlock}" />
+									<ItemsControl ItemsSource="{Binding IntegralParameters}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<StackPanel>
+													<TextBlock Classes="Tertiary" Text="{Binding Name}" />
+													<StackPanel Orientation="Horizontal" Spacing="4">
+														<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+														<TextBlock Text="{Binding Unit}" />
+													</StackPanel>
+												</StackPanel>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</StackPanel>
+							</Border>
+							
+							<Border Classes="PaneBorder">
+								<StackPanel Spacing="10">
+									<TextBlock Text="Current" Classes="H6" Theme="{StaticResource TitleTextBlock}" />
+									<ItemsControl ItemsSource="{Binding CurrentParameters}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<StackPanel>
+													<TextBlock Classes="Tertiary" Text="{Binding Name}" />
+													<StackPanel Orientation="Horizontal" Spacing="4">
+														<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+														<TextBlock Text="{Binding Unit}" />
+													</StackPanel>
+												</StackPanel>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</StackPanel>
+							</Border>
 						</StackPanel>
 					</ScrollViewer>
 				</StackPanel>
 			</SplitView.Pane>
 			<SplitView.Content>
-				<StackPanel Orientation="Horizontal">
-					
-					<ItemsControl ItemsSource="{Binding CurrentParameters}" Margin="20">
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<StackPanel>
-									<TextBlock Classes="Tertiary" Text="{Binding Name}" />
-									<StackPanel Orientation="Horizontal" Spacing="4">
-										<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-										<TextBlock Text="{Binding Unit}" />
-									</StackPanel>
-								</StackPanel>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
-					
-					<ItemsControl ItemsSource="{Binding IntegralParameters}" Margin="20">
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<StackPanel>
-									<TextBlock Classes="Tertiary" Text="{Binding Name}" />
-									<StackPanel Orientation="Horizontal" Spacing="4">
-										<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-										<TextBlock Text="{Binding Unit}" />
-									</StackPanel>
-								</StackPanel>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
-					
-				</StackPanel>
+				
 			</SplitView.Content>
 		</SplitView>
 		<Panel Grid.Row="2">

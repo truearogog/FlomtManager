@@ -134,7 +134,6 @@ namespace FlomtManager.App.ViewModels
                     var deviceDefinitionId = await _deviceDefinitionRepository.Create(deviceDefinition);
                     device.DeviceDefinitionId = deviceDefinitionId;
                     await _deviceStore.UpdateDevice(_deviceRepository, device);
-                    _deviceDefinition = deviceDefinition;
 
                     var parameters = await _modbusService.ReadParameterDefinitions(_modbusProtocol, device.SlaveId, deviceDefinition, cancellationToken);
                     foreach (var parameter in parameters)
@@ -155,6 +154,7 @@ namespace FlomtManager.App.ViewModels
                 }
 
                 _device = device;
+                _deviceDefinition = deviceDefinition;
 
                 cancellationToken.ThrowIfCancellationRequested();
                 // create current parameter line data
