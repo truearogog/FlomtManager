@@ -29,15 +29,26 @@ namespace FlomtManager.Services.Services
                 IntegralParameterLineNumber = (byte)registers[8],
                 IntegralParameterLineLength = (byte)(registers[8] >> 8),
                 IntegralParameterLineStart = registers[9],
+
+                AverageParameterArchiveLineDefinitionStart = registers[10],
+                AverageParameterArchiveLineNumber = (byte)registers[11],
+                AverageParameterArchiveLineLength = (byte)(registers[11] >> 8),
+
+                AveragePerHourBlockStart = registers[15],
+                AveragePerHourBlockLineCount = registers[16],
             };
 
             var currentParameterDefinition = await modbusProtocol.ReadRegistersBytesAsync(
-                slaveId, deviceDefinition.CurrentParameterLineDefinitionStart, deviceDefinition.CurrentParameterLineNumber, cancellationToken: cancellationToken);
+                slaveId, deviceDefinition.CurrentParameterLineDefinitionStart, (ushort)(deviceDefinition.CurrentParameterLineNumber / 2), cancellationToken: cancellationToken);
             deviceDefinition.CurrentParameterLineDefinition = currentParameterDefinition;
 
             var integralParameterDefinition = await modbusProtocol.ReadRegistersBytesAsync(
-                slaveId, deviceDefinition.IntegralParameterLineDefinitionStart, deviceDefinition.IntegralParameterLineNumber, cancellationToken: cancellationToken);
+                slaveId, deviceDefinition.IntegralParameterLineDefinitionStart, (ushort)(deviceDefinition.IntegralParameterLineNumber / 2), cancellationToken: cancellationToken);
             deviceDefinition.IntegralParameterLineDefinition = integralParameterDefinition;
+
+            var averageParameterArchiveDefinition = await modbusProtocol.ReadRegistersBytesAsync(
+                slaveId, deviceDefinition.AverageParameterArchiveLineDefinitionStart, (ushort)(deviceDefinition.AverageParameterArchiveLineNumber / 2), cancellationToken: cancellationToken);
+            deviceDefinition.AverageParameterArchiveLineDefinition = averageParameterArchiveDefinition;
 
             var bytes = deviceDefinition.GetBytes();
             deviceDefinition.CRC = ModbusHelper.GetCRC(bytes);
@@ -59,25 +70,30 @@ namespace FlomtManager.Services.Services
         */
         public async Task<IEnumerable<Parameter>> ReadParameterDefinitions(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct)
         {
-            var bytes = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * 16 / 2, cancellationToken: ct);
+            var bytes = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.ParameterDefinitionStart, 
+                DeviceConstants.MAX_PARAMETER_COUNT * 16 / 2, cancellationToken: ct);
 
             var parameters = new List<Parameter>();
             for (var i = 0; i < DeviceConstants.MAX_PARAMETER_COUNT; ++i)
             {
                 var parameterBytes = bytes.Skip(i * 16).Take(16).ToArray();
-                if (parameterBytes[0] == 0)
-                    continue;
-
-                var parameter = new Parameter
+                if (parameterBytes[0] != 0)
                 {
-                    Number = parameterBytes[0],
-                    IntegrationNumber = parameterBytes[1],
-                    ErrorMask = (ushort)(parameterBytes[2] + parameterBytes[3] * 256),
-                    Name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray()),
-                    Unit = Encoding.ASCII.GetString(parameterBytes.Skip(10).TakeWhile(x => x != '\0').ToArray()),
-                };
+                    var (type, comma) = ParseParameterTypeByte(parameterBytes[1]);
 
-                parameters.Add(parameter);
+                    var parameter = new Parameter
+                    {
+                        Number = parameterBytes[0],
+                        ParameterType = type,
+                        Comma = comma,
+                        ErrorMask = (ushort)(parameterBytes[2] + parameterBytes[3] * 256),
+                        IntegrationNumber = parameterBytes[4],
+                        Name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray()),
+                        Unit = Encoding.ASCII.GetString(parameterBytes.Skip(10).TakeWhile(x => x != '\0').ToArray()),
+                    };
+
+                    parameters.Add(parameter);
+                }
             }
             return parameters;
         }
@@ -101,7 +117,7 @@ namespace FlomtManager.Services.Services
                 70 - U32 seconds since 2000 year
                 71 - 127 - reserved
         */
-        public (ParameterType type, float comma) ParseParameterTypeByte(byte parameterTypeByte)
+        public (ParameterType Type, float Comma) ParseParameterTypeByte(byte parameterTypeByte)
         {
             return parameterTypeByte switch
             {

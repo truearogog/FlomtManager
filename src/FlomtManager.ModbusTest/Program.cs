@@ -1,8 +1,8 @@
 ﻿using FlomtManager.Modbus;
 using System.Text;
 
-// var modbusProtocol = new ModbusProtocolTcp("185.147.58.54", 5000);
-var modbusProtocol = new ModbusProtocolTcp("192.168.8.22", 5000);
+var modbusProtocol = new ModbusProtocolTcp("185.147.58.54", 5000);
+// var modbusProtocol = new ModbusProtocolTcp("192.168.8.22", 5000);
 
 await modbusProtocol.OpenAsync(CancellationToken.None);
 

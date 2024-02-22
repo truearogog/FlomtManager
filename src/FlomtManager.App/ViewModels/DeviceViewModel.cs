@@ -2,8 +2,11 @@
 using Avalonia.Threading;
 using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
+using FlomtManager.Core.Attributes;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
+using FlomtManager.Core.Services;
+using FlomtManager.Framework.Extensions;
 using FlomtManager.Modbus;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
@@ -13,6 +16,7 @@ namespace FlomtManager.App.ViewModels
 {
     public class DeviceViewModel : ViewModelBase
     {
+        private readonly IModbusService _modbusService;
         private readonly DeviceStore _deviceStore;
         private readonly IDeviceDefinitionRepository _deviceDefinitionRepository;
         private readonly IParameterRepository _parameterRepository;
@@ -36,8 +40,9 @@ namespace FlomtManager.App.ViewModels
 
         public DeviceConnectionViewModel? DeviceConnection { get; set; }
 
-        public DeviceViewModel(DeviceStore deviceStore, IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository)
+        public DeviceViewModel(IModbusService modbusService, DeviceStore deviceStore, IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository)
         {
+            _modbusService = modbusService;
             _deviceStore = deviceStore;
             _deviceDefinitionRepository = deviceDefinitionRepository;
             _parameterRepository = parameterRepository;
@@ -65,34 +70,28 @@ namespace FlomtManager.App.ViewModels
                 return;
             }
 
-            var currentParameters = deviceDefinition.CurrentParameterLineDefinition
-                .Where((_, i) => i % 2 == 0)
-                .Where(x => x != 0);
-            CurrentParameters.Clear();
-            foreach (var currentParameter in currentParameters)
-            {
-                var parameter = parameters.First(x => x.Number == currentParameter);
-                CurrentParameters.Add(new ParameterViewModel
-                {
-                    Number = parameter.Number,
-                    Name = parameter.Name,
-                    Unit = parameter.Unit,
-                });
-            }
+            AddParameters(deviceDefinition.CurrentParameterLineDefinition!, CurrentParameters, parameters);            
+            AddParameters(deviceDefinition.IntegralParameterLineDefinition!, IntegralParameters, parameters);            
+        }
 
-            var integralParameters = deviceDefinition.IntegralParameterLineDefinition
-                .Where((_, i) => i % 2 == 0)
-                .Where(x => x != 0);
-            IntegralParameters.Clear();
-            foreach (var integralParameter in integralParameters)
+        private void AddParameters(byte[] parameterLineDefinition, ObservableCollection<ParameterViewModel> parameterCollection, IEnumerable<Parameter> parameters)
+        {
+            parameterCollection.Clear();
+            foreach (var parameterByte in parameterLineDefinition)
             {
-                var parameter = parameters.First(x => x.Number == integralParameter);
-                IntegralParameters.Add(new ParameterViewModel
+                if ((parameterByte & 0x80) == 0)
                 {
-                    Number = parameter.Number,
-                    Name = parameter.Name,
-                    Unit = parameter.Unit,
-                });
+                    var parameter = parameters.First(x => x.Number == parameterByte);
+                    if (parameter.ParameterType.GetAttribute<HideAttribute>() == null)
+                    {
+                        parameterCollection.Add(new ParameterViewModel
+                        {
+                            Number = parameter.Number,
+                            Name = parameter.Name,
+                            Unit = parameter.Unit,
+                        });
+                    }
+                }
             }
         }
 
@@ -162,11 +161,21 @@ namespace FlomtManager.App.ViewModels
             {
                 foreach (var currentParameter in CurrentParameters)
                 {
-                    currentParameter.Value = e.CurrentParameters.TryGetValue(currentParameter.Number, out var value) ? value : string.Empty;
+                    ParameterValue? value = e.CurrentParameters.TryGetValue(currentParameter.Number, out var _value) ? _value : null;
+                    if (value != null)
+                    {
+                        currentParameter.Value = value.Value;
+                        currentParameter.Error = value.Error;
+                    }
                 }
                 foreach (var integralParameter in IntegralParameters)
                 {
-                    integralParameter.Value = e.IntegralParameters.TryGetValue(integralParameter.Number, out var value) ? value : string.Empty;
+                    ParameterValue? value = e.IntegralParameters.TryGetValue(integralParameter.Number, out var _value) ? _value : null;
+                    if (value != null)
+                    {
+                        integralParameter.Value = value.Value;
+                        integralParameter.Error = value.Error;
+                    }
                 }
             });
         }

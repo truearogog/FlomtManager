@@ -11,12 +11,32 @@
     x:DataType="vm:DeviceViewModel"
     Icon="/Assets/avalonia-logo.ico"
     Title="{Binding Device.Name}">
-	
+
 	<Window.Styles>
 		<Style Selector="TextBlock, SelectableTextBlock, i|Icon">
 			<Setter Property="VerticalAlignment" Value="Center" />
 		</Style>
+		<Style Selector="Border.Error">
+			<Setter Property="Background" Value="{DynamicResource SemiColorDangerLight}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource SemiColorDanger}" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="CornerRadius" Value="2" />
+		</Style>
 	</Window.Styles>
+
+	<Window.DataTemplates>
+		<DataTemplate DataType="{x:Type vm:ParameterViewModel}">
+			<Border Classes.Error="{Binding Error}" Padding="2">
+				<StackPanel>
+					<TextBlock Classes="Tertiary" Text="{Binding Name}" />
+					<Grid ColumnDefinitions="*,auto">
+						<TextBlock Grid.Column="0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+						<TextBlock Grid.Column="1" Text="{Binding Unit}" />
+					</Grid>
+				</StackPanel>
+			</Border>
+		</DataTemplate>
+	</Window.DataTemplates>
 	
 	<Grid RowDefinitions="auto,*,auto">
 		<Border
@@ -42,25 +62,18 @@
 				</Button>
 			</StackPanel>
 		</Border>
-		<SplitView
+		<Grid
 			Grid.Row="1"
-			Name="splitView"
-			CompactPaneLength="50"
-			DisplayMode="CompactInline"
-			IsPaneOpen="{Binding #toggle.IsChecked, Mode=TwoWay}"
-			OpenPaneLength="200"
-			PanePlacement="Left">
-			<SplitView.Styles>
-				<Style Selector="Border.PaneBorder">
-					<Setter Property="Margin" Value="0" />
-					<Setter Property="Padding" Value="12,6" />
-					<Setter Property="IsVisible" Value="{Binding #splitView.IsPaneOpen}" />
-					<Setter Property="Theme" Value="{DynamicResource CardBorder}" />
-				</Style>
-			</SplitView.Styles>
-			<SplitView.Pane>
-				<StackPanel>
+			ColumnDefinitions="auto,*">
+			<Border 
+				Grid.Column="0"
+				BorderThickness="0,0,1,0"
+				Theme="{DynamicResource CardBorder}" 
+				Background="{DynamicResource SemiColorBackground0}"
+				CornerRadius="0" Padding="0" Margin="0">
+				<Grid RowDefinitions="auto,*">
 					<ToggleSwitch
+						Grid.Row="0"
 						Name="toggle"
 						Padding="4"
 						IsChecked="True"
@@ -73,12 +86,23 @@
 							<i:Icon Value="fa-solid fa-angle-right" />
 						</ToggleSwitch.OffContent>
 					</ToggleSwitch>
-					<ScrollViewer HorizontalScrollBarVisibility="Hidden">
-						<StackPanel Spacing="10" Margin="4">
+					<ScrollViewer 
+						Grid.Row="1"
+						Margin="4"
+						IsVisible="{Binding #toggle.IsChecked, Mode=TwoWay}">
+						<StackPanel Spacing="10" Width="200">
+							<StackPanel.Styles>
+								<Style Selector="Border.PaneBorder">
+									<Setter Property="Margin" Value="0" />
+									<Setter Property="Padding" Value="12,6" />
+									<Setter Property="Theme" Value="{DynamicResource CardBorder}" />
+								</Style>
+							</StackPanel.Styles>
+
 							<Border Classes="PaneBorder" Padding="0">
 								<StackPanel>
 									<StackPanel.Styles>
-										<Style Selector="StackPanel.statusStackPanel">
+										<Style Selector="StackPanel.StatusStackPanel">
 											<Setter Property="HorizontalAlignment" Value="Center" />
 											<Setter Property="Margin" Value="0,4" />
 											<Setter Property="Spacing" Value="4" />
@@ -87,7 +111,7 @@
 									</StackPanel.Styles>
 
 									<StackPanel IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Disconnected}}">
-										<StackPanel Classes="statusStackPanel">
+										<StackPanel Classes="StatusStackPanel">
 											<i:Icon Foreground="{DynamicResource SemiColorDanger}" Value="fa-solid fa-xmark" />
 											<TextBlock Foreground="{DynamicResource SemiColorDanger}" Text="Disconnected" />
 										</StackPanel>
@@ -95,7 +119,7 @@
 									</StackPanel>
 
 									<StackPanel IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connecting}}">
-										<StackPanel Classes="statusStackPanel">
+										<StackPanel Classes="StatusStackPanel">
 											<i:Icon Foreground="{DynamicResource SemiColorWarning}" Value="fa-solid fa-rss" />
 											<TextBlock Foreground="{DynamicResource SemiColorWarning}" Text="Connecting" />
 										</StackPanel>
@@ -103,7 +127,7 @@
 									</StackPanel>
 
 									<StackPanel IsVisible="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connected}}">
-										<StackPanel Classes="statusStackPanel">
+										<StackPanel Classes="StatusStackPanel">
 											<i:Icon Foreground="{DynamicResource SemiColorSuccess}" Value="fa-solid fa-check" />
 											<TextBlock Foreground="{DynamicResource SemiColorSuccess}" Text="Connected" />
 										</StackPanel>
@@ -111,7 +135,7 @@
 									</StackPanel>
 								</StackPanel>
 							</Border>
-							
+
 							<Border Classes="PaneBorder">
 								<StackPanel Spacing="10">
 									<StackPanel>
@@ -134,50 +158,38 @@
 							</Border>
 
 							<Border Classes="PaneBorder">
-								<StackPanel Spacing="10">
-									<TextBlock Text="Integral" Classes="H6" Theme="{StaticResource TitleTextBlock}" />
+								<StackPanel Spacing="5">
+									<TextBlock Text="Integral" Classes="H6" Theme="{DynamicResource TitleTextBlock}" />
 									<ItemsControl ItemsSource="{Binding IntegralParameters}">
-										<ItemsControl.ItemTemplate>
-											<DataTemplate>
-												<StackPanel>
-													<TextBlock Classes="Tertiary" Text="{Binding Name}" />
-													<StackPanel Orientation="Horizontal" Spacing="4">
-														<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-														<TextBlock Text="{Binding Unit}" />
-													</StackPanel>
-												</StackPanel>
-											</DataTemplate>
-										</ItemsControl.ItemTemplate>
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<StackPanel Spacing="2" />
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
 									</ItemsControl>
 								</StackPanel>
 							</Border>
-							
+
 							<Border Classes="PaneBorder">
-								<StackPanel Spacing="10">
+								<StackPanel Spacing="5">
 									<TextBlock Text="Current" Classes="H6" Theme="{StaticResource TitleTextBlock}" />
 									<ItemsControl ItemsSource="{Binding CurrentParameters}">
-										<ItemsControl.ItemTemplate>
-											<DataTemplate>
-												<StackPanel>
-													<TextBlock Classes="Tertiary" Text="{Binding Name}" />
-													<StackPanel Orientation="Horizontal" Spacing="4">
-														<TextBlock Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-														<TextBlock Text="{Binding Unit}" />
-													</StackPanel>
-												</StackPanel>
-											</DataTemplate>
-										</ItemsControl.ItemTemplate>
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<StackPanel Spacing="2" />
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
 									</ItemsControl>
 								</StackPanel>
 							</Border>
 						</StackPanel>
 					</ScrollViewer>
-				</StackPanel>
-			</SplitView.Pane>
-			<SplitView.Content>
-				
-			</SplitView.Content>
-		</SplitView>
+				</Grid>
+			</Border>
+
+			
+		</Grid>
+		
 		<Panel Grid.Row="2">
 			<Border Theme="{DynamicResource CardBorder}" Padding="4" CornerRadius="0" Margin="0">
 				<StackPanel Orientation="Horizontal">

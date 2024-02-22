@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FlomtManager.Data.EF.SQLite.Migrations
 {
     [DbContext(typeof(SQLiteAppDb))]
-    [Migration("20240210225424_Initial")]
+    [Migration("20240222165100_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -162,6 +162,9 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<float>("Comma")
+                        .HasColumnType("REAL");
+
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
@@ -183,6 +186,10 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
 
                     b.Property<byte>("Number")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ParameterType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Unit")
                         .IsRequired()

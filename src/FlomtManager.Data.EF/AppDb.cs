@@ -33,6 +33,7 @@ namespace FlomtManager.Data.EF
 
             modelBuilder.Entity<DeviceDefinitionEntity>().HasOne(x => x.Device).WithOne(x => x.DeviceDefinition);
 
+            modelBuilder.Entity<ParameterEntity>().Property(x => x.ParameterType).HasConversion<string>();
             modelBuilder.Entity<ParameterEntity>().HasOne(x => x.Device).WithMany(x => x.Parameters);
         }
     }

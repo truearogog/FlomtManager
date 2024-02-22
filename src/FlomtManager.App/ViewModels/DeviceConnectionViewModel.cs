@@ -11,17 +11,11 @@ using ReactiveUI;
 using Serilog;
 using System.Buffers.Binary;
 using System.Collections.Frozen;
-using System.Collections.ObjectModel;
-using System.Reflection;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
 namespace FlomtManager.App.ViewModels
 {
-    internal readonly record struct ParameterDefinition(byte Number, ParameterType Type, float Comma)
-    {
-    }
-
     public class DeviceConnectionViewModel : ViewModelBase
     {
         private readonly DeviceStore _deviceStore;
@@ -37,16 +31,13 @@ namespace FlomtManager.App.ViewModels
             set => this.RaiseAndSetIfChanged(ref _connectionState, value);
         }
 
+        private byte _errorNumber;
+
+        // parameter number, parameters
+        private IReadOnlyDictionary<byte, Parameter>? _parameters;
+
         // parameter type, size in bytes
         private IReadOnlyDictionary<ParameterType, byte> _parameterTypeSizes;
-
-        // parameter number, size, comma multiplier
-        private IReadOnlyCollection<ParameterDefinition>? _currentParameterLineDefinition;
-        private ushort _currentParameterLineSize;
-
-        // parameter number, size, comma multiplier
-        private IReadOnlyCollection<ParameterDefinition>? _integralParameterLineDefinition;
-        private ushort _integralParameterLineSize;
 
         private IModbusProtocol? _modbusProtocol;
         private Device? _device;
@@ -68,7 +59,7 @@ namespace FlomtManager.App.ViewModels
             var parameterTypeType = typeof(ParameterType);
             _parameterTypeSizes = Enum.GetValues<ParameterType>().ToFrozenDictionary(
                 x => x,
-                x => parameterTypeType.GetMember(x.ToString()).First().GetCustomAttribute<SizeAttribute>()?.Size ?? throw new Exception("Wrong parameter size."));
+                x => x.GetAttribute<SizeAttribute>()?.Size ?? throw new Exception("Wrong parameter size."));
 
             _dataReadTimer = new Timer(TimeSpan.FromSeconds(5));
             _dataReadTimer.Elapsed += _dataReadTimer_Elapsed;
@@ -81,10 +72,23 @@ namespace FlomtManager.App.ViewModels
 
             try
             {
+                ArgumentNullException.ThrowIfNull(_parameters);
                 ArgumentNullException.ThrowIfNull(_deviceDefinition);
+                ArgumentNullException.ThrowIfNull(_deviceDefinition.CurrentParameterLineDefinition);
+                ArgumentNullException.ThrowIfNull(_deviceDefinition.IntegralParameterLineDefinition);
 
-                var currentParameters = await ReadParameterLine(_currentParameterLineDefinition!, _deviceDefinition.CurrentParameterLineStart, _currentParameterLineSize);
-                var integralParameters = await ReadParameterLine(_integralParameterLineDefinition!, _deviceDefinition.IntegralParameterLineStart, _integralParameterLineSize);
+                // read parameter values
+                var currentParameters = await ReadParameterLine(_deviceDefinition.CurrentParameterLineStart, _deviceDefinition.CurrentParameterLineLength, 
+                    _deviceDefinition.CurrentParameterLineDefinition);
+                var integralParameters = await ReadParameterLine(_deviceDefinition.IntegralParameterLineStart, _deviceDefinition.CurrentParameterLineLength,
+                    _deviceDefinition.IntegralParameterLineDefinition);
+
+                // get error parameter value and apply it to parameters
+                var error = ushort.Parse(currentParameters[_errorNumber].Value);
+                foreach (var parameterNumber in currentParameters.Keys)
+                {
+                    currentParameters[parameterNumber].Error = (_parameters[parameterNumber].ErrorMask & error) > 0;
+                }
 
                 OnConnectionData?.Invoke(this, new()
                 {
@@ -157,13 +161,8 @@ namespace FlomtManager.App.ViewModels
                 _deviceDefinition = deviceDefinition;
 
                 cancellationToken.ThrowIfCancellationRequested();
-                // create current parameter line data
-                _currentParameterLineDefinition = ParseParameterLineDefinition(deviceDefinition!.CurrentParameterLineDefinition);
-                _currentParameterLineSize = (ushort)_currentParameterLineDefinition.Sum(x => _parameterTypeSizes[x.Type]);
-
-                // create integral parameter line data
-                _integralParameterLineDefinition = ParseParameterLineDefinition(deviceDefinition!.IntegralParameterLineDefinition);
-                _integralParameterLineSize = (ushort)_integralParameterLineDefinition.Sum(x => _parameterTypeSizes[x.Type]);
+                _parameters = (await _parameterRepository.GetAll(x => x.DeviceId == device.Id)).ToFrozenDictionary(x => x.Number, x => x);
+                _errorNumber = _parameters.Values.FirstOrDefault(x => x.ParameterType == ParameterType.Error)?.Number ?? 0;
 
                 _dataReadTimer.Start();
 
@@ -188,36 +187,32 @@ namespace FlomtManager.App.ViewModels
             ConnectionState = ConnectionState.Disconnected;
         }
 
-        private ReadOnlyCollection<ParameterDefinition> ParseParameterLineDefinition(byte[] bytes)
-        {
-            List<ParameterDefinition> parameterTypes = [];
-            for (var i = 0; i < bytes.Length; i += 2)
-            {
-                var (type, comma) = _modbusService.ParseParameterTypeByte(bytes[i + 1]);
-                parameterTypes.Add(new(bytes[i], type, comma));
-            }
-            return parameterTypes.AsReadOnly();
-        }
-
-        private async Task<IReadOnlyDictionary<byte, string>> ReadParameterLine(
-            IReadOnlyCollection<ParameterDefinition> parameterLineDefinition, ushort lineStart, ushort lineSize, CancellationToken cancellationToken = default)
+        private async Task<IReadOnlyDictionary<byte, ParameterValue>> ReadParameterLine(
+            ushort lineStart, ushort lineSize, byte[] parameterDefinition, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(_device);
+            ArgumentNullException.ThrowIfNull(_parameters);
             ArgumentNullException.ThrowIfNull(_modbusProtocol);
 
             var parameterLine = await _modbusProtocol.ReadRegistersBytesAsync(_device.SlaveId, lineStart, (ushort)(lineSize / 2), cancellationToken: cancellationToken);
             var current = 0;
-            Dictionary<byte, string> result = [];
-            foreach (var (number, type, comma) in parameterLineDefinition)
+            Dictionary<byte, ParameterValue> result = [];
+            foreach (var parameterByte in parameterDefinition)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (number != 0)
+                if ((parameterByte & 0x80) > 0)
                 {
-                    var value = ParseBytesToValue(parameterLine.AsSpan(current, _parameterTypeSizes[type]), type, comma);
-                    result.Add(number, value);
+                    var parameter = _parameters[parameterByte];
+                    var size = _parameterTypeSizes[parameter.ParameterType];
+                    var value = ParseBytesToValue(parameterLine.AsSpan(current, size), parameter.ParameterType, parameter.Comma);
+                    current += size;
                 }
-                current += _parameterTypeSizes[type];
+                else
+                {
+                    current += parameterByte & 0xF;
+                }
             }
+
             return result.AsReadOnly();
         }
 

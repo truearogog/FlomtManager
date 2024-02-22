@@ -42,6 +42,11 @@ namespace FlomtManager.Modbus
                     left -= toRead;
                     current += (ushort)toRead;
                     progressHandler?.Invoke(current, byteCount);
+
+                    if (left > 0)
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(2), cancellationToken);
+                    }
                 }
             }
             catch
@@ -64,7 +69,7 @@ namespace FlomtManager.Modbus
             var message = new byte[8];
             BuildMessage(slaveId, 3, start, count, ref message);
             await SendAsync(message, cancellationToken);
-            await Task.Delay(TimeSpan.FromMilliseconds(10), cancellationToken);
+            await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken);
             var bytes = await ReceiveAsync(count, cancellationToken);
             if (bytes is [.., _, _] && CheckResponse(bytes))
             {

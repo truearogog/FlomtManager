@@ -14,5 +14,12 @@ namespace FlomtManager.App.ViewModels
             get => _value;
             set => this.RaiseAndSetIfChanged(ref _value, value);
         }
+
+        private bool _error = false;
+        public bool Error
+        {
+            get => _error;
+            set => this.RaiseAndSetIfChanged(ref _error, value);
+        }
     }
 }
