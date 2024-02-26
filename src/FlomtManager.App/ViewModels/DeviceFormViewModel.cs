@@ -17,14 +17,6 @@ namespace FlomtManager.App.ViewModels
             set => this.RaiseAndSetIfChanged(ref _id, value);
         }
 
-        private string _serialCode;
-        [Required]
-        public string SerialCode
-        {
-            get => _serialCode;
-            set => this.RaiseAndSetIfChanged(ref _serialCode, value);
-        }
-
         private string _name;
         [Required]
         public string Name

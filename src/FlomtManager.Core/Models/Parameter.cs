@@ -9,7 +9,7 @@ namespace FlomtManager.Core.Models
 
         public required byte Number { get; set; }
         public required ParameterType ParameterType { get; set; }
-        public required float Comma { get; set; }
+        public required byte Comma { get; set; }
         public required ushort ErrorMask { get; set; }
         public required byte IntegrationNumber { get; set; }
         public required string Name { get; set; }

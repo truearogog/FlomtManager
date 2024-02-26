@@ -35,10 +35,6 @@
 			Content="{Binding Form.Id, StringFormat='{}{0} device', Converter={StaticResource AddEditConverter}}" />
 
 		<StackPanel>
-			<TextBlock Classes="Tertiary" Text="Serial Code" />
-			<TextBox Watermark="Serial Code" Text="{Binding Form.SerialCode}" />
-		</StackPanel>
-		<StackPanel>
 			<TextBlock Classes="Tertiary" Text="Name" />
 			<TextBox Watermark="Name" Text="{Binding Form.Name}" />
 		</StackPanel>

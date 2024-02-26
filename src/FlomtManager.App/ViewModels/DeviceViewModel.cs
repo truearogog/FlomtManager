@@ -1,4 +1,5 @@
 ﻿using Avalonia.Controls.Notifications;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
@@ -24,6 +25,8 @@ namespace FlomtManager.App.ViewModels
         public event EventHandler? CloseRequested;
         public event EventHandler<Device>? DeviceUpdateRequested;
         public event EventHandler<(NotificationType, string)>? NotificationRequested;
+
+        public event EventHandler? ReadFromFileRequested;
 
         private Device? _device;
         public Device? Device
@@ -153,6 +156,22 @@ namespace FlomtManager.App.ViewModels
             _connectionCancellationTokenSource?.Cancel();
             ArgumentNullException.ThrowIfNull(DeviceConnection);
             await DeviceConnection.Disconnect();
+        }
+
+        public async void ReadArchivesFromDevice()
+        {
+        }
+
+        public void ReadArchivesFromFile()
+        {
+            ReadFromFileRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        public async Task ReadArchivesFromFile(IStorageFile storageFile)
+        {
+            ArgumentNullException.ThrowIfNull(Device);
+            ArgumentNullException.ThrowIfNull(DeviceConnection);
+            await DeviceConnection.ReadArchivesFromFile(Device, storageFile);
         }
 
         private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)

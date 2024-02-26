@@ -133,10 +133,6 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                     b.Property<string>("PortName")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SerialCode")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<byte>("SlaveId")
                         .HasColumnType("INTEGER");
 
@@ -159,8 +155,8 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<float>("Comma")
-                        .HasColumnType("REAL");
+                    b.Property<byte>("Comma")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()

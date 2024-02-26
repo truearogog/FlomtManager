@@ -25,6 +25,7 @@
 
 	    <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtenstionsVersion)" />
 	    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+		<PackageReference Include="HexIO" Version="3.0.5" />
 
 	    <PackageReference Include="Serilog" Version="$(SerilogVersion)" />
 	    <PackageReference Include="Serilog.Expressions" Version="$(SerilogExpressionsVersion)" />

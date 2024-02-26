@@ -133,15 +133,25 @@
 										</StackPanel>
 										<Button Content="Disconnect" Classes="Primary" Command="{Binding TryDisconnect}" />
 									</StackPanel>
+
+									<DropDownButton Content="Read archives" >
+										<DropDownButton.Flyout>
+											<MenuFlyout Placement="BottomEdgeAlignedRight" >
+												<MenuItem 
+													Header="From Device" 
+													IsEnabled="{Binding DeviceConnection.ConnectionState, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionState.Connected}}"
+													Command="{Binding ReadArchivesFromDevice}" />
+												<MenuItem 
+													Header="From File"
+													Command="{Binding ReadArchivesFromFile}" />
+											</MenuFlyout>
+										</DropDownButton.Flyout>
+									</DropDownButton>
 								</StackPanel>
 							</Border>
 
 							<Border Classes="PaneBorder">
 								<StackPanel Spacing="10">
-									<StackPanel>
-										<TextBlock Classes="Tertiary" Text="Serial Code" />
-										<SelectableTextBlock Text="{Binding Device.SerialCode, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-									</StackPanel>
 									<StackPanel>
 										<TextBlock Classes="Tertiary" Text="Name" />
 										<SelectableTextBlock Text="{Binding Device.Name, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />

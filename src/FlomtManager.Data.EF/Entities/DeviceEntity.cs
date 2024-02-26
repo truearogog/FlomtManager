@@ -6,7 +6,6 @@ namespace FlomtManager.Data.EF.Entities
 {
     public sealed class DeviceEntity : EntityBase
     {
-        public required string SerialCode { get; set; }
         public required string Name { get; set; }
         public string? Address { get; set; }
 

@@ -17,7 +17,6 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    SerialCode = table.Column<string>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Address = table.Column<string>(type: "TEXT", nullable: true),
                     ConnectionType = table.Column<int>(type: "INTEGER", nullable: false),
@@ -81,7 +80,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Number = table.Column<byte>(type: "INTEGER", nullable: false),
                     ParameterType = table.Column<string>(type: "TEXT", nullable: false),
-                    Comma = table.Column<float>(type: "REAL", nullable: false),
+                    Comma = table.Column<byte>(type: "INTEGER", nullable: false),
                     ErrorMask = table.Column<ushort>(type: "INTEGER", nullable: false),
                     IntegrationNumber = table.Column<byte>(type: "INTEGER", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 4, nullable: false),

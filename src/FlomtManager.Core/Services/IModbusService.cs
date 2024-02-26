@@ -8,6 +8,7 @@ namespace FlomtManager.Core.Services
     {
         Task<DeviceDefinition> ReadDeviceDefinition(IModbusProtocol modbusProtocol, byte slaveId, CancellationToken cancellationToken);
         Task<IEnumerable<Parameter>> ReadParameterDefinitions(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct);
-        (ParameterType Type, float Comma) ParseParameterTypeByte(byte parameterTypeByte);
+        (ParameterType Type, byte Comma) ParseParameterTypeByte(byte parameterTypeByte);
+        float GetComma(byte commaByte);
     }
 }

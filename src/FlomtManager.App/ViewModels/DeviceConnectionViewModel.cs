@@ -1,4 +1,5 @@
-﻿using FlomtManager.App.Models;
+﻿using Avalonia.Platform.Storage;
+using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
 using FlomtManager.Core.Attributes;
 using FlomtManager.Core.Enums;
@@ -7,10 +8,13 @@ using FlomtManager.Core.Repositories;
 using FlomtManager.Core.Services;
 using FlomtManager.Framework.Extensions;
 using FlomtManager.Modbus;
+using HexIO;
 using ReactiveUI;
 using Serilog;
 using System.Buffers.Binary;
 using System.Collections.Frozen;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
@@ -187,6 +191,25 @@ namespace FlomtManager.App.ViewModels
             ConnectionState = ConnectionState.Disconnected;
         }
 
+        public async Task ReadArchivesFromDevice()
+        {
+
+        }
+
+        public async Task ReadArchivesFromFile(Device device, IStorageFile file)
+        {
+            await using var stream = await file.OpenReadAsync();
+            using var reader = new IntelHexStreamReader(stream);
+            var size = 0;
+            do
+            {
+                var record = reader.ReadHexRecord();
+                size += record.RecordLength;
+                Debug.WriteLine(string.Join("", record.Data));
+            } while (!reader.State.Eof);
+            Debug.WriteLine(size);
+        }
+
         private async Task<IReadOnlyDictionary<byte, ParameterValue>> ReadParameterLine(
             ushort lineStart, ushort lineSize, byte[] parameterDefinition, CancellationToken cancellationToken = default)
         {
@@ -200,11 +223,12 @@ namespace FlomtManager.App.ViewModels
             foreach (var parameterByte in parameterDefinition)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if ((parameterByte & 0x80) > 0)
+                if ((parameterByte & 0x80) == 0)
                 {
                     var parameter = _parameters[parameterByte];
                     var size = _parameterTypeSizes[parameter.ParameterType];
                     var value = ParseBytesToValue(parameterLine.AsSpan(current, size), parameter.ParameterType, parameter.Comma);
+                    result.Add(parameter.Number, new() { Value = value });
                     current += size;
                 }
                 else
@@ -216,18 +240,18 @@ namespace FlomtManager.App.ViewModels
             return result.AsReadOnly();
         }
 
-        private static string ParseBytesToValue(ReadOnlySpan<byte> bytes, ParameterType type, float comma)
+        private string ParseBytesToValue(ReadOnlySpan<byte> bytes, ParameterType type, byte comma)
         {
             return type switch
             {
-                ParameterType.S16C => (BinaryPrimitives.ReadInt16LittleEndian(bytes) * comma).ToString(),
-                ParameterType.U16C => (BinaryPrimitives.ReadUInt16LittleEndian(bytes) * comma).ToString(),
-                ParameterType.FS16C => ParseFS16C(bytes, comma).ToString(),
-                ParameterType.FU16C => ParseFU16C(bytes, comma).ToString(),
-                ParameterType.S32C => ParseS32C(bytes, comma, 0).ToString(),
-                ParameterType.S32CD1 => ParseS32C(bytes, comma, 1).ToString(),
-                ParameterType.S32CD2 => ParseS32C(bytes, comma, 2).ToString(),
-                ParameterType.S32CD3 => ParseS32C(bytes, comma, 3).ToString(),
+                ParameterType.S16C => StringParseS16C(bytes, comma),
+                ParameterType.U16C => StringParseU16C(bytes, comma),
+                ParameterType.FS16C => StringParseFS16C(bytes, comma),
+                ParameterType.FU16C => StringParseFU16C(bytes, comma),
+                ParameterType.S32C => StringParseS32C(bytes, comma, 0),
+                ParameterType.S32CD1 => StringParseS32C(bytes, comma, 1),
+                ParameterType.S32CD2 => StringParseS32C(bytes, comma, 2),
+                ParameterType.S32CD3 => StringParseS32C(bytes, comma, 3),
                 ParameterType.Error => BitConverter.ToUInt16(bytes).ToString(),
                 ParameterType.WorkingTimeInSeconds => SecondsToString(BinaryPrimitives.ReadUInt32LittleEndian(bytes)),
                 ParameterType.WorkingTimeInSecondsInArchiveInterval => BitConverter.ToUInt16(bytes).ToString(),
@@ -239,27 +263,80 @@ namespace FlomtManager.App.ViewModels
             };
         }
 
-        private static float ParseFS16C(ReadOnlySpan<byte> bytes, float comma)
+        private string FloatToString(float value, byte comma)
+        {
+            return comma switch
+            {
+                0 => value.ToString(),
+                >= 1 and <= 4 => value.ToString("F" + comma),
+                7 => value.ToString(),
+                _ => throw new NotSupportedException()
+            };
+        }
+
+        private float ParseS16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            var value = BinaryPrimitives.ReadInt16LittleEndian(bytes);
+            var commaMultiplier = _modbusService.GetComma(comma);
+            return value * commaMultiplier;
+        }
+
+        private string StringParseS16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            return FloatToString(ParseS16C(bytes, comma), comma);
+        }
+
+        private float ParseU16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            var value = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
+            var commaMultiplier = _modbusService.GetComma(comma);
+            return value * commaMultiplier;
+        }
+
+        private string StringParseU16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            return FloatToString(ParseU16C(bytes, comma), comma);
+        }
+
+        private float ParseFS16C(ReadOnlySpan<byte> bytes, byte comma)
         {
             var value = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
             var mantissa = value & 0x3FFF;
             var sign = ((value >> 14) & 1) == 0 ? 1 : -1;
             var exponent = -(value >> 15);
-            return mantissa * sign * MathF.Pow(10, exponent) * comma;
+            var commaMultiplier = _modbusService.GetComma(comma);
+            return mantissa * sign * MathF.Pow(10, exponent) * commaMultiplier;
         }
 
-        private static float ParseFU16C(ReadOnlySpan<byte> bytes, float comma)
+        private string StringParseFS16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            return FloatToString(ParseFS16C(bytes, comma), comma);
+        }
+
+        private float ParseFU16C(ReadOnlySpan<byte> bytes, byte comma)
         {
             var value = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
             var mantissa = value & 0x3FFF;
             var exponent = value >> 14;
-            return mantissa * MathF.Pow(10, exponent) * comma;
+            var commaMultiplier = _modbusService.GetComma(comma);
+            return mantissa * MathF.Pow(10, exponent) * commaMultiplier;
         }
 
-        private static float ParseS32C(ReadOnlySpan<byte> bytes, float comma, byte trim)
+        private string StringParseFU16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            return FloatToString(ParseFU16C(bytes, comma), comma);
+        }
+
+        private float ParseS32C(ReadOnlySpan<byte> bytes, byte comma, byte trim)
         {
             var value = BinaryPrimitives.ReadInt32LittleEndian(bytes);
-            return (value * comma).TrimDecimalPlaces(trim);
+            var commaMultiplier = _modbusService.GetComma(comma);
+            return (value * commaMultiplier).TrimDecimalPlaces(trim);
+        }
+
+        private string StringParseS32C(ReadOnlySpan<byte> bytes, byte comma, byte trim)
+        {
+            return FloatToString(ParseS32C(bytes, comma, trim), comma);
         }
 
         private static string SecondsToString(uint seconds)

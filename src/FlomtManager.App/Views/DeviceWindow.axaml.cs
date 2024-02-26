@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using Avalonia.Platform.Storage;
 using FlomtManager.App.Extensions;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
@@ -46,6 +47,7 @@ namespace FlomtManager.App.Views
                 viewModel.CloseRequested += _CloseRequested;
                 viewModel.DeviceUpdateRequested += _DeviceUpdateRequested;
                 viewModel.NotificationRequested += _NotificationRequested;
+                viewModel.ReadFromFileRequested += _ReadFromFileRequested;
             }
         }
 
@@ -58,6 +60,7 @@ namespace FlomtManager.App.Views
                 viewModel.CloseRequested -= _CloseRequested;
                 viewModel.DeviceUpdateRequested -= _DeviceUpdateRequested;
                 viewModel.NotificationRequested -= _NotificationRequested;
+                viewModel.ReadFromFileRequested -= _ReadFromFileRequested;
             }
         }
 
@@ -82,6 +85,30 @@ namespace FlomtManager.App.Views
         private void _NotificationRequested(object? sender, (NotificationType type, string message) notification)
         {
             _windowNotificationManager?.Show(new Notification(notification.type.ToString(), notification.message, notification.type));
+        }
+
+        private async void _ReadFromFileRequested(object? sender, EventArgs e)
+        {
+            if (DataContext is DeviceViewModel viewModel)
+            {
+                var sp = GetTopLevel(this)?.StorageProvider;
+                if (sp == null)
+                {
+                    return;
+                }
+                var result = await sp.OpenFilePickerAsync(new FilePickerOpenOptions()
+                {
+                    Title = "Select File",
+                    FileTypeFilter = new[] { FlomtFilePickerFileTypes.Hex },
+                    AllowMultiple = false,
+                });
+                if (result.Count == 0)
+                {
+                    return;
+                }
+                var file = result[0];
+                await viewModel.ReadArchivesFromFile(file);
+            }
         }
     }
 }

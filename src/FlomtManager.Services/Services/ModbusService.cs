@@ -117,7 +117,7 @@ namespace FlomtManager.Services.Services
                 70 - U32 seconds since 2000 year
                 71 - 127 - reserved
         */
-        public (ParameterType Type, float Comma) ParseParameterTypeByte(byte parameterTypeByte)
+        public (ParameterType Type, byte Comma) ParseParameterTypeByte(byte parameterTypeByte)
         {
             return parameterTypeByte switch
             {
@@ -140,7 +140,9 @@ namespace FlomtManager.Services.Services
             };
         }
 
-        private static float GetCommaFromByte(byte commaByte)
+        private static byte GetCommaFromByte(byte commaByte) => commaByte &= 0x7;
+
+        public float GetComma(byte commaByte)
         {
             commaByte &= 0x7;
             return commaByte switch
@@ -150,22 +152,6 @@ namespace FlomtManager.Services.Services
                 7 => 10,
                 _ => throw new NotSupportedException()
             };
-        }
-
-        private float ParseBytesToParameter(ReadOnlySpan<byte> bytes, ParameterType parameterType, float comma)
-        {
-            return comma * (parameterType switch
-            {
-                ParameterType.S16C => BitConverter.ToInt16(bytes),
-                ParameterType.U16C => BitConverter.ToUInt16(bytes),
-                ParameterType.FS16C => (BitConverter.ToUInt16(bytes) & 0x3FFF) * (((bytes[0] >> 6) & 1) == 0 ? 1 : -1) * MathF.Pow(10, -(bytes[1] >> 7)),
-                ParameterType.FU16C => (BitConverter.ToUInt16(bytes) & 0x3FFF) * MathF.Pow(10, -(bytes[1] >> 6)),
-                ParameterType.S32C => BitConverter.ToSingle(bytes),
-                ParameterType.S32CD1 => BitConverter.ToSingle(bytes),
-                ParameterType.S32CD2 => BitConverter.ToSingle(bytes),
-                ParameterType.S32CD3 => BitConverter.ToSingle(bytes),
-                _ => 0
-            });
         }
     }
 }

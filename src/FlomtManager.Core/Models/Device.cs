@@ -9,7 +9,6 @@ namespace FlomtManager.Core.Models
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
 
-        public required string SerialCode { get; set; }
         public required string Name { get; set; }
         public string? Address { get; set; }
 
