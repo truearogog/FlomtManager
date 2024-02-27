@@ -1,7 +1,9 @@
 ﻿using Avalonia.Platform.Storage;
 using FlomtManager.App.Models;
+using FlomtManager.App.Pages;
 using FlomtManager.App.Stores;
 using FlomtManager.Core.Attributes;
+using FlomtManager.Core.Constants;
 using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
@@ -15,6 +17,7 @@ using System.Buffers.Binary;
 using System.Collections.Frozen;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Threading;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
@@ -133,6 +136,19 @@ namespace FlomtManager.App.ViewModels
 
                 await _modbusProtocol.OpenAsync(cancellationToken);
                 var deviceDefinition = await _modbusService.ReadDeviceDefinition(_modbusProtocol, device.SlaveId, cancellationToken);
+
+                var currentParameterDefinition = await _modbusProtocol.ReadRegistersBytesAsync(
+                    device.SlaveId, deviceDefinition.CurrentParameterLineDefinitionStart, (ushort)(deviceDefinition.CurrentParameterLineNumber / 2), cancellationToken: cancellationToken);
+                deviceDefinition.CurrentParameterLineDefinition = currentParameterDefinition;
+
+                var integralParameterDefinition = await _modbusProtocol.ReadRegistersBytesAsync(
+                    device.SlaveId, deviceDefinition.IntegralParameterLineDefinitionStart, (ushort)(deviceDefinition.IntegralParameterLineNumber / 2), cancellationToken: cancellationToken);
+                deviceDefinition.IntegralParameterLineDefinition = integralParameterDefinition;
+
+                var averageParameterArchiveDefinition = await _modbusProtocol.ReadRegistersBytesAsync(
+                    device.SlaveId, deviceDefinition.AverageParameterArchiveLineDefinitionStart, (ushort)(deviceDefinition.AverageParameterArchiveLineNumber / 2), cancellationToken: cancellationToken);
+                deviceDefinition.AverageParameterArchiveLineDefinition = averageParameterArchiveDefinition;
+
                 deviceDefinition.DeviceId = device.Id;
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -191,23 +207,98 @@ namespace FlomtManager.App.ViewModels
             ConnectionState = ConnectionState.Disconnected;
         }
 
-        public async Task ReadArchivesFromDevice()
+        public async Task ReadArchivesFromDevice(CancellationToken cancellationToken = default)
         {
+            try
+            {
+                ArgumentNullException.ThrowIfNull(_device);
+                ArgumentNullException.ThrowIfNull(_modbusProtocol);
 
+                var bytes = await _modbusProtocol.ReadRegistersBytesAsync(_device.SlaveId, 0, DeviceConstants.MEMORY_SIZE_REGISTERS, cancellationToken: cancellationToken);
+
+                await ParseDeviceMemory(_device, bytes.AsMemory(), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                OnConnectionError?.Invoke(this, new()
+                {
+                    Exception = ex
+                });
+                await Disconnect(cancellationToken);
+                Log.Error(ex, string.Empty);
+            }
         }
 
-        public async Task ReadArchivesFromFile(Device device, IStorageFile file)
+        public async Task ReadArchivesFromFile(Device device, IStorageFile file, CancellationToken cancellationToken = default)
         {
-            await using var stream = await file.OpenReadAsync();
-            using var reader = new IntelHexStreamReader(stream);
-            var size = 0;
-            do
+            try
             {
-                var record = reader.ReadHexRecord();
-                size += record.RecordLength;
-                Debug.WriteLine(string.Join("", record.Data));
-            } while (!reader.State.Eof);
-            Debug.WriteLine(size);
+                await using var stream = await file.OpenReadAsync();
+                using var reader = new IntelHexStreamReader(stream);
+                var bytes = new byte[DeviceConstants.MEMORY_SIZE_BYTES];
+                var total = 0;
+                while (!reader.State.Eof)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var record = reader.ReadHexRecord();
+                    record.Data.CopyTo(bytes, total);
+                    total += record.RecordLength;
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                await ParseDeviceMemory(device, bytes.AsMemory(), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                OnConnectionError?.Invoke(this, new()
+                {
+                    Exception = ex
+                });
+                Log.Error(ex, string.Empty);
+            }
+        }
+
+        private async Task ParseDeviceMemory(Device device, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default)
+        {
+            var definitionBytes = bytes.Slice(116, 84);
+            var registerCount = definitionBytes.Length / 2;
+            var registers = new ushort[registerCount];
+            for (int i = 0; i < registerCount; i++)
+            {
+                registers[i] = definitionBytes.Span[2 * i + 1];
+                registers[i] <<= 8;
+                registers[i] += definitionBytes.Span[2 * i];
+            }
+
+            var deviceDefinition = _modbusService.ParseDeviceDefinition(registers);
+            deviceDefinition.DeviceId = device.Id;
+
+            if (device.DeviceDefinitionId == 0)
+            {
+                var deviceDefinitionId = await _deviceDefinitionRepository.Create(deviceDefinition);
+                device.DeviceDefinitionId = deviceDefinitionId;
+                await _deviceStore.UpdateDevice(_deviceRepository, device);
+
+                var parameterBytes = bytes.Slice(deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * 16);
+                var parameters = _modbusService.ParseParameterDefinitions(parameterBytes.Span);
+                foreach (var parameter in parameters)
+                {
+                    parameter.DeviceId = device.Id;
+                }
+                await _parameterRepository.CreateRange(parameters);
+            }
+
+            // else - read device definition and compare crc
+            else
+            {
+                var oldDeviceDefinition = await _deviceDefinitionRepository.GetById(device.DeviceDefinitionId);
+                if (deviceDefinition.CRC != oldDeviceDefinition!.CRC)
+                {
+                    throw new ModbusException("Device definitions have changed.");
+                }
+            }
+
+
         }
 
         private async Task<IReadOnlyDictionary<byte, ParameterValue>> ReadParameterLine(

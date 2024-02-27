@@ -10,9 +10,8 @@ namespace FlomtManager.Services.Services
 {
     internal class ModbusService : IModbusService
     {
-        public async Task<DeviceDefinition> ReadDeviceDefinition(IModbusProtocol modbusProtocol, byte slaveId, CancellationToken cancellationToken)
+        public DeviceDefinition ParseDeviceDefinition(ReadOnlySpan<ushort> registers)
         {
-            var registers = await modbusProtocol.ReadRegistersAsync(slaveId, 116, 42, cancellationToken: cancellationToken);
             var deviceDefinition = new DeviceDefinition
             {
                 ParameterDefinitionStart = registers[0],
@@ -38,22 +37,16 @@ namespace FlomtManager.Services.Services
                 AveragePerHourBlockLineCount = registers[16],
             };
 
-            var currentParameterDefinition = await modbusProtocol.ReadRegistersBytesAsync(
-                slaveId, deviceDefinition.CurrentParameterLineDefinitionStart, (ushort)(deviceDefinition.CurrentParameterLineNumber / 2), cancellationToken: cancellationToken);
-            deviceDefinition.CurrentParameterLineDefinition = currentParameterDefinition;
-
-            var integralParameterDefinition = await modbusProtocol.ReadRegistersBytesAsync(
-                slaveId, deviceDefinition.IntegralParameterLineDefinitionStart, (ushort)(deviceDefinition.IntegralParameterLineNumber / 2), cancellationToken: cancellationToken);
-            deviceDefinition.IntegralParameterLineDefinition = integralParameterDefinition;
-
-            var averageParameterArchiveDefinition = await modbusProtocol.ReadRegistersBytesAsync(
-                slaveId, deviceDefinition.AverageParameterArchiveLineDefinitionStart, (ushort)(deviceDefinition.AverageParameterArchiveLineNumber / 2), cancellationToken: cancellationToken);
-            deviceDefinition.AverageParameterArchiveLineDefinition = averageParameterArchiveDefinition;
-
             var bytes = deviceDefinition.GetBytes();
             deviceDefinition.CRC = ModbusHelper.GetCRC(bytes);
 
             return deviceDefinition;
+        }
+
+        public async Task<DeviceDefinition> ReadDeviceDefinition(IModbusProtocol modbusProtocol, byte slaveId, CancellationToken cancellationToken)
+        {
+            var registers = await modbusProtocol.ReadRegistersAsync(slaveId, 116, 42, cancellationToken: cancellationToken);
+            return ParseDeviceDefinition(registers);
         }
 
         /*
@@ -68,15 +61,12 @@ namespace FlomtManager.Services.Services
             6...9 -'Q',0,0,0 - symbolic name of the parameter - 4 characters max or up to 0
             10...15 - 'm3/h',0,0 - parameter units - 6 characters max or up to 0
         */
-        public async Task<IEnumerable<Parameter>> ReadParameterDefinitions(IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken ct)
+        public IEnumerable<Parameter> ParseParameterDefinitions(ReadOnlySpan<byte> bytes)
         {
-            var bytes = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.ParameterDefinitionStart, 
-                DeviceConstants.MAX_PARAMETER_COUNT * 16 / 2, cancellationToken: ct);
-
             var parameters = new List<Parameter>();
             for (var i = 0; i < DeviceConstants.MAX_PARAMETER_COUNT; ++i)
             {
-                var parameterBytes = bytes.Skip(i * 16).Take(16).ToArray();
+                var parameterBytes = bytes.Slice(i * 16, 16).ToArray();
                 if (parameterBytes[0] != 0)
                 {
                     var (type, comma) = ParseParameterTypeByte(parameterBytes[1]);
@@ -96,6 +86,14 @@ namespace FlomtManager.Services.Services
                 }
             }
             return parameters;
+        }
+
+        public async Task<IEnumerable<Parameter>> ReadParameterDefinitions(
+            IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken cancellationToken = default)
+        {
+            var bytes = await modbusProtocol.ReadRegistersBytesAsync(slaveId, deviceDefinition.ParameterDefinitionStart, 
+                DeviceConstants.MAX_PARAMETER_COUNT * 16 / 2, cancellationToken: cancellationToken);
+            return ParseParameterDefinitions(bytes);
         }
 
         /*
