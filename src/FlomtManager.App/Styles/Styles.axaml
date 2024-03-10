@@ -1,5 +1,6 @@
 ﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:i="https://github.com/projektanker/icons.avalonia"
 		xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Design.PreviewWith>
         <Border Padding="20">
@@ -9,6 +10,7 @@
 	<Style Selector="ListBox.RadioButtonListBox">
 		<Setter Property="BorderBrush" Value="Transparent"/>
 	</Style>
+	
 	<Style Selector="ListBox.RadioButtonListBox ListBoxItem">
 		<Setter Property="Template">
 			<Setter.Value>
@@ -24,5 +26,22 @@
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
+	</Style>
+	
+	<Style Selector="TextBlock, SelectableTextBlock, i|Icon">
+		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
+	
+	<Style Selector="Border.Error">
+		<Setter Property="Background" Value="{DynamicResource SemiColorDangerLight}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource SemiColorDanger}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="2" />
+	</Style>
+	
+	<Style Selector="Border.PaneBorder">
+		<Setter Property="Margin" Value="0" />
+		<Setter Property="Padding" Value="12,6" />
+		<Setter Property="Theme" Value="{DynamicResource CardBorder}" />
 	</Style>
 </Styles>

@@ -7,6 +7,7 @@
 		<AvaloniaVersion>11.0.5</AvaloniaVersion>
 		<SemiAvaloniaVersion>11.0.1</SemiAvaloniaVersion>
 		<ProjektankerIconsAvaloniaVersion>9.0.1</ProjektankerIconsAvaloniaVersion>
+		<ScottPlotAvaloniaVersion>5.0.21</ScottPlotAvaloniaVersion>
 	</PropertyGroup>
 	
 	<PropertyGroup>
@@ -19,9 +20,7 @@
 	
 	<PropertyGroup>
 		<SerilogVersion>3.1.1</SerilogVersion>
-		<SerilogExpressionsVersion>4.0.0</SerilogExpressionsVersion>
 		<SerilogExtensionsVersion>8.0.0</SerilogExtensionsVersion>
-		<SerilogSettingsConfigurationVersion>8.0.0</SerilogSettingsConfigurationVersion>
 		<SerilogSinksDebugVersion>2.0.0</SerilogSinksDebugVersion>
 		<SerilogSinksFileVersion>5.0.0</SerilogSinksFileVersion>
 	</PropertyGroup>

@@ -41,6 +41,7 @@ namespace FlomtManager.Data.EF.Extensions
             services.Add(new ServiceDescriptor(typeof(IDeviceRepository), typeof(DeviceRepository), scope));
             services.Add(new ServiceDescriptor(typeof(IDeviceDefinitionRepository), typeof(DeviceDefinitionRepository), scope));
             services.Add(new ServiceDescriptor(typeof(IParameterRepository), typeof(ParameterRepository), scope));
+            services.Add(new ServiceDescriptor(typeof(IDataGroupRepository), typeof(DataGroupRepository), scope));
 
             // Register services
             services.Add(new ServiceDescriptor(typeof(IAppDb), typeof(T), scope));
@@ -51,6 +52,7 @@ namespace FlomtManager.Data.EF.Extensions
                 cfg.AddProfile(typeof(DeviceProfile));
                 cfg.AddProfile(typeof(DeviceDefinitionProfile));
                 cfg.AddProfile(typeof(ParameterProfile));
+                cfg.AddProfile(typeof(DataGroupProfile));
             });
             services.Add(new ServiceDescriptor(typeof(IDataMapper), new DataMapper(config)));
 

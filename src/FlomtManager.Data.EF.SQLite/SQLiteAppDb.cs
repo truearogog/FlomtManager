@@ -14,12 +14,20 @@ public sealed class SQLiteAppDb(DbContextOptions<SQLiteAppDb> options) : AppDb<S
         BasePropertyConfiguration(modelBuilder.Entity<DeviceEntity>());
         BasePropertyConfiguration(modelBuilder.Entity<DeviceDefinitionEntity>());
         BasePropertyConfiguration(modelBuilder.Entity<ParameterEntity>());
+        BasePropertyConfiguration(modelBuilder.Entity<DataGroupEntity>());
     }
 
     private static void BasePropertyConfiguration<T>(EntityTypeBuilder<T> entityTypeBuilder) where T : EntityBase
     {
         entityTypeBuilder.HasKey(x => x.Id);
-        entityTypeBuilder.Property(x => x.Created).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
-        entityTypeBuilder.Property(x => x.Updated).HasColumnType("datetime").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        entityTypeBuilder.Property(x => x.Created)
+            .HasColumnType("datetime")
+            .HasDefaultValueSql("datetime('now', 'localtime')")
+            .ValueGeneratedOnAdd();
+        entityTypeBuilder.Property(x => x.Updated)
+            .HasColumnType("datetime")
+            //.HasDefaultValueSql("datetime('now', 'localtime')")
+            //.ValueGeneratedOnAddOrUpdate()
+            ;
     }
 }

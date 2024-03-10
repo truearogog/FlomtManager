@@ -1,8 +1,9 @@
-﻿namespace FlomtManager.Core.Models
+﻿using FlomtManager.Core.Models.Base;
+
+namespace FlomtManager.Core.Models
 {
-    public class DeviceDefinition
+    public class DeviceDefinition : ModelBase
     {
-        public int Id { get; set; }
         public DateTime Created { get; set; }
 
         public ushort ParameterDefinitionStart { get; set; }
@@ -33,6 +34,6 @@
 
         public ushort CRC { get; set; }
 
-        public int DeviceId { get; set; }
+        public DateTime? LastArchiveRead { get; set; }
     }
 }

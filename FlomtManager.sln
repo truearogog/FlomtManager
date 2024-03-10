@@ -5,12 +5,6 @@ VisualStudioVersion = 17.8.34309.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.App", "src\FlomtManager.App\FlomtManager.App.csproj", "{F3C98D81-F756-4845-8806-7B46D427AE58}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F31AB9F6-3BED-46DB-A613-A13FDAC34A9D}"
-	ProjectSection(SolutionItems) = preProject
-		directory.build.props = directory.build.props
-		directory.packages.props = directory.packages.props
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Core", "src\FlomtManager.Core\FlomtManager.Core.csproj", "{5C5403FA-0066-4631-9F6A-4C527167A1B3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Data.EF", "src\FlomtManager.Data.EF\FlomtManager.Data.EF.csproj", "{830A2EEB-1C84-4443-A775-6D9A36FF3773}"
@@ -25,9 +19,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Modbus", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.ModbusTest", "src\FlomtManager.ModbusTest\FlomtManager.ModbusTest.csproj", "{4939BF32-185B-4B5E-8921-47B4CDB70A8B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlomtManager.MemoryReader", "src\FlomtManager.MemoryReader\FlomtManager.MemoryReader.csproj", "{65688AB3-DC5C-4EA3-9C21-92C8108B0790}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.MemoryReader", "src\FlomtManager.MemoryReader\FlomtManager.MemoryReader.csproj", "{65688AB3-DC5C-4EA3-9C21-92C8108B0790}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{9713B9C0-506A-4157-B5A6-90E2245B3C32}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{50985161-B3B6-425C-92F1-24360C0B147E}"
+	ProjectSection(SolutionItems) = preProject
+		directory.build.props = directory.build.props
+		directory.packages.props = directory.packages.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Framework.Skia", "src\FlomtManager.Framework.Skia\FlomtManager.Framework.Skia.csproj", "{311EE259-E1CF-4508-A1E9-D57CE04983D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +73,10 @@ Global
 		{65688AB3-DC5C-4EA3-9C21-92C8108B0790}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{65688AB3-DC5C-4EA3-9C21-92C8108B0790}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{65688AB3-DC5C-4EA3-9C21-92C8108B0790}.Release|Any CPU.Build.0 = Release|Any CPU
+		{311EE259-E1CF-4508-A1E9-D57CE04983D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{311EE259-E1CF-4508-A1E9-D57CE04983D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{311EE259-E1CF-4508-A1E9-D57CE04983D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{311EE259-E1CF-4508-A1E9-D57CE04983D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

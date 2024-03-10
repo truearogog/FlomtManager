@@ -1,0 +1,49 @@
+<UserControl 
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:vm="using:FlomtManager.App.ViewModels"
+	xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
+    x:DataType="vm:DataGroupChartViewModel"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="FlomtManager.App.Views.DataGroupChart">
+
+	<UserControl.DataTemplates>
+		<DataTemplate DataType="vm:ParameterViewModel">
+			<ToggleButton 
+				CornerRadius="0" 
+				HorizontalContentAlignment="Stretch" 
+				IsChecked="true"
+				Command="{Binding ((vm:DataGroupChartViewModel)DataContext).ToggleParameter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+				CommandParameter="{Binding Parameter.Number}">
+				<ToggleButton.Styles>
+					<Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+						<Setter Property="Background" Value="{Binding Parameter.Color}" />
+					</Style>
+					<Style Selector="ToggleButton:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+						<Setter Property="Background" Value="{Binding Parameter.Color, Converter={StaticResource ColorAddLightnessConverter}, ConverterParameter='10'}" />
+					</Style>
+				</ToggleButton.Styles>
+				<StackPanel>
+					<TextBlock Text="{Binding Parameter.Name}" />
+					<Grid ColumnDefinitions="*,auto">
+						<TextBlock Grid.Column="0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+						<TextBlock Grid.Column="1" Text="{Binding Parameter.Unit}" />
+					</Grid>
+				</StackPanel>
+			</ToggleButton>
+		</DataTemplate>
+	</UserControl.DataTemplates>
+	
+	<Grid RowDefinitions="auto,*">
+		<ItemsControl Grid.Row="0" ItemsSource="{Binding Parameters}" >
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<UniformGrid Rows="1" />
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+		</ItemsControl>
+		<ScottPlot:AvaPlot Grid.Row="1" x:Name="Chart" Margin="4" />
+	</Grid>
+</UserControl>

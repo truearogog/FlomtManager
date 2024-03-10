@@ -21,11 +21,12 @@ namespace FlomtManager.App.ViewModels
         private readonly DeviceStore _deviceStore;
         private readonly IDeviceDefinitionRepository _deviceDefinitionRepository;
         private readonly IParameterRepository _parameterRepository;
+        private readonly IDataGroupRepository _dataGroupRepository;
+        private readonly IDataService _dataService;
 
         public event EventHandler? CloseRequested;
         public event EventHandler<Device>? DeviceUpdateRequested;
         public event EventHandler<(NotificationType, string)>? NotificationRequested;
-
         public event EventHandler? ReadFromFileRequested;
 
         private Device? _device;
@@ -35,20 +36,30 @@ namespace FlomtManager.App.ViewModels
             set 
             {
                 this.RaiseAndSetIfChanged(ref _device, value);
+                DataGroupChart.Device = _device;
+                DataGroupIntegration.Device = _device;
+                AddParameters();
             }
         }
 
         public ObservableCollection<ParameterViewModel> CurrentParameters { get; set; } = [];
         public ObservableCollection<ParameterViewModel> IntegralParameters { get; set; } = [];
 
-        public DeviceConnectionViewModel? DeviceConnection { get; set; }
+        public DeviceConnectionViewModel DeviceConnection { get; set; }
+        public DataGroupChartViewModel DataGroupChart { get; set; }
+        public DataGroupIntegrationViewModel DataGroupIntegration { get; set; }
 
-        public DeviceViewModel(IModbusService modbusService, DeviceStore deviceStore, IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository)
+        public ObservableCollection<DataGroupValues> DataGroups { get; set; } = [];
+
+        public DeviceViewModel(IModbusService modbusService, DeviceStore deviceStore, IDeviceDefinitionRepository deviceDefinitionRepository, 
+            IParameterRepository parameterRepository, IDataGroupRepository dataGroupRepository, IDataService dataService)
         {
             _modbusService = modbusService;
             _deviceStore = deviceStore;
             _deviceDefinitionRepository = deviceDefinitionRepository;
             _parameterRepository = parameterRepository;
+            _dataGroupRepository = dataGroupRepository;
+            _dataService = dataService;
 
             _deviceStore.DeviceUpdated += _DeviceUpdated;
             _deviceStore.DeviceDeleted += _DeviceDeleted;
@@ -56,6 +67,16 @@ namespace FlomtManager.App.ViewModels
             DeviceConnection = App.Host.Services.GetRequiredService<DeviceConnectionViewModel>();
             DeviceConnection.OnConnectionData += _OnConnectionData;
             DeviceConnection.OnConnectionError += _OnConnectionError;
+            
+            DataGroupChart = App.Host.Services.GetRequiredService<DataGroupChartViewModel>();
+            DataGroupChart.OnIntegrationChanged += _OnIntegrationChanged;
+
+            DataGroupIntegration = App.Host.Services.GetRequiredService<DataGroupIntegrationViewModel>();
+        }
+
+        private void _OnIntegrationChanged(object? sender, IEnumerable<(byte, float)> e)
+        {
+            DataGroupIntegration.UpdateValues(e);
         }
 
         private async void AddParameters()
@@ -67,17 +88,17 @@ namespace FlomtManager.App.ViewModels
 
             var parameters = await _parameterRepository.GetAll(x => x.DeviceId == Device.Id);
 
-            var deviceDefinition = Device.DeviceDefinition ?? _deviceDefinitionRepository.GetAllQueryable(x => x.DeviceId == Device.Id).FirstOrDefault();
+            var deviceDefinition = Device.DeviceDefinition ?? _deviceDefinitionRepository.GetAllQueryable(x => x.Id == Device.Id).FirstOrDefault();
             if (deviceDefinition == null)
             {
                 return;
             }
 
-            AddParameters(deviceDefinition.CurrentParameterLineDefinition!, CurrentParameters, parameters);            
+            AddParameters(deviceDefinition.CurrentParameterLineDefinition!, CurrentParameters, parameters);
             AddParameters(deviceDefinition.IntegralParameterLineDefinition!, IntegralParameters, parameters);            
         }
 
-        private void AddParameters(byte[] parameterLineDefinition, ObservableCollection<ParameterViewModel> parameterCollection, IEnumerable<Parameter> parameters)
+        private static void AddParameters(byte[] parameterLineDefinition, ObservableCollection<ParameterViewModel> parameterCollection, IEnumerable<Parameter> parameters)
         {
             parameterCollection.Clear();
             foreach (var parameterByte in parameterLineDefinition)
@@ -87,12 +108,7 @@ namespace FlomtManager.App.ViewModels
                     var parameter = parameters.First(x => x.Number == parameterByte);
                     if (parameter.ParameterType.GetAttribute<HideAttribute>() == null)
                     {
-                        parameterCollection.Add(new ParameterViewModel
-                        {
-                            Number = parameter.Number,
-                            Name = parameter.Name,
-                            Unit = parameter.Unit,
-                        });
+                        parameterCollection.Add(new() { Parameter = parameter });
                     }
                 }
             }
@@ -160,6 +176,9 @@ namespace FlomtManager.App.ViewModels
 
         public async void ReadArchivesFromDevice()
         {
+            ArgumentNullException.ThrowIfNull(DeviceConnection);
+            await DeviceConnection.ReadArchivesFromDevice();
+            UpdateData();
         }
 
         public void ReadArchivesFromFile()
@@ -172,6 +191,13 @@ namespace FlomtManager.App.ViewModels
             ArgumentNullException.ThrowIfNull(Device);
             ArgumentNullException.ThrowIfNull(DeviceConnection);
             await DeviceConnection.ReadArchivesFromFile(Device, storageFile);
+            UpdateData();
+        }
+
+        private void UpdateData()
+        {
+            ArgumentNullException.ThrowIfNull(Device);
+            DataGroupChart.UpdateData();
         }
 
         private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)
@@ -180,7 +206,7 @@ namespace FlomtManager.App.ViewModels
             {
                 foreach (var currentParameter in CurrentParameters)
                 {
-                    ParameterValue? value = e.CurrentParameters.TryGetValue(currentParameter.Number, out var _value) ? _value : null;
+                    ParameterValue? value = e.CurrentParameters.TryGetValue(currentParameter.Parameter.Number, out var _value) ? _value : null;
                     if (value != null)
                     {
                         currentParameter.Value = value.Value;
@@ -189,7 +215,7 @@ namespace FlomtManager.App.ViewModels
                 }
                 foreach (var integralParameter in IntegralParameters)
                 {
-                    ParameterValue? value = e.IntegralParameters.TryGetValue(integralParameter.Number, out var _value) ? _value : null;
+                    ParameterValue? value = e.IntegralParameters.TryGetValue(integralParameter.Parameter.Number, out var _value) ? _value : null;
                     if (value != null)
                     {
                         integralParameter.Value = value.Value;

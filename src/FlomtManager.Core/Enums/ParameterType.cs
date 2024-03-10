@@ -23,15 +23,18 @@ namespace FlomtManager.Core.Enums
         [Size(4)]
         S32CD3, // 0111.XXX(56-63) - S32C0D3...S32C7D3 - 32 bit value ignore 3 last digits
         [Size(2)]
-        [Hide]
+        [Hide(HideTargets.Chart)]
         Error, // 64 - 16 bit unsigned Errors
         [Size(4)]
         WorkingTimeInSeconds, // 65 - 32 bit T working time in seconds (HHHH:MM:SS)
         [Size(2)]
+        [Hide(HideTargets.Chart)]
         WorkingTimeInSecondsInArchiveInterval, // 66 - 16 bit unsigned working time in seconds in archive interval
         [Size(2)]
+        [Hide(HideTargets.Chart)]
         WorkingTimeInMinutesInArchiveInterval, // 67 - 16 bit unsigned Working minutes in the archive interval
         [Size(2)]
+        [Hide(HideTargets.Chart)]
         WorkingTimeInHoursInArchiveInterval, // 68 - 16 bit unsigned Working hours in the archived interval
         [Size(6)]
         Time, // 69 - 8 bit * 6 SS:MM:HH DD.MM.YY 

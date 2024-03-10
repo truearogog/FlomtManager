@@ -18,6 +18,7 @@
 	    <PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" Condition="'$(Configuration)' == 'Debug'" />
 	    <PackageReference Include="Projektanker.Icons.Avalonia" Version="$(ProjektankerIconsAvaloniaVersion)" />
 	    <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="$(ProjektankerIconsAvaloniaVersion)" />
+	    <PackageReference Include="ScottPlot.Avalonia" Version="$(ScottPlotAvaloniaVersion)" />
 
 	    <PackageReference Include="Semi.Avalonia" Version="$(SemiAvaloniaVersion)" />
 	    <PackageReference Include="Semi.Avalonia.ColorPicker" Version="$(SemiAvaloniaVersion)" />
@@ -28,9 +29,7 @@
 		<PackageReference Include="HexIO" Version="3.0.5" />
 
 	    <PackageReference Include="Serilog" Version="$(SerilogVersion)" />
-	    <PackageReference Include="Serilog.Expressions" Version="$(SerilogExpressionsVersion)" />
 	    <PackageReference Include="Serilog.Extensions.Hosting" Version="$(SerilogExtensionsVersion)" />
-	    <PackageReference Include="Serilog.Settings.Configuration" Version="$(SerilogSettingsConfigurationVersion)" />
 	    <PackageReference Include="Serilog.Sinks.Debug" Version="$(SerilogSinksDebugVersion)" />
 	    <PackageReference Include="Serilog.Sinks.File" Version="$(SerilogSinksFileVersion)" />
 	</ItemGroup>
@@ -38,6 +37,7 @@
     <ItemGroup>
       <ProjectReference Include="..\FlomtManager.Core\FlomtManager.Core.csproj" />
       <ProjectReference Include="..\FlomtManager.Data.EF.SQLite\FlomtManager.Data.EF.SQLite.csproj" />
+      <ProjectReference Include="..\FlomtManager.Framework.Skia\FlomtManager.Framework.Skia.csproj" />
       <ProjectReference Include="..\FlomtManager.Framework\FlomtManager.Framework.csproj" />
       <ProjectReference Include="..\FlomtManager.Modbus\FlomtManager.Modbus.csproj" />
       <ProjectReference Include="..\FlomtManager.Services\FlomtManager.Services.csproj" />

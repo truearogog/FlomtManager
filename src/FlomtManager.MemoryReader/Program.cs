@@ -1,14 +1,11 @@
 ﻿using Avalonia;
 using Avalonia.Dialogs;
 using Avalonia.ReactiveUI;
-using Microsoft.Extensions.Configuration;
 using Projektanker.Icons.Avalonia;
 using Projektanker.Icons.Avalonia.FontAwesome;
 using Serilog;
-using Serilog.Templates;
-using System;
+using Serilog.Events;
 using System.Reflection;
-using System.Threading;
 
 namespace FlomtManager.MemoryReader
 {
@@ -64,16 +61,12 @@ namespace FlomtManager.MemoryReader
 
         private static void SetupLogger()
         {
-            var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", false).Build();
-            var expressionTemplate =
-                new ExpressionTemplate(
-                    "[{@t:yyyy-MM-dd HH:mm:ss} {@l:u3} {Coalesce(Substring(SourceContext, LastIndexOf(SourceContext, '.') + 1))}] {@m}\n{@x}");
             Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(configuration)
-                .Enrich.FromLogContext()
-                .WriteTo.Debug(expressionTemplate)
-                .WriteTo.File(expressionTemplate, "log/log.txt", rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 2, fileSizeLimitBytes: 10 * 1024 * 1024, rollOnFileSizeLimit: true)
+                .MinimumLevel.Information()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+                .WriteTo.Debug()
+                .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
         }
     }

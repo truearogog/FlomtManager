@@ -4,6 +4,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
+	xmlns:local="using:FlomtManager.App.Views"
 	xmlns:enums="using:FlomtManager.Core.Enums"
 	xmlns:vm="using:FlomtManager.App.ViewModels"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
@@ -12,26 +13,14 @@
     Icon="/Assets/avalonia-logo.ico"
     Title="{Binding Device.Name}">
 
-	<Window.Styles>
-		<Style Selector="TextBlock, SelectableTextBlock, i|Icon">
-			<Setter Property="VerticalAlignment" Value="Center" />
-		</Style>
-		<Style Selector="Border.Error">
-			<Setter Property="Background" Value="{DynamicResource SemiColorDangerLight}" />
-			<Setter Property="BorderBrush" Value="{DynamicResource SemiColorDanger}" />
-			<Setter Property="BorderThickness" Value="1" />
-			<Setter Property="CornerRadius" Value="2" />
-		</Style>
-	</Window.Styles>
-
 	<Window.DataTemplates>
 		<DataTemplate DataType="{x:Type vm:ParameterViewModel}">
 			<Border Classes.Error="{Binding Error}" Padding="2">
 				<StackPanel>
-					<TextBlock Classes="Tertiary" Text="{Binding Name}" />
+					<TextBlock Classes="Tertiary" Text="{Binding Parameter.Name}" />
 					<Grid ColumnDefinitions="*,auto">
 						<TextBlock Grid.Column="0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-						<TextBlock Grid.Column="1" Text="{Binding Unit}" />
+						<TextBlock Grid.Column="1" Text="{Binding Parameter.Unit}" />
 					</Grid>
 				</StackPanel>
 			</Border>
@@ -91,14 +80,6 @@
 						Margin="4"
 						IsVisible="{Binding #toggle.IsChecked, Mode=TwoWay}">
 						<StackPanel Spacing="10" Width="200">
-							<StackPanel.Styles>
-								<Style Selector="Border.PaneBorder">
-									<Setter Property="Margin" Value="0" />
-									<Setter Property="Padding" Value="12,6" />
-									<Setter Property="Theme" Value="{DynamicResource CardBorder}" />
-								</Style>
-							</StackPanel.Styles>
-
 							<Border Classes="PaneBorder" Padding="0">
 								<StackPanel>
 									<StackPanel.Styles>
@@ -192,12 +173,25 @@
 									</ItemsControl>
 								</StackPanel>
 							</Border>
+
+							<local:DataGroupIntegration DataContext="{Binding DataGroupIntegration}" />
 						</StackPanel>
 					</ScrollViewer>
 				</Grid>
 			</Border>
 
-			
+			<TabControl Grid.Column="1">
+				<TabItem>
+					<TabItem.Header>
+						<StackPanel Orientation="Horizontal" Spacing="4">
+							<i:Icon Value="fa-solid fa-chart-line" />
+							<TextBlock Text="Chart" />
+						</StackPanel>
+					</TabItem.Header>
+					
+					<local:DataGroupChart DataContext="{Binding DataGroupChart}" />
+				</TabItem>
+			</TabControl>
 		</Grid>
 		
 		<Panel Grid.Row="2">

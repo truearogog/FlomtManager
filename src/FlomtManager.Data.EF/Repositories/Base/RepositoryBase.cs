@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using FlomtManager.Core.Models.Base;
 using FlomtManager.Core.Repositories.Base;
 using FlomtManager.Data.EF.Entities.Base;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ namespace FlomtManager.Data.EF.Repositories.Base
 {
     internal abstract class RepositoryBase<TEntity, TModel>(IAppDb db, DbSet<TEntity> dbSet, IDataMapper mapper) : IRepositoryBase<TModel>
         where TEntity : EntityBase
+        where TModel : ModelBase
     {
         protected readonly IAppDb Db = db;
         protected readonly DbSet<TEntity> DbSet = dbSet;
@@ -62,12 +64,12 @@ namespace FlomtManager.Data.EF.Repositories.Base
                 .FirstOrDefaultAsync().ConfigureAwait(false);
         }
 
-        public async Task<int> Create(TModel model)
+        public async Task<TModel> Create(TModel model)
         {
             var entity = Mapper.Map<TEntity>(model);
             await DbSet.AddAsync(entity).ConfigureAwait(false);
             await Db.SaveChangesAsync().ConfigureAwait(false);
-            return entity.Id;
+            return Mapper.Map<TModel>(entity);
         }
 
         public async Task CreateRange(IEnumerable<TModel> models)
@@ -77,13 +79,24 @@ namespace FlomtManager.Data.EF.Repositories.Base
             await Db.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public async Task<int> Update(TModel model)
+        public async Task<TModel> Update(TModel model)
         {
-            var entity = Mapper.Map<TEntity>(model);
-            entity.Updated = DateTime.UtcNow;
-            DbSet.Update(entity);
-            await Db.SaveChangesAsync().ConfigureAwait(false);
-            return entity.Id;
+            var existingEntity = DbSet.Local.SingleOrDefault(x => x.Id == model.Id);
+            if (existingEntity != null)
+            {
+                Mapper.Map(model, existingEntity);
+                existingEntity.Updated = DateTime.Now;
+                await Db.SaveChangesAsync().ConfigureAwait(false);
+                return Mapper.Map<TModel>(existingEntity);
+            }
+            else
+            {
+                var entity = Mapper.Map<TEntity>(model);
+                entity.Updated = DateTime.Now;
+                DbSet.Entry(entity).State = EntityState.Modified;
+                await Db.SaveChangesAsync().ConfigureAwait(false);
+                return Mapper.Map<TModel>(entity);
+            }
         }
 
         public async Task UpdateRange(IEnumerable<TModel> models)
@@ -91,7 +104,7 @@ namespace FlomtManager.Data.EF.Repositories.Base
             var entities = Mapper.Map<IEnumerable<TEntity>>(models);
             foreach (var entity in entities)
             {
-                entity.Updated = DateTime.UtcNow;
+                entity.Updated = DateTime.Now;
             }
             await Db.UpdateRangeAsync(entities);
             await Db.SaveChangesAsync().ConfigureAwait(false);
@@ -107,6 +120,11 @@ namespace FlomtManager.Data.EF.Repositories.Base
         {
             await DbSet.Where(x => ids.Contains(x.Id)).ExecuteDeleteAsync().ConfigureAwait(false);
             await Db.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        public async Task<bool> Any(Expression<Func<TModel, bool>> predicate)
+        {
+            return await GetAllQueryable(predicate).AnyAsync();
         }
     }
 }

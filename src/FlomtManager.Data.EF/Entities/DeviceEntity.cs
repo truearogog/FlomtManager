@@ -24,5 +24,6 @@ namespace FlomtManager.Data.EF.Entities
         public int DeviceDefinitionId { get; set; }
         public DeviceDefinitionEntity? DeviceDefinition { get; set; }
         public ICollection<ParameterEntity>? Parameters { get; set; }
+        public ICollection<DataGroupEntity>? DataGroups { get; set; }
     }
 }

@@ -11,20 +11,27 @@ namespace FlomtManager.Data.EF.Entities
         public ushort ProgramVersionStart { get; set; }
 
         public ushort CurrentParameterLineDefinitionStart { get; set; }
-        public byte[] CurrentParameterLineDefinition { get; set; }
+        public byte[]? CurrentParameterLineDefinition { get; set; }
         public byte CurrentParameterLineLength { get; set; }
         public byte CurrentParameterLineNumber { get; set; }
         public ushort CurrentParameterLineStart { get; set; }
 
         public ushort IntegralParameterLineDefinitionStart { get; set; }
-        public byte[] IntegralParameterLineDefinition { get; set; }
+        public byte[]? IntegralParameterLineDefinition { get; set; }
         public byte IntegralParameterLineLength { get; set; }
         public byte IntegralParameterLineNumber { get; set; }
         public ushort IntegralParameterLineStart { get; set; }
 
+        public ushort AverageParameterArchiveLineDefinitionStart { get; set; }
+        public byte[]? AverageParameterArchiveLineDefinition { get; set; }
+        public byte AverageParameterArchiveLineLength { get; set; }
+        public byte AverageParameterArchiveLineNumber { get; set; }
+
+        public ushort AveragePerHourBlockStart { get; set; }
+        public ushort AveragePerHourBlockLineCount { get; set; }
+
         public ushort CRC { get; set; }
 
-        public int DeviceId { get; set; }
-        public DeviceEntity Device { get; set; }
+        public DateTime? LastArchiveRead { get; set; }
     }
 }

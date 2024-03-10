@@ -11,7 +11,7 @@
 	<Application.DataTemplates>
 		<local:ViewLocator />
 	</Application.DataTemplates>
-
+	
 	<Application.Styles>
 		<StyleInclude Source="/Styles/Styles.axaml" />
 		<StyleInclude Source="avares://Semi.Avalonia/Themes/Index.axaml" />
@@ -23,6 +23,7 @@
 		<conv:AddEditConverter x:Key="AddEditConverter" />
 		<conv:EqualsConverter x:Key="EqualsConverter" />
 		<conv:IsNullOrEmptyElseConverter x:Key="IsNullOrEmptyElseConverter" />
+		<conv:ColorAddLightnessConverter x:Key="ColorAddLightnessConverter" />
 	</Application.Resources>
 	
 	<TrayIcon.Icons>

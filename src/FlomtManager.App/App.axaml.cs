@@ -3,7 +3,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using FlomtManager.App.Models;
 using FlomtManager.App.Profiles;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
@@ -32,8 +31,10 @@ namespace FlomtManager.App
                 .UseSerilog()
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddAppEF<SQLiteAppDb>(options => options.UseSqlite(context.Configuration.GetConnectionString("AppDb")
-                        ?? throw new InvalidOperationException("Connection string 'AppDb' not found.")), scope: ServiceLifetime.Transient);
+                    services.AddAppEF<SQLiteAppDb>(options =>
+                    {
+                        options.UseSqlite(context.Configuration.GetConnectionString("AppDb") ?? throw new InvalidOperationException("Connection string 'AppDb' not found."));
+                    }, scope: ServiceLifetime.Transient);
                     services.AddServices();
 
                     // register stores
@@ -47,6 +48,8 @@ namespace FlomtManager.App
                     services.AddTransient<DeviceViewModel>();
                     services.AddTransient<DeviceCreateUpdateViewModel>();
                     services.AddTransient<DeviceConnectionViewModel>();
+                    services.AddTransient<DataGroupChartViewModel>();
+                    services.AddTransient<DataGroupIntegrationViewModel>();
 
                     // register mapper
                     var config = new MapperConfiguration(cfg =>

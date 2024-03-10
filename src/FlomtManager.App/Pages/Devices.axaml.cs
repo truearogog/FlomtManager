@@ -1,4 +1,6 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.LogicalTree;
 using FlomtManager.App.Extensions;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
@@ -24,6 +26,18 @@ namespace FlomtManager.App.Pages
                 viewModel.DeviceCreateRequested += _DeviceCreateRequested;
                 viewModel.DeviceUpdateRequested += _DeviceUpdateRequested;
                 viewModel.DeviceViewRequested += _DeviceViewRequested;
+            }
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+
+            if (DataContext is DevicesViewModel viewModel)
+            {
+                viewModel.DeviceCreateRequested -= _DeviceCreateRequested;
+                viewModel.DeviceUpdateRequested -= _DeviceUpdateRequested;
+                viewModel.DeviceViewRequested -= _DeviceViewRequested;
             }
         }
 

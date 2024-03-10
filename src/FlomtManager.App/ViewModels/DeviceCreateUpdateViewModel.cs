@@ -8,10 +8,8 @@ using FlomtManager.Core.Repositories;
 using FlomtManager.Framework.Helpers;
 using ReactiveUI;
 using Serilog;
-using System;
 using System.Collections.ObjectModel;
 using System.IO.Ports;
-using System.Linq;
 
 namespace FlomtManager.App.ViewModels
 {

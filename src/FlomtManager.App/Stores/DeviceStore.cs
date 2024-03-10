@@ -9,20 +9,16 @@ namespace FlomtManager.App.Stores
         public event Action<Device>? DeviceUpdated;
         public event Action<int>? DeviceDeleted;
 
-        public async Task<int> CreateDevice(IDeviceRepository deviceRepository, Device device)
+        public async Task CreateDevice(IDeviceRepository deviceRepository, Device device)
         {
-            var id = await deviceRepository.Create(device);
-            device.Id = id;
-            DeviceCreated?.Invoke(device);
-            return id;
+            var createdDevice = await deviceRepository.Create(device);
+            DeviceCreated?.Invoke(createdDevice);
         }
 
-        public async Task<int> UpdateDevice(IDeviceRepository deviceRepository, Device device)
+        public async Task UpdateDevice(IDeviceRepository deviceRepository, Device device)
         {
-            var id = await deviceRepository.Update(device);
-            device.Id = id;
-            DeviceUpdated?.Invoke(device);
-            return id;
+            var updatedDevice = await deviceRepository.Update(device);
+            DeviceUpdated?.Invoke(updatedDevice);
         }
 
         public async Task DeleteDevice(IDeviceRepository deviceRepository, int id)

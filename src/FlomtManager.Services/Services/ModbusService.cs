@@ -3,7 +3,9 @@ using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Services;
 using FlomtManager.Framework.Extensions;
+using FlomtManager.Framework.Skia;
 using FlomtManager.Modbus;
+using System.Buffers.Binary;
 using System.Text;
 
 namespace FlomtManager.Services.Services
@@ -33,11 +35,11 @@ namespace FlomtManager.Services.Services
                 AverageParameterArchiveLineNumber = (byte)registers[11],
                 AverageParameterArchiveLineLength = (byte)(registers[11] >> 8),
 
-                AveragePerHourBlockStart = registers[15],
-                AveragePerHourBlockLineCount = registers[16],
+                AveragePerHourBlockStart = registers[14],
+                AveragePerHourBlockLineCount = registers[15],
             };
 
-            var bytes = deviceDefinition.GetBytes();
+            var bytes = deviceDefinition.SerializeBytes();
             deviceDefinition.CRC = ModbusHelper.GetCRC(bytes);
 
             return deviceDefinition;
@@ -63,6 +65,8 @@ namespace FlomtManager.Services.Services
         */
         public IEnumerable<Parameter> ParseParameterDefinitions(ReadOnlySpan<byte> bytes)
         {
+            var hues = new List<float>();
+
             var parameters = new List<Parameter>();
             for (var i = 0; i < DeviceConstants.MAX_PARAMETER_COUNT; ++i)
             {
@@ -71,6 +75,8 @@ namespace FlomtManager.Services.Services
                 {
                     var (type, comma) = ParseParameterTypeByte(parameterBytes[1]);
 
+                    var color = RandomColor.Next(hues);
+                    hues.Add(color.Hue);
                     var parameter = new Parameter
                     {
                         Number = parameterBytes[0],
@@ -80,6 +86,7 @@ namespace FlomtManager.Services.Services
                         IntegrationNumber = parameterBytes[4],
                         Name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray()),
                         Unit = Encoding.ASCII.GetString(parameterBytes.Skip(10).TakeWhile(x => x != '\0').ToArray()),
+                        Color = color.ToString()
                     };
 
                     parameters.Add(parameter);
@@ -150,6 +157,150 @@ namespace FlomtManager.Services.Services
                 7 => 10,
                 _ => throw new NotSupportedException()
             };
+        }
+
+        public object ParseBytesToValue(ReadOnlySpan<byte> bytes, ParameterType type, byte comma)
+        {
+            return type switch
+            {
+                ParameterType.S16C => ParseS16C(bytes, comma),
+                ParameterType.U16C => ParseU16C(bytes, comma),
+                ParameterType.FS16C => ParseFS16C(bytes, comma),
+                ParameterType.FU16C => ParseFU16C(bytes, comma),
+                ParameterType.S32C => ParseS32C(bytes, comma, 0),
+                ParameterType.S32CD1 => ParseS32C(bytes, comma, 1),
+                ParameterType.S32CD2 => ParseS32C(bytes, comma, 2),
+                ParameterType.S32CD3 => ParseS32C(bytes, comma, 3),
+                ParameterType.Error => BitConverter.ToUInt16(bytes),
+                ParameterType.WorkingTimeInSeconds => BinaryPrimitives.ReadUInt32LittleEndian(bytes),
+                ParameterType.WorkingTimeInSecondsInArchiveInterval => BitConverter.ToUInt16(bytes),
+                ParameterType.WorkingTimeInMinutesInArchiveInterval => BitConverter.ToUInt16(bytes),
+                ParameterType.WorkingTimeInHoursInArchiveInterval => BitConverter.ToUInt16(bytes),
+                ParameterType.Time => ParseDateTime(bytes),
+                ParameterType.SecondsSince2000 => BitConverter.ToUInt32(bytes),
+                _ => string.Empty
+            };
+        }
+
+        public string StringParseBytesToValue(ReadOnlySpan<byte> bytes, ParameterType type, byte comma)
+        {
+            return type switch
+            {
+                ParameterType.S16C => StringParseS16C(bytes, comma),
+                ParameterType.U16C => StringParseU16C(bytes, comma),
+                ParameterType.FS16C => StringParseFS16C(bytes, comma),
+                ParameterType.FU16C => StringParseFU16C(bytes, comma),
+                ParameterType.S32C => StringParseS32C(bytes, comma, 0),
+                ParameterType.S32CD1 => StringParseS32C(bytes, comma, 1),
+                ParameterType.S32CD2 => StringParseS32C(bytes, comma, 2),
+                ParameterType.S32CD3 => StringParseS32C(bytes, comma, 3),
+                ParameterType.Error => BitConverter.ToUInt16(bytes).ToString(),
+                ParameterType.WorkingTimeInSeconds => StringParseSeconds(bytes),
+                ParameterType.WorkingTimeInSecondsInArchiveInterval => BitConverter.ToUInt16(bytes).ToString(),
+                ParameterType.WorkingTimeInMinutesInArchiveInterval => BitConverter.ToUInt16(bytes).ToString(),
+                ParameterType.WorkingTimeInHoursInArchiveInterval => BitConverter.ToUInt16(bytes).ToString(),
+                ParameterType.Time => StringParseDateTime(bytes),
+                ParameterType.SecondsSince2000 => BitConverter.ToUInt32(bytes).ToString(),
+                _ => string.Empty
+            };
+        }
+
+        public string FloatToString(float value, byte comma)
+        {
+            return comma switch
+            {
+                0 => value.ToString(),
+                >= 1 and <= 4 => value.ToString("F" + comma),
+                7 => value.ToString(),
+                _ => throw new NotSupportedException()
+            };
+        }
+
+        public float ParseS16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            var value = BinaryPrimitives.ReadInt16LittleEndian(bytes);
+            var commaMultiplier = GetComma(comma);
+            return value * commaMultiplier;
+        }
+
+        public string StringParseS16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            return FloatToString(ParseS16C(bytes, comma), comma);
+        }
+
+        public float ParseU16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            var value = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
+            var commaMultiplier = GetComma(comma);
+            return value * commaMultiplier;
+        }
+
+        public string StringParseU16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            return FloatToString(ParseU16C(bytes, comma), comma);
+        }
+
+        public float ParseFS16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            var value = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
+            var mantissa = value & 0x3FFF;
+            var sign = ((value >> 14) & 1) == 0 ? 1 : -1;
+            var exponent = -(value >> 15);
+            var commaMultiplier = GetComma(comma);
+            return mantissa * sign * MathF.Pow(10, exponent) * commaMultiplier;
+        }
+
+        public string StringParseFS16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            return FloatToString(ParseFS16C(bytes, comma), comma);
+        }
+
+        public float ParseFU16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            var value = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
+            var mantissa = value & 0x3FFF;
+            var exponent = value >> 14;
+            var commaMultiplier = GetComma(comma);
+            return mantissa * MathF.Pow(10, exponent) * commaMultiplier;
+        }
+
+        public string StringParseFU16C(ReadOnlySpan<byte> bytes, byte comma)
+        {
+            return FloatToString(ParseFU16C(bytes, comma), comma);
+        }
+
+        public float ParseS32C(ReadOnlySpan<byte> bytes, byte comma, byte trim)
+        {
+            var value = BinaryPrimitives.ReadInt32LittleEndian(bytes);
+            var commaMultiplier = GetComma(comma);
+            return (value * commaMultiplier).TrimDecimalPlaces(trim);
+        }
+
+        public string StringParseS32C(ReadOnlySpan<byte> bytes, byte comma, byte trim)
+        {
+            return FloatToString(ParseS32C(bytes, comma, trim), comma);
+        }
+
+        public string StringParseSeconds(ReadOnlySpan<byte> bytes)
+        {
+            var timeSpan = ParseSeconds(bytes);
+            // Using the custom format "hhhh:mm:ss" for hours, minutes, and seconds
+            return $"{timeSpan.Days * 24 + timeSpan.Hours}:{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
+        }
+
+        public TimeSpan ParseSeconds(ReadOnlySpan<byte> bytes)
+        {
+            return TimeSpan.FromSeconds(BinaryPrimitives.ReadUInt32LittleEndian(bytes));
+        }
+
+        public DateTime ParseDateTime(ReadOnlySpan<byte> bytes)
+        {
+            return new(2000 + bytes[5], bytes[4], bytes[3], bytes[2], bytes[1], bytes[0]);
+        }
+
+        public string StringParseDateTime(ReadOnlySpan<byte> bytes)
+        {
+            return ParseDateTime(bytes).ToString("ss:mm:HH dd.MM.yy");
         }
     }
 }

@@ -1,28 +1,22 @@
-﻿using System.Text.Json;
-using System.Text;
+﻿using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace FlomtManager.Framework.Extensions
 {
     public static class ObjectExtensions
     {
-        public static byte[]? GetBytes(this object obj)
+        private static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {
-            if (obj == null)
-                return default;
+            PropertyNamingPolicy = null,
+            WriteIndented = true,
+            AllowTrailingCommas = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        };
 
-            return Encoding.UTF8.GetBytes(JsonSerializer.Serialize(obj, GetJsonSerializerOptions()));
-        }
-
-        private static JsonSerializerOptions GetJsonSerializerOptions()
+        public static byte[] SerializeBytes(this object obj)
         {
-            return new JsonSerializerOptions()
-            {
-                PropertyNamingPolicy = null,
-                WriteIndented = true,
-                AllowTrailingCommas = true,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            };
+            return Encoding.UTF8.GetBytes(JsonSerializer.Serialize(obj, JsonSerializerOptions));
         }
     }
 }

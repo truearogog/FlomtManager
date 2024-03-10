@@ -16,5 +16,29 @@ namespace FlomtManager.Core.Services
 
         (ParameterType Type, byte Comma) ParseParameterTypeByte(byte parameterTypeByte);
         float GetComma(byte commaByte);
+
+        object ParseBytesToValue(ReadOnlySpan<byte> bytes, ParameterType type, byte comma);
+        string StringParseBytesToValue(ReadOnlySpan<byte> bytes, ParameterType type, byte comma);
+
+        string FloatToString(float value, byte comma);
+        float ParseS16C(ReadOnlySpan<byte> bytes, byte comma);
+
+        string StringParseS16C(ReadOnlySpan<byte> bytes, byte comma);
+        float ParseU16C(ReadOnlySpan<byte> bytes, byte comma);
+
+        string StringParseU16C(ReadOnlySpan<byte> bytes, byte comma);
+        float ParseFS16C(ReadOnlySpan<byte> bytes, byte comma);
+
+        string StringParseFS16C(ReadOnlySpan<byte> bytes, byte comma);
+        float ParseFU16C(ReadOnlySpan<byte> bytes, byte comma);
+
+        string StringParseFU16C(ReadOnlySpan<byte> bytes, byte comma);
+        float ParseS32C(ReadOnlySpan<byte> bytes, byte comma, byte trim);
+
+        string StringParseS32C(ReadOnlySpan<byte> bytes, byte comma, byte trim);
+        string StringParseSeconds(ReadOnlySpan<byte> bytes);
+        TimeSpan ParseSeconds(ReadOnlySpan<byte> bytes);
+        DateTime ParseDateTime(ReadOnlySpan<byte> bytes);
+        string StringParseDateTime(ReadOnlySpan<byte> bytes);
     }
 }

@@ -15,6 +15,7 @@ namespace FlomtManager.Data.EF.Entities
         public required string Name { get; set; }
         [MaxLength(6)]
         public required string Unit { get; set; }
+        public required string Color { get; set; }
 
         public required int DeviceId { get; set; }
         public DeviceEntity? Device { get; set; }

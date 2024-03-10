@@ -17,10 +17,61 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.1");
 
-            modelBuilder.Entity("FlomtManager.Data.EF.Entities.DeviceDefinitionEntity", b =>
+            modelBuilder.Entity("FlomtManager.Data.EF.Entities.DataGroupEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("datetime('now', 'localtime')");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DeviceId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("DateTime", "DeviceId")
+                        .IsUnique();
+
+                    b.ToTable("DataGroups");
+                });
+
+            modelBuilder.Entity("FlomtManager.Data.EF.Entities.DeviceDefinitionEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte[]>("AverageParameterArchiveLineDefinition")
+                        .HasColumnType("BLOB");
+
+                    b.Property<ushort>("AverageParameterArchiveLineDefinitionStart")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte>("AverageParameterArchiveLineLength")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte>("AverageParameterArchiveLineNumber")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ushort>("AveragePerHourBlockLineCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ushort>("AveragePerHourBlockStart")
                         .HasColumnType("INTEGER");
 
                     b.Property<ushort>("CRC")
@@ -29,10 +80,9 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("datetime('now', 'localtime')");
 
                     b.Property<byte[]>("CurrentParameterLineDefinition")
-                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<ushort>("CurrentParameterLineDefinitionStart")
@@ -50,11 +100,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                     b.Property<ushort>("DescriptionStart")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("DeviceId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<byte[]>("IntegralParameterLineDefinition")
-                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<ushort>("IntegralParameterLineDefinitionStart")
@@ -69,6 +115,9 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                     b.Property<ushort>("IntegralParameterLineStart")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("LastArchiveRead")
+                        .HasColumnType("TEXT");
+
                     b.Property<ushort>("ParameterDefinitionNumber")
                         .HasColumnType("INTEGER");
 
@@ -79,14 +128,9 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Updated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DeviceId")
-                        .IsUnique();
 
                     b.ToTable("DeviceDefinitions");
                 });
@@ -109,7 +153,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("datetime('now', 'localtime')");
 
                     b.Property<int>("DataBits")
                         .HasColumnType("INTEGER");
@@ -140,9 +184,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Updated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime");
 
                     b.HasKey("Id");
 
@@ -155,13 +197,17 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<byte>("Comma")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Created")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasDefaultValueSql("datetime('now', 'localtime')");
 
                     b.Property<int>("DeviceId")
                         .HasColumnType("INTEGER");
@@ -190,9 +236,7 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Updated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("datetime");
 
                     b.HasKey("Id");
 
@@ -201,13 +245,24 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
                     b.ToTable("Parameters");
                 });
 
-            modelBuilder.Entity("FlomtManager.Data.EF.Entities.DeviceDefinitionEntity", b =>
+            modelBuilder.Entity("FlomtManager.Data.EF.Entities.DataGroupEntity", b =>
                 {
                     b.HasOne("FlomtManager.Data.EF.Entities.DeviceEntity", "Device")
-                        .WithOne("DeviceDefinition")
-                        .HasForeignKey("FlomtManager.Data.EF.Entities.DeviceDefinitionEntity", "DeviceId");
+                        .WithMany("DataGroups")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("FlomtManager.Data.EF.Entities.DeviceDefinitionEntity", b =>
+                {
+                    b.HasOne("FlomtManager.Data.EF.Entities.DeviceEntity", null)
+                        .WithOne("DeviceDefinition")
+                        .HasForeignKey("FlomtManager.Data.EF.Entities.DeviceDefinitionEntity", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FlomtManager.Data.EF.Entities.ParameterEntity", b =>
@@ -223,6 +278,8 @@ namespace FlomtManager.Data.EF.SQLite.Migrations
 
             modelBuilder.Entity("FlomtManager.Data.EF.Entities.DeviceEntity", b =>
                 {
+                    b.Navigation("DataGroups");
+
                     b.Navigation("DeviceDefinition");
 
                     b.Navigation("Parameters");

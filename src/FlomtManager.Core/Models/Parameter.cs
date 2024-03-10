@@ -1,10 +1,10 @@
 ﻿using FlomtManager.Core.Enums;
+using FlomtManager.Core.Models.Base;
 
 namespace FlomtManager.Core.Models
 {
-    public class Parameter
+    public class Parameter : ModelBase
     {
-        public int Id { get; set; }
         public DateTime Created { get; set; }
 
         public required byte Number { get; set; }
@@ -14,6 +14,7 @@ namespace FlomtManager.Core.Models
         public required byte IntegrationNumber { get; set; }
         public required string Name { get; set; }
         public required string Unit { get; set; }
+        public required string Color { get; set; }
 
         public int DeviceId { get; set; }
     }

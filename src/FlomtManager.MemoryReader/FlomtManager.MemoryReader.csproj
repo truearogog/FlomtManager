@@ -26,9 +26,7 @@
 		<PackageReference Include="HexIO" Version="3.0.5" />
 
 		<PackageReference Include="Serilog" Version="$(SerilogVersion)" />
-		<PackageReference Include="Serilog.Expressions" Version="$(SerilogExpressionsVersion)" />
 		<PackageReference Include="Serilog.Extensions.Hosting" Version="$(SerilogExtensionsVersion)" />
-		<PackageReference Include="Serilog.Settings.Configuration" Version="$(SerilogSettingsConfigurationVersion)" />
 		<PackageReference Include="Serilog.Sinks.Debug" Version="$(SerilogSinksDebugVersion)" />
 		<PackageReference Include="Serilog.Sinks.File" Version="$(SerilogSinksFileVersion)" />
 	</ItemGroup>

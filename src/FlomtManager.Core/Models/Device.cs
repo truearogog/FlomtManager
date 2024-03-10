@@ -1,11 +1,11 @@
 ﻿using FlomtManager.Core.Enums;
+using FlomtManager.Core.Models.Base;
 using System.IO.Ports;
 
 namespace FlomtManager.Core.Models
 {
-    public class Device
+    public class Device : ModelBase
     {
-        public int Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Updated { get; set; }
 

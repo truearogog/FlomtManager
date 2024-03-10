@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using FlomtManager.App.ViewModels;
-using System;
 
 namespace FlomtManager.App.Views
 {
