@@ -157,11 +157,23 @@ namespace FlomtManager.MemoryReader.ViewModels
                     fileName = $"flomt_{deviceNumber}_{Form.DateTime:yyMMdd}_{Form.Number:D2}_S{Form.Start}_L{Form.Count}.hex";
                 }
 
+                var time = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, 102, 3);
+                var hour = time[2];
                 var bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)(Form.Count / 2), (current, total) =>
                 {
                     CurrentProgress = current;
                     MaxProgress = total;
                 }, _cancellationTokenSource.Token);
+                var time2 = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, 102, 3);
+                var hour2 = time[2];
+                if (hour != hour2)
+                {
+                    bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)(Form.Count / 2), (current, total) =>
+                    {
+                        CurrentProgress = current;
+                        MaxProgress = total;
+                    }, _cancellationTokenSource.Token);
+                }
 
                 using var writer = new IntelHexStreamWriter(Path.Combine(Form.Directory, fileName));
                 int current = 0, left = bytes.Length;

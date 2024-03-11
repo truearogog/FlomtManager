@@ -1,12 +1,10 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using FlomtManager.MemoryReader.Models;
 using FlomtManager.MemoryReader.ViewModels;
 using FlomtManager.MemoryReader.Views;
-using System;
-using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace FlomtManager.MemoryReader
 {
@@ -48,18 +46,17 @@ namespace FlomtManager.MemoryReader
             }
         }
 
-        private void SerializeForm(FormViewModel formViewModel)
+        private static void SerializeForm(FormViewModel formViewModel)
         {
             var file = Path.Combine(Environment.CurrentDirectory, FormSerializationPath);
-            var json = JsonSerializer.Serialize(formViewModel, new JsonSerializerOptions { NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals });
+            var json = JsonSerializer.Serialize(formViewModel, FormViewModelContext.Default.FormViewModel);
             File.WriteAllText(file, json);
         }
 
-        private FormViewModel DeserializeForm()
+        private static FormViewModel DeserializeForm()
         {
             var json = File.ReadAllText(FormSerializationPath);
-            return JsonSerializer.Deserialize<FormViewModel>(json, new JsonSerializerOptions { NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals }) 
-                ?? new FormViewModel();
+            return JsonSerializer.Deserialize(json, FormViewModelContext.Default.FormViewModel) ?? new FormViewModel();
         }
     }
 }

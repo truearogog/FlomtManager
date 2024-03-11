@@ -1,7 +1,6 @@
 ﻿using FlomtManager.Core.Constants;
 using FlomtManager.Core.Enums;
 using ReactiveUI;
-using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.IO.Ports;

@@ -25,6 +25,14 @@
 	<Border Classes="PaneBorder">
 		<StackPanel Spacing="5">
 			<TextBlock Text="Integration" Classes="H6" Theme="{DynamicResource TitleTextBlock}" />
+			<StackPanel>
+				<TextBlock Classes="Tertiary" Text="Integration start time" />
+				<SelectableTextBlock Text="{Binding IntegrationStart, Converter={StaticResource IsNullElseConverter}, ConverterParameter='-'}" />
+			</StackPanel>
+			<StackPanel>
+				<TextBlock Classes="Tertiary" Text="Integration end time" />
+				<SelectableTextBlock Text="{Binding IntegrationEnd, Converter={StaticResource IsNullElseConverter}, ConverterParameter='-'}" />
+			</StackPanel>
 			<ItemsControl ItemsSource="{Binding Parameters}">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>

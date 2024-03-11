@@ -74,7 +74,7 @@ namespace FlomtManager.App.ViewModels
             DataGroupIntegration = App.Host.Services.GetRequiredService<DataGroupIntegrationViewModel>();
         }
 
-        private void _OnIntegrationChanged(object? sender, IEnumerable<(byte, float)> e)
+        private void _OnIntegrationChanged(object? sender, IntegrationChangedEventArgs e)
         {
             DataGroupIntegration.UpdateValues(e);
         }
@@ -100,6 +100,11 @@ namespace FlomtManager.App.ViewModels
 
         private static void AddParameters(byte[] parameterLineDefinition, ObservableCollection<ParameterViewModel> parameterCollection, IEnumerable<Parameter> parameters)
         {
+            if (!parameters.Any())
+            {
+                return;
+            }
+
             parameterCollection.Clear();
             foreach (var parameterByte in parameterLineDefinition)
             {
@@ -178,7 +183,9 @@ namespace FlomtManager.App.ViewModels
         {
             ArgumentNullException.ThrowIfNull(DeviceConnection);
             await DeviceConnection.ReadArchivesFromDevice();
+            AddParameters();
             UpdateData();
+            DataGroupIntegration.Device = Device;
         }
 
         public void ReadArchivesFromFile()
@@ -191,7 +198,9 @@ namespace FlomtManager.App.ViewModels
             ArgumentNullException.ThrowIfNull(Device);
             ArgumentNullException.ThrowIfNull(DeviceConnection);
             await DeviceConnection.ReadArchivesFromFile(Device, storageFile);
+            AddParameters();
             UpdateData();
+            DataGroupIntegration.Device = Device;
         }
 
         private void UpdateData()

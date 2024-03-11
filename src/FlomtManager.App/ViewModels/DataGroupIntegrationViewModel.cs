@@ -1,4 +1,5 @@
-﻿using FlomtManager.Core.Models;
+﻿using FlomtManager.App.Models;
+using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
 using ReactiveUI;
 using System.Collections.ObjectModel;
@@ -21,32 +22,50 @@ namespace FlomtManager.App.ViewModels
             }
         }
 
+        private DateTime? _integrationStart = null;
+        public DateTime? IntegrationStart
+        {
+            get => _integrationStart;
+            set => this.RaiseAndSetIfChanged(ref _integrationStart, value);
+        }
+
+        private DateTime? _integrationEnd = null;
+        public DateTime? IntegrationEnd
+        {
+            get => _integrationEnd;
+            set => this.RaiseAndSetIfChanged(ref _integrationEnd, value);
+        }
+
         public ObservableCollection<ParameterViewModel> Parameters { get; set; } = [];
 
         private async void AddParameters()
         {
             ArgumentNullException.ThrowIfNull(Device);
             var deviceDefinition = await _deviceDefinitionRepository.GetById(Device.Id);
-            ArgumentNullException.ThrowIfNull(deviceDefinition);
-            Parameters.Clear();
-            var parameters = await _parameterRepository.GetAll(x => x.DeviceId == Device.Id);
-            foreach (var parameterByte in deviceDefinition.AverageParameterArchiveLineDefinition!)
+            if (deviceDefinition != null)
             {
-                var parameter = parameters.FirstOrDefault(x => x.Number == parameterByte);
-                if (parameter != null && parameter.IntegrationNumber != 0)
+                Parameters.Clear();
+                var parameters = await _parameterRepository.GetAll(x => x.DeviceId == Device.Id);
+                foreach (var parameterByte in deviceDefinition.AverageParameterArchiveLineDefinition!)
                 {
-                    var integrationParameter = parameters.FirstOrDefault(x => x.Number == parameter.IntegrationNumber);
-                    if (integrationParameter != null)
+                    var parameter = parameters.FirstOrDefault(x => x.Number == parameterByte);
+                    if (parameter != null && parameter.IntegrationNumber != 0)
                     {
-                        Parameters.Add(new() { Parameter = integrationParameter });
+                        var integrationParameter = parameters.FirstOrDefault(x => x.Number == parameter.IntegrationNumber);
+                        if (integrationParameter != null)
+                        {
+                            Parameters.Add(new() { Parameter = integrationParameter });
+                        }
                     }
                 }
             }
         }
 
-        public void UpdateValues(IEnumerable<(byte, float)> integration)
+        public void UpdateValues(IntegrationChangedEventArgs args)
         {
-            foreach (var (number, value) in integration)
+            IntegrationStart = args.IntegrationStart;
+            IntegrationEnd = args.IntegrationEnd;
+            foreach (var (number, value) in args.IntegrationData)
             {
                 var parameter = Parameters.FirstOrDefault(x => x.Parameter.Number == number);
                 if (parameter != null)

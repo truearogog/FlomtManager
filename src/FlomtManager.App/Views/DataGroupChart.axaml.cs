@@ -134,6 +134,8 @@ namespace FlomtManager.App.Views
                     if (thingUnderMouse is not null)
                     {
                         _spanBeingDragged = thingUnderMouse;
+                        _crosshair!.IsVisible = false;
+                        Chart.Refresh();
                     }
                     else
                     {
@@ -188,12 +190,9 @@ namespace FlomtManager.App.Views
             }
             else
             {
+                _viewModel!.CurrentDisplayDate = roundedCoordinates.X;
                 _crosshair!.Position = roundedCoordinates;
                 Chart.Refresh();
-                if (_viewModel != null)
-                {
-                    _viewModel.CurrentDisplayDate = roundedCoordinates.X;
-                }
 
                 var spanUnderMouse = GetSpanUnderMouse((float)point.Position.X, (float)point.Position.Y);
                 if (spanUnderMouse is null)

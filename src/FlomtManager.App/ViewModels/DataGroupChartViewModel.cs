@@ -1,9 +1,13 @@
-﻿using FlomtManager.Core.Attributes;
+﻿using Avalonia.Media;
+using Avalonia.Skia;
+using FlomtManager.App.Models;
+using FlomtManager.Core.Attributes;
 using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Services;
 using FlomtManager.Framework.Extensions;
 using ReactiveUI;
+using ScottPlot;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 
@@ -29,7 +33,7 @@ namespace FlomtManager.App.ViewModels
         public ObservableCollection<ParameterViewModel> Parameters { get; set; } = [];
         public event EventHandler<IEnumerable<DataGroupValues>>? OnDataUpdate;
         public event EventHandler<byte>? OnParameterToggled;
-        public event EventHandler<IEnumerable<(byte, float)>>? OnIntegrationChanged;
+        public event EventHandler<IntegrationChangedEventArgs>? OnIntegrationChanged;
 
         private double _integrationSpanMinDate;
         public double IntegrationSpanMinDate
@@ -75,6 +79,7 @@ namespace FlomtManager.App.ViewModels
             {
                 var index = _dates.BinarySearchClosestValueIndex(CurrentDisplayDate);
                 var dataGroup = _data[index];
+                Parameters.First().Value = CurrentDisplayDate.ToDateTime().ToString();
                 foreach (var (parameter, value) in dataGroup.Parameters.Zip(dataGroup.Values))
                 {
                     var parameterViewModel = Parameters.FirstOrDefault(x => x.Parameter.Number == parameter.Number);
@@ -94,7 +99,7 @@ namespace FlomtManager.App.ViewModels
 
         private void ChangeIntegration()
         {
-            if (_dates != null && _data != null && _integrationParameters != null)
+            if (_dates != null && _data != null && _integrationParameters != null && IntegrationSpanMinDate != default && IntegrationSpanMaxDate != default)
             {
                 var workingTimeIndex = _data.First().Parameters.ToList().FindIndex(x => x.ParameterType == ParameterType.WorkingTimeInSecondsInArchiveInterval);
                 var minIndex = _dates.BinarySearchClosestValueIndex(IntegrationSpanMinDate);
@@ -112,7 +117,11 @@ namespace FlomtManager.App.ViewModels
                         return integration;
                     });
 
-                OnIntegrationChanged?.Invoke(this, _integrationParameters.Select(x => x.Item1.IntegrationNumber).Zip(integration));
+                OnIntegrationChanged?.Invoke(this, new() {
+                    IntegrationStart = DateTime.FromOADate(IntegrationSpanMinDate),
+                    IntegrationEnd = DateTime.FromOADate(IntegrationSpanMaxDate),
+                    IntegrationData = _integrationParameters.Select(x => x.Item1.IntegrationNumber).Zip(integration)
+                });
             }
         }
 
@@ -134,9 +143,33 @@ namespace FlomtManager.App.ViewModels
             }
         }
 
+        public double GetClosestDate(double date)
+        {
+            if (_dates != null)
+            {
+                var index = _dates.BinarySearchClosestValueIndex(date);
+                return _dates[index];
+            }
+            return date;
+        }
+
         private void AddParameters(IEnumerable<Parameter> parameters)
         {
             Parameters.Clear();
+            Parameters.Add(new()
+            {
+                Parameter = new()
+                {
+                    Number = 0,
+                    Comma = default,
+                    ErrorMask = default,
+                    IntegrationNumber = default,
+                    Name = "Time",
+                    Unit = string.Empty,
+                    Color = Avalonia.Media.Colors.DarkGray.ToSKColor().ToString(),
+                    ParameterType = ParameterType.Time
+                }
+            });
             foreach (var parameter in parameters)
             {
                 if (parameter.ParameterType.GetAttribute<HideAttribute>()?.Hide(HideTargets.Chart) != true)

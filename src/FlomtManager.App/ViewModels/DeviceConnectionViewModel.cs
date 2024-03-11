@@ -185,7 +185,7 @@ namespace FlomtManager.App.ViewModels
             }
             catch (Exception ex)
             {
-                await Disconnect(cancellationToken);
+                await Disconnect();
                 Log.Error(ex, string.Empty);
                 throw;
             }
