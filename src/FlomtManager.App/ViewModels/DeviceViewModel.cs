@@ -3,6 +3,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
+using FlomtManager.App.Views;
 using FlomtManager.Core.Attributes;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
@@ -38,6 +39,7 @@ namespace FlomtManager.App.ViewModels
                 this.RaiseAndSetIfChanged(ref _device, value);
                 DataGroupChart.Device = _device;
                 DataGroupIntegration.Device = _device;
+                DataGroupTable.Device = _device;
                 AddParameters();
             }
         }
@@ -47,6 +49,7 @@ namespace FlomtManager.App.ViewModels
 
         public DeviceConnectionViewModel DeviceConnection { get; set; }
         public DataGroupChartViewModel DataGroupChart { get; set; }
+        public DataGroupTableViewModel DataGroupTable { get; set; }
         public DataGroupIntegrationViewModel DataGroupIntegration { get; set; }
 
         public ObservableCollection<DataGroupValues> DataGroups { get; set; } = [];
@@ -70,6 +73,8 @@ namespace FlomtManager.App.ViewModels
             
             DataGroupChart = App.Host.Services.GetRequiredService<DataGroupChartViewModel>();
             DataGroupChart.OnIntegrationChanged += _OnIntegrationChanged;
+
+            DataGroupTable = App.Host.Services.GetRequiredService<DataGroupTableViewModel>();
 
             DataGroupIntegration = App.Host.Services.GetRequiredService<DataGroupIntegrationViewModel>();
         }
@@ -205,7 +210,7 @@ namespace FlomtManager.App.ViewModels
 
         private void UpdateData()
         {
-            ArgumentNullException.ThrowIfNull(Device);
+            DataGroupChart.UpdateData();
             DataGroupChart.UpdateData();
         }
 

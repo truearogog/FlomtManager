@@ -3,7 +3,8 @@
     [Flags]
     public enum HideTargets
     {
-        Chart = 1,
+        Chart = 1 << 0,
+        Table = 1 << 1,
         All = 1 << 8 - 1,
     }
 }

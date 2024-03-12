@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Skia;
 using Avalonia.Styling;
 using DynamicData;
+using FlomtManager.App.Extensions;
 using FlomtManager.App.ViewModels;
 using FlomtManager.Core.Attributes;
 using FlomtManager.Core.Enums;
@@ -44,7 +45,7 @@ namespace FlomtManager.App.Views
             Chart.PointerReleased += Chart_PointerReleased;
 
             SetChartTheme();
-            App.Current!.ActualThemeVariantChanged += Current_ActualThemeVariantChanged;
+            App.Current!.ActualThemeVariantChanged += _ActualThemeVariantChanged;
         }
 
         protected override void OnDataContextChanged(EventArgs e)
@@ -76,16 +77,16 @@ namespace FlomtManager.App.Views
 
         private void _OnDataUpdate(object? sender, IEnumerable<DataGroupValues> dataGroups)
         {
-            foreach (var (parameterNumber, chart) in _charts)
-            {
-                Chart.Plot.Remove(chart);
-                _charts.Remove(parameterNumber);
-            }
-
             var parameters = dataGroups.FirstOrDefault()?.Parameters;
             if (parameters == null)
             {
                 return;
+            }
+
+            foreach (var (parameterNumber, chart) in _charts)
+            {
+                Chart.Plot.Remove(chart);
+                _charts.Remove(parameterNumber);
             }
 
             var current = 0;
@@ -322,7 +323,7 @@ namespace FlomtManager.App.Views
             return null;
         }
 
-        private void Current_ActualThemeVariantChanged(object? sender, EventArgs e)
+        private void _ActualThemeVariantChanged(object? sender, EventArgs e)
         {
             SetChartTheme();
         }
@@ -331,27 +332,18 @@ namespace FlomtManager.App.Views
         {
             var themeVariant = App.Current!.ActualThemeVariant;
 
-            var backgroundColor = GetFromBrushResource("SemiColorBackground0", themeVariant);
+            var backgroundColor = App.Current!.GetBrushResource("SemiColorBackground0", themeVariant).Color.ToSKColor();
             Chart.Plot.DataBackground = ScottPlot.Color.FromSKColor(backgroundColor);
             Chart.Plot.FigureBackground = ScottPlot.Color.FromSKColor(backgroundColor);
 
-            var axesColor = GetFromBrushResource("SemiGrey9", themeVariant);
+            var axesColor = App.Current!.GetBrushResource("SemiGrey9", themeVariant).Color.ToSKColor();
             Chart.Plot.Style.ColorAxes(ScottPlot.Color.FromSKColor(axesColor));
 
-            var gridColor = GetFromBrushResource("SemiGrey1", themeVariant);
+            var gridColor = App.Current!.GetBrushResource("SemiGrey1", themeVariant).Color.ToSKColor();
             Chart.Plot.Style.ColorGrids(ScottPlot.Color.FromSKColor(gridColor));
             
-            var crosshairColor = GetFromBrushResource("SemiBlue4", themeVariant);
+            var crosshairColor = App.Current!.GetBrushResource("SemiBlue4", themeVariant).Color.ToSKColor();
             _crosshair!.LineStyle.Color = ScottPlot.Color.FromSKColor(crosshairColor);
-        }
-
-        private static SKColor GetFromBrushResource(string resourceKey, ThemeVariant themeVariant)
-        {
-            if (!App.Current!.TryGetResource(resourceKey, themeVariant, out var brush))
-            {
-                throw new InvalidOperationException($"{resourceKey} for requested theme not found!");
-            }
-            return ((brush as SolidColorBrush)?.Color ?? throw new InvalidCastException()).ToSKColor();
         }
     }
 }

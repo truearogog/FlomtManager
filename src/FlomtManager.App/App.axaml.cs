@@ -49,6 +49,7 @@ namespace FlomtManager.App
                     services.AddTransient<DeviceCreateUpdateViewModel>();
                     services.AddTransient<DeviceConnectionViewModel>();
                     services.AddTransient<DataGroupChartViewModel>();
+                    services.AddTransient<DataGroupTableViewModel>();
                     services.AddTransient<DataGroupIntegrationViewModel>();
 
                     // register mapper

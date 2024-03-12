@@ -24,6 +24,7 @@ namespace FlomtManager.App.ViewModels
             var dataGroups = await _dataService.GetDataGroupValues(Device?.Id ?? 0);
             if (dataGroups.Length != 0)
             {
+                Data = new(dataGroups);
                 OnDataUpdate?.Invoke(this, dataGroups);
             }
         }

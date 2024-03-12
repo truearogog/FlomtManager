@@ -200,7 +200,7 @@
 						</StackPanel>
 					</TabItem.Header>
 					
-					<local:DataGroupTable />
+					<local:DataGroupTable DataContext="{Binding DataGroupTable}" />
 				</TabItem>
 			</TabControl>
 		</Grid>

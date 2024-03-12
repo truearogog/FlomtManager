@@ -12,6 +12,10 @@
 		AutoGenerateColumns="False"
 		IsReadOnly="True"
 		ItemsSource="{Binding Data}">
-		
+		<DataGrid.Styles>
+			<Style Selector="DataGridRow:nth-child(even)">
+				<Setter Property="Background" Value="{DynamicResource SemiGrey0}" />
+			</Style>
+		</DataGrid.Styles>
 	</DataGrid>
 </UserControl>
