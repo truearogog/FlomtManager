@@ -1,19 +1,20 @@
-﻿using Avalonia.Platform.Storage;
+﻿using System.Collections.Frozen;
+using System.Timers;
+using Avalonia.Platform.Storage;
 using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
 using FlomtManager.Core.Attributes;
 using FlomtManager.Core.Constants;
+using FlomtManager.Core.Entities;
 using FlomtManager.Core.Enums;
-using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
 using FlomtManager.Core.Services;
 using FlomtManager.Framework.Extensions;
 using FlomtManager.Modbus;
 using HexIO;
+using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using Serilog;
-using System.Collections.Frozen;
-using System.Timers;
 using Timer = System.Timers.Timer;
 
 namespace FlomtManager.App.ViewModels
@@ -37,21 +38,26 @@ namespace FlomtManager.App.ViewModels
         private byte _errorNumber;
 
         // parameter number, parameters
-        private IReadOnlyDictionary<byte, Parameter>? _parameters;
+        private IReadOnlyDictionary<byte, Parameter> _parameters;
 
         // parameter type, size in bytes
         private IReadOnlyDictionary<ParameterType, byte> _parameterTypeSizes;
 
-        private Device? _device;
-        private DeviceDefinition? _deviceDefinition;
-        private IModbusProtocol? _modbusProtocol;
-        private Timer? _dataReadTimer;
+        private Device _device;
+        private DeviceDefinition _deviceDefinition;
+        private IModbusProtocol _modbusProtocol;
+        private Timer _dataReadTimer;
 
-        public event EventHandler<DeviceConnectionDataEventArgs>? OnConnectionData;
-        public event EventHandler<DeviceConnectionErrorEventArgs>? OnConnectionError;
+        public event EventHandler<DeviceConnectionDataEventArgs> OnConnectionData;
+        public event EventHandler<DeviceConnectionErrorEventArgs> OnConnectionError;
 
-        public DeviceConnectionViewModel(DeviceStore deviceStore, IDeviceRepository deviceRepository, IModbusService modbusService,
-            IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository, IDataGroupRepository dataGroupRepository)
+        public DeviceConnectionViewModel(
+            DeviceStore deviceStore,
+            IDeviceRepository deviceRepository,
+            IModbusService modbusService,
+            IDeviceDefinitionRepository deviceDefinitionRepository,
+            IParameterRepository parameterRepository,
+            IDataGroupRepository dataGroupRepository)
         {
             _deviceStore = deviceStore;
             _deviceRepository = deviceRepository;
@@ -69,7 +75,7 @@ namespace FlomtManager.App.ViewModels
         }
 
         private SemaphoreSlim _semaphore = new(1, 1);
-        private async void _dataReadTimer_Elapsed(object? sender, ElapsedEventArgs e)
+        private async void _dataReadTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             await _semaphore.WaitAsync();
 
@@ -149,23 +155,27 @@ namespace FlomtManager.App.ViewModels
                 // if first time - read device definition and parameter definitions
                 if (device.DeviceDefinitionId == 0)
                 {
-                    deviceDefinition = await _deviceDefinitionRepository.Create(deviceDefinition);
+                    _deviceDefinitionRepository.Add(deviceDefinition);
+                    await _deviceDefinitionRepository.SaveChangesAsync(cancellationToken);
                     device.DeviceDefinitionId = deviceDefinition.Id;
-                    await _deviceStore.UpdateDevice(_deviceRepository, device);
+                    await _deviceRepository.SaveChangesAsync(cancellationToken);
+
+                    _deviceStore.UpdateDevice(await _deviceRepository.GetByIdAsyncNonTracking(device.Id, cancellationToken));
 
                     var parameters = await _modbusService.ReadParameterDefinitions(_modbusProtocol, device.SlaveId, deviceDefinition, cancellationToken);
                     foreach (var parameter in parameters)
                     {
                         parameter.DeviceId = device.Id;
                     }
-                    await _parameterRepository.CreateRange(parameters);
+                    _parameterRepository.AddRange(parameters);
+                    await _parameterRepository.SaveChangesAsync(cancellationToken);
                     _deviceDefinition = deviceDefinition;
                 }
 
                 // else - read device definition and compare crc
                 else
                 {
-                    var oldDeviceDefinition = await _deviceDefinitionRepository.GetById(device.DeviceDefinitionId);
+                    var oldDeviceDefinition = await _deviceDefinitionRepository.GetByIdAsync(device.DeviceDefinitionId, cancellationToken);
                     if (deviceDefinition.CRC != oldDeviceDefinition!.CRC)
                     {
                         throw new ModbusException("Device definitions have changed.");
@@ -176,7 +186,7 @@ namespace FlomtManager.App.ViewModels
                 _device = device;
 
                 cancellationToken.ThrowIfCancellationRequested();
-                _parameters = (await _parameterRepository.GetAll(x => x.DeviceId == device.Id)).ToFrozenDictionary(x => x.Number, x => x);
+                _parameters = (await _parameterRepository.GetAll().Where(x => x.DeviceId == device.Id).ToListAsync()).ToFrozenDictionary(x => x.Number, x => x);
                 _errorNumber = _parameters.Values.FirstOrDefault(x => x.ParameterType == ParameterType.Error)?.Number ?? 0;
 
                 _dataReadTimer.Start();
@@ -284,9 +294,11 @@ namespace FlomtManager.App.ViewModels
 
                 if (device.DeviceDefinitionId == 0)
                 {
-                    deviceDefinition = await _deviceDefinitionRepository.Create(deviceDefinition);
+                    _deviceDefinitionRepository.Add(deviceDefinition);
+                    await _deviceDefinitionRepository.SaveChangesAsync(cancellationToken);
                     device.DeviceDefinitionId = deviceDefinition.Id;
-                    await _deviceStore.UpdateDevice(_deviceRepository, device);
+                    await _deviceRepository.SaveChangesAsync();
+                    _deviceStore.UpdateDevice(await _deviceRepository.GetByIdAsyncNonTracking(device.Id, cancellationToken));
 
                     var parameterBytes = bytes.AsMemory(deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * 16);
                     var parameters = _modbusService.ParseParameterDefinitions(parameterBytes.Span);
@@ -294,14 +306,15 @@ namespace FlomtManager.App.ViewModels
                     {
                         parameter.DeviceId = device.Id;
                     }
-                    await _parameterRepository.CreateRange(parameters);
+                    _parameterRepository.AddRange(parameters);
+                    await _parameterRepository.SaveChangesAsync(cancellationToken);
                     _deviceDefinition = deviceDefinition;
                 }
 
                 // else - read device definition and compare crc
                 else
                 {
-                    var oldDeviceDefinition = await _deviceDefinitionRepository.GetById(device.DeviceDefinitionId);
+                    var oldDeviceDefinition = await _deviceDefinitionRepository.GetByIdAsync(device.DeviceDefinitionId);
                     if (deviceDefinition.CRC != oldDeviceDefinition!.CRC)
                     {
                         throw new ModbusException("Device definitions have changed.");
@@ -338,7 +351,7 @@ namespace FlomtManager.App.ViewModels
             ArgumentNullException.ThrowIfNull(_device);
             ArgumentNullException.ThrowIfNull(_deviceDefinition);
 
-            _parameters = (await _parameterRepository.GetAll(x => x.DeviceId == _device.Id)).ToFrozenDictionary(x => x.Number, x => x);
+            _parameters = (await _parameterRepository.GetAll().Where(x => x.DeviceId == _device.Id).ToListAsync()).ToFrozenDictionary(x => x.Number, x => x);
 
             var dataGroups = new List<DataGroup>();
             var emptyBlock = Enumerable.Repeat<byte>(0, _deviceDefinition.AverageParameterArchiveLineLength).ToArray();
@@ -348,7 +361,7 @@ namespace FlomtManager.App.ViewModels
                 var date = dateHours.AddHours(-i);
                 var blockBytes = bytes.Slice(i * _deviceDefinition.AverageParameterArchiveLineLength, _deviceDefinition.AverageParameterArchiveLineLength);
                 if (!blockBytes.Span.SequenceEqual(emptyBlock) && 
-                    !await _dataGroupRepository.Any(x => x.DateTime == date && x.DeviceId == _device.Id))
+                    !await _dataGroupRepository.GetAll().AnyAsync(x => x.DateTime == date && x.DeviceId == _device.Id))
                 {
                     dataGroups.Add(new()
                     {
@@ -359,10 +372,11 @@ namespace FlomtManager.App.ViewModels
                 }
             }
 
-            await _dataGroupRepository.CreateRange(dataGroups);
+            _dataGroupRepository.AddRange(dataGroups);
+            await _dataGroupRepository.SaveChangesAsync(cancellationToken);
 
             _deviceDefinition.LastArchiveRead = DateTime.Now;
-            await _deviceDefinitionRepository.Update(_deviceDefinition);
+            await _deviceDefinitionRepository.SaveChangesAsync(cancellationToken);
         }
 
         private async Task<IReadOnlyDictionary<byte, ParameterValue>> ReadParameterLine(

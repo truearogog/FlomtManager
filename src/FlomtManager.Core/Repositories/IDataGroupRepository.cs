@@ -1,9 +1,6 @@
-﻿using FlomtManager.Core.Models;
-using FlomtManager.Core.Repositories.Base;
+﻿using FlomtManager.Core.Entities;
 
 namespace FlomtManager.Core.Repositories
 {
-    public interface IDataGroupRepository : IRepositoryBase<DataGroup>
-    {
-    }
+    public interface IDataGroupRepository : IRepository<DataGroup>;
 }

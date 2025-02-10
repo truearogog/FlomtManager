@@ -5,6 +5,7 @@ using Avalonia.Platform.Storage;
 using FlomtManager.App.Extensions;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
+using FlomtManager.Core.Entities;
 using FlomtManager.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -63,12 +64,12 @@ namespace FlomtManager.App.Views
             }
         }
 
-        private void _CloseRequested(object? sender, EventArgs e)
+        private void _CloseRequested(object sender, EventArgs e)
         {
             Close();
         }
 
-        private void _DeviceUpdateRequested(object? sender, Device device)
+        private void _DeviceUpdateRequested(object sender, Device device)
         {
             var viewModel = App.Host.Services.GetRequiredService<DeviceCreateUpdateViewModel>();
             viewModel.SetDevice(device);
@@ -81,12 +82,12 @@ namespace FlomtManager.App.Views
             window.ShowDialog(parentWindow);
         }
 
-        private void _NotificationRequested(object? sender, (NotificationType type, string message) notification)
+        private void _NotificationRequested(object sender, (NotificationType type, string message) notification)
         {
             _windowNotificationManager?.Show(new Notification(notification.type.ToString(), notification.message, notification.type));
         }
 
-        private async void _ReadFromFileRequested(object? sender, EventArgs e)
+        private async void _ReadFromFileRequested(object sender, EventArgs e)
         {
             if (DataContext is DeviceViewModel viewModel)
             {

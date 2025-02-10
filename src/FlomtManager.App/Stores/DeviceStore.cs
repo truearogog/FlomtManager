@@ -1,29 +1,25 @@
-﻿using FlomtManager.Core.Models;
-using FlomtManager.Core.Repositories;
+﻿using FlomtManager.Core.Entities;
 
 namespace FlomtManager.App.Stores
 {
     public class DeviceStore
     {
-        public event Action<Device>? DeviceCreated;
-        public event Action<Device>? DeviceUpdated;
-        public event Action<int>? DeviceDeleted;
+        public event Action<Device> DeviceCreated;
+        public event Action<Device> DeviceUpdated;
+        public event Action<int> DeviceDeleted;
 
-        public async Task CreateDevice(IDeviceRepository deviceRepository, Device device)
+        public void CreateDevice(Device device)
         {
-            var createdDevice = await deviceRepository.Create(device);
-            DeviceCreated?.Invoke(createdDevice);
+            DeviceCreated?.Invoke(device);
         }
 
-        public async Task UpdateDevice(IDeviceRepository deviceRepository, Device device)
+        public void UpdateDevice(Device device)
         {
-            var updatedDevice = await deviceRepository.Update(device);
-            DeviceUpdated?.Invoke(updatedDevice);
+            DeviceUpdated?.Invoke(device);
         }
 
-        public async Task DeleteDevice(IDeviceRepository deviceRepository, int id)
+        public void DeleteDevice(int id)
         {
-            await deviceRepository.Delete(id);
             DeviceDeleted?.Invoke(id);
         }
     }

@@ -1,8 +1,9 @@
-﻿using FlomtManager.App.Models;
-using FlomtManager.Core.Models;
+﻿using System.Collections.ObjectModel;
+using FlomtManager.App.Models;
+using FlomtManager.Core.Entities;
 using FlomtManager.Core.Repositories;
+using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
-using System.Collections.ObjectModel;
 
 namespace FlomtManager.App.ViewModels
 {
@@ -11,8 +12,8 @@ namespace FlomtManager.App.ViewModels
         private readonly IDeviceDefinitionRepository _deviceDefinitionRepository = deviceDefinitionRepository;
         private readonly IParameterRepository _parameterRepository = parameterRepository;
 
-        private Device? _device;
-        public Device? Device
+        private Device _device;
+        public Device Device
         {
             get => _device;
             set
@@ -41,11 +42,11 @@ namespace FlomtManager.App.ViewModels
         private async void AddParameters()
         {
             ArgumentNullException.ThrowIfNull(Device);
-            var deviceDefinition = await _deviceDefinitionRepository.GetById(Device.Id);
+            var deviceDefinition = await _deviceDefinitionRepository.GetByIdAsync(Device.Id);
             if (deviceDefinition != null)
             {
                 Parameters.Clear();
-                var parameters = await _parameterRepository.GetAll(x => x.DeviceId == Device.Id);
+                var parameters = await _parameterRepository.GetAll().Where(x => x.DeviceId == Device.Id).ToListAsync();
                 foreach (var parameterByte in deviceDefinition.AverageParameterArchiveLineDefinition!)
                 {
                     var parameter = parameters.FirstOrDefault(x => x.Number == parameterByte);

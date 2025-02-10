@@ -1,7 +1,8 @@
-﻿using FlomtManager.Core.Models;
+﻿using System.Collections.ObjectModel;
+using FlomtManager.Core.Entities;
+using FlomtManager.Core.Models;
 using FlomtManager.Core.Services;
 using ReactiveUI;
-using System.Collections.ObjectModel;
 
 namespace FlomtManager.App.ViewModels
 {
@@ -9,8 +10,8 @@ namespace FlomtManager.App.ViewModels
     {
         private readonly IDataService _dataService = dataService;
 
-        private Device? _device;
-        public Device? Device
+        private Device _device;
+        public Device Device
         {
             get => _device;
             set => this.RaiseAndSetIfChanged(ref _device, value);

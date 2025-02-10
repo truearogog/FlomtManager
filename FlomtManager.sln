@@ -7,12 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.App", "src\Flo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Core", "src\FlomtManager.Core\FlomtManager.Core.csproj", "{5C5403FA-0066-4631-9F6A-4C527167A1B3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Data.EF", "src\FlomtManager.Data.EF\FlomtManager.Data.EF.csproj", "{830A2EEB-1C84-4443-A775-6D9A36FF3773}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Data.EF.SQLite", "src\FlomtManager.Data.EF.SQLite\FlomtManager.Data.EF.SQLite.csproj", "{96286E38-7561-459D-BAB0-3CAB9980543A}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Services", "src\FlomtManager.Services\FlomtManager.Services.csproj", "{45D178EB-EEB8-4C36-96D2-18979EF00933}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Framework", "src\FlomtManager.Framework\FlomtManager.Framework.csproj", "{4868329E-18DD-421A-9D71-016324E15E7D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Modbus", "src\FlomtManager.Modbus\FlomtManager.Modbus.csproj", "{2B5BB13E-0EB6-42E9-B17F-D07C940A2D54}"
@@ -31,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{50985161
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlomtManager.Framework.Skia", "src\FlomtManager.Framework.Skia\FlomtManager.Framework.Skia.csproj", "{311EE259-E1CF-4508-A1E9-D57CE04983D6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlomtManager.Infrastructure", "src\FlomtManager.Infrastructure\FlomtManager.Infrastructure.csproj", "{76A6A519-AC0A-42CE-8001-54E32D5FC390}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,18 +41,6 @@ Global
 		{5C5403FA-0066-4631-9F6A-4C527167A1B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C5403FA-0066-4631-9F6A-4C527167A1B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C5403FA-0066-4631-9F6A-4C527167A1B3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{830A2EEB-1C84-4443-A775-6D9A36FF3773}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{830A2EEB-1C84-4443-A775-6D9A36FF3773}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{830A2EEB-1C84-4443-A775-6D9A36FF3773}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{830A2EEB-1C84-4443-A775-6D9A36FF3773}.Release|Any CPU.Build.0 = Release|Any CPU
-		{96286E38-7561-459D-BAB0-3CAB9980543A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{96286E38-7561-459D-BAB0-3CAB9980543A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{96286E38-7561-459D-BAB0-3CAB9980543A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{96286E38-7561-459D-BAB0-3CAB9980543A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{45D178EB-EEB8-4C36-96D2-18979EF00933}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{45D178EB-EEB8-4C36-96D2-18979EF00933}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{45D178EB-EEB8-4C36-96D2-18979EF00933}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{45D178EB-EEB8-4C36-96D2-18979EF00933}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4868329E-18DD-421A-9D71-016324E15E7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4868329E-18DD-421A-9D71-016324E15E7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4868329E-18DD-421A-9D71-016324E15E7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -77,6 +61,10 @@ Global
 		{311EE259-E1CF-4508-A1E9-D57CE04983D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{311EE259-E1CF-4508-A1E9-D57CE04983D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{311EE259-E1CF-4508-A1E9-D57CE04983D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76A6A519-AC0A-42CE-8001-54E32D5FC390}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76A6A519-AC0A-42CE-8001-54E32D5FC390}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76A6A519-AC0A-42CE-8001-54E32D5FC390}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76A6A519-AC0A-42CE-8001-54E32D5FC390}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

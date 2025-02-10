@@ -1,18 +1,13 @@
-using AutoMapper;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using FlomtManager.App.Profiles;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
 using FlomtManager.App.Views;
-using FlomtManager.Data.EF;
-using FlomtManager.Data.EF.Extensions;
-using FlomtManager.Data.EF.SQLite;
-using FlomtManager.Services.Extensions;
+using FlomtManager.Core;
+using FlomtManager.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -31,10 +26,7 @@ namespace FlomtManager.App
                 .UseSerilog()
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddAppEF<SQLiteAppDb>(options =>
-                    {
-                        options.UseSqlite(context.Configuration.GetConnectionString("AppDb") ?? throw new InvalidOperationException("Connection string 'AppDb' not found."));
-                    }, scope: ServiceLifetime.Transient);
+                    services.AppAppEF(context.Configuration);
                     services.AddServices();
 
                     // register stores
@@ -51,13 +43,6 @@ namespace FlomtManager.App
                     services.AddTransient<DataGroupChartViewModel>();
                     services.AddTransient<DataGroupTableViewModel>();
                     services.AddTransient<DataGroupIntegrationViewModel>();
-
-                    // register mapper
-                    var config = new MapperConfiguration(cfg =>
-                    {
-                        cfg.AddProfile(typeof(DeviceProfile));
-                    });
-                    services.Add(new ServiceDescriptor(typeof(IMapper), new Mapper(config)));
                 })
                 .Build();
             Host.Start();

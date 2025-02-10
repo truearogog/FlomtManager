@@ -1,10 +1,7 @@
-﻿#nullable disable
-
-using ReactiveUI;
-using System.ComponentModel.DataAnnotations;
-using System;
-using FlomtManager.Core.Enums;
+﻿using System.ComponentModel.DataAnnotations;
 using System.IO.Ports;
+using FlomtManager.Core.Enums;
+using ReactiveUI;
 
 namespace FlomtManager.App.ViewModels
 {
@@ -94,8 +91,5 @@ namespace FlomtManager.App.ViewModels
             get => _port;
             set => this.RaiseAndSetIfChanged(ref _port, value);
         }
-
-        public DateTime Created { get; set; }
-        public int DeviceDefinitionId { get; set; }
     }
 }

@@ -1,11 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.LogicalTree;
 using FlomtManager.App.Extensions;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
 using FlomtManager.App.Views;
-using FlomtManager.Core.Models;
+using FlomtManager.Core.Entities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlomtManager.App.Pages

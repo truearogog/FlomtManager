@@ -1,15 +1,15 @@
-﻿using Avalonia.Media;
+﻿using System.Collections.ObjectModel;
+using System.Reactive.Linq;
 using Avalonia.Skia;
 using FlomtManager.App.Models;
 using FlomtManager.Core.Attributes;
+using FlomtManager.Core.Entities;
 using FlomtManager.Core.Enums;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Services;
 using FlomtManager.Framework.Extensions;
 using ReactiveUI;
 using ScottPlot;
-using System.Collections.ObjectModel;
-using System.Reactive.Linq;
 
 namespace FlomtManager.App.ViewModels
 {
@@ -17,23 +17,23 @@ namespace FlomtManager.App.ViewModels
     {
         private readonly IDataService _dataService;
 
-        private double[]? _dates;
-        private DataGroupValues[]? _data;
+        private double[] _dates;
+        private DataGroupValues[] _data;
 
         // parameter, position
-        private ReadOnlyCollection<(Parameter, int)>? _integrationParameters;
+        private ReadOnlyCollection<(Parameter, int)> _integrationParameters;
 
-        private Device? _device;
-        public Device? Device
+        private Device _device;
+        public Device Device
         {
             get => _device;
             set => this.RaiseAndSetIfChanged(ref _device, value);
         }
 
         public ObservableCollection<ParameterViewModel> Parameters { get; set; } = [];
-        public event EventHandler<IEnumerable<DataGroupValues>>? OnDataUpdate;
-        public event EventHandler<byte>? OnParameterToggled;
-        public event EventHandler<IntegrationChangedEventArgs>? OnIntegrationChanged;
+        public event EventHandler<IEnumerable<DataGroupValues>> OnDataUpdate;
+        public event EventHandler<byte> OnParameterToggled;
+        public event EventHandler<IntegrationChangedEventArgs> OnIntegrationChanged;
 
         private double _integrationSpanMinDate;
         public double IntegrationSpanMinDate

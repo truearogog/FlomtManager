@@ -1,9 +1,8 @@
-﻿using FlomtManager.App.Stores;
-using FlomtManager.Core.Models;
+﻿using System.Collections.ObjectModel;
+using FlomtManager.App.Stores;
+using FlomtManager.Core.Entities;
 using FlomtManager.Core.Repositories;
-using System;
-using System.Collections.ObjectModel;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace FlomtManager.App.ViewModels
 {
@@ -12,9 +11,9 @@ namespace FlomtManager.App.ViewModels
         private readonly IDeviceRepository _deviceRepository;
         private readonly DeviceStore _deviceStore;
 
-        public event EventHandler? DeviceCreateRequested;
-        public event EventHandler<Device>? DeviceUpdateRequested;
-        public event EventHandler<Device>? DeviceViewRequested;
+        public event EventHandler DeviceCreateRequested;
+        public event EventHandler<Device> DeviceUpdateRequested;
+        public event EventHandler<Device> DeviceViewRequested;
 
         public ObservableCollection<Device> Devices { get; set; } = [];
 
@@ -48,7 +47,7 @@ namespace FlomtManager.App.ViewModels
         private async void AddDevices()
         {
             Devices.Clear();
-            await foreach (var device in _deviceRepository.GetAllAsync())
+            await foreach (var device in _deviceRepository.GetAll().AsAsyncEnumerable())
             {
                 Devices.Add(device);
             }

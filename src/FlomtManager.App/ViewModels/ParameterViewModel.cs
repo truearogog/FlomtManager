@@ -1,4 +1,4 @@
-﻿using FlomtManager.Core.Models;
+﻿using FlomtManager.Core.Entities;
 using ReactiveUI;
 
 namespace FlomtManager.App.ViewModels

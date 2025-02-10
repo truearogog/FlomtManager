@@ -6,7 +6,7 @@ namespace FlomtManager.Framework.Skia
     {
         private const int SAME_HUE_RANGE = 5;
 
-        public static SKColor Next(IEnumerable<float>? hues = null)
+        public static SKColor Next(IEnumerable<float> hues = null)
         {
             var h = Random.Shared.Next(0, 360);
             if (hues != null)

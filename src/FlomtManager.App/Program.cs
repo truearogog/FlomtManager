@@ -1,11 +1,11 @@
-﻿using Avalonia;
+﻿using System.Reflection;
+using Avalonia;
 using Avalonia.Dialogs;
 using Avalonia.ReactiveUI;
 using Projektanker.Icons.Avalonia;
 using Projektanker.Icons.Avalonia.FontAwesome;
 using Serilog;
 using Serilog.Events;
-using System.Reflection;
 
 namespace FlomtManager.App
 {

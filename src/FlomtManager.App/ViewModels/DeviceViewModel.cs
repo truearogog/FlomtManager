@@ -1,37 +1,34 @@
-﻿using Avalonia.Controls.Notifications;
+﻿using System.Collections.ObjectModel;
+using Avalonia.Controls.Notifications;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using FlomtManager.App.Models;
 using FlomtManager.App.Stores;
-using FlomtManager.App.Views;
 using FlomtManager.Core.Attributes;
+using FlomtManager.Core.Entities;
 using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
-using FlomtManager.Core.Services;
 using FlomtManager.Framework.Extensions;
 using FlomtManager.Modbus;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
-using System.Collections.ObjectModel;
 
 namespace FlomtManager.App.ViewModels
 {
     public class DeviceViewModel : ViewModelBase
     {
-        private readonly IModbusService _modbusService;
         private readonly DeviceStore _deviceStore;
         private readonly IDeviceDefinitionRepository _deviceDefinitionRepository;
         private readonly IParameterRepository _parameterRepository;
-        private readonly IDataGroupRepository _dataGroupRepository;
-        private readonly IDataService _dataService;
 
-        public event EventHandler? CloseRequested;
-        public event EventHandler<Device>? DeviceUpdateRequested;
-        public event EventHandler<(NotificationType, string)>? NotificationRequested;
-        public event EventHandler? ReadFromFileRequested;
+        public event EventHandler CloseRequested;
+        public event EventHandler<Device> DeviceUpdateRequested;
+        public event EventHandler<(NotificationType, string)> NotificationRequested;
+        public event EventHandler ReadFromFileRequested;
 
-        private Device? _device;
-        public Device? Device
+        private Device _device;
+        public Device Device
         {
             get => _device;
             set 
@@ -54,15 +51,14 @@ namespace FlomtManager.App.ViewModels
 
         public ObservableCollection<DataGroupValues> DataGroups { get; set; } = [];
 
-        public DeviceViewModel(IModbusService modbusService, DeviceStore deviceStore, IDeviceDefinitionRepository deviceDefinitionRepository, 
-            IParameterRepository parameterRepository, IDataGroupRepository dataGroupRepository, IDataService dataService)
+        public DeviceViewModel(
+            DeviceStore deviceStore,
+            IDeviceDefinitionRepository deviceDefinitionRepository,
+            IParameterRepository parameterRepository)
         {
-            _modbusService = modbusService;
             _deviceStore = deviceStore;
             _deviceDefinitionRepository = deviceDefinitionRepository;
             _parameterRepository = parameterRepository;
-            _dataGroupRepository = dataGroupRepository;
-            _dataService = dataService;
 
             _deviceStore.DeviceUpdated += _DeviceUpdated;
             _deviceStore.DeviceDeleted += _DeviceDeleted;
@@ -79,7 +75,7 @@ namespace FlomtManager.App.ViewModels
             DataGroupIntegration = App.Host.Services.GetRequiredService<DataGroupIntegrationViewModel>();
         }
 
-        private void _OnIntegrationChanged(object? sender, IntegrationChangedEventArgs e)
+        private void _OnIntegrationChanged(object sender, IntegrationChangedEventArgs e)
         {
             DataGroupIntegration.UpdateValues(e);
         }
@@ -91,9 +87,9 @@ namespace FlomtManager.App.ViewModels
                 return;
             }
 
-            var parameters = await _parameterRepository.GetAll(x => x.DeviceId == Device.Id);
+            var parameters = await _parameterRepository.GetAll().Where(x => x.DeviceId == Device.Id).ToListAsync();
 
-            var deviceDefinition = Device.DeviceDefinition ?? _deviceDefinitionRepository.GetAllQueryable(x => x.Id == Device.Id).FirstOrDefault();
+            var deviceDefinition = Device.DeviceDefinition ?? await _deviceDefinitionRepository.GetAll().FirstOrDefaultAsync(x => x.Id == Device.Id);
             if (deviceDefinition == null)
             {
                 return;
@@ -146,7 +142,7 @@ namespace FlomtManager.App.ViewModels
             }
         }
 
-        private CancellationTokenSource? _connectionCancellationTokenSource;
+        private CancellationTokenSource _connectionCancellationTokenSource;
         public async void TryConnect()
         {
             try
@@ -214,13 +210,13 @@ namespace FlomtManager.App.ViewModels
             DataGroupChart.UpdateData();
         }
 
-        private void _OnConnectionData(object? sender, DeviceConnectionDataEventArgs e)
+        private void _OnConnectionData(object sender, DeviceConnectionDataEventArgs e)
         {
             Dispatcher.UIThread.Invoke(() =>
             {
                 foreach (var currentParameter in CurrentParameters)
                 {
-                    ParameterValue? value = e.CurrentParameters.TryGetValue(currentParameter.Parameter.Number, out var _value) ? _value : null;
+                    ParameterValue value = e.CurrentParameters.TryGetValue(currentParameter.Parameter.Number, out var _value) ? _value : null;
                     if (value != null)
                     {
                         currentParameter.Value = value.Value;
@@ -229,7 +225,7 @@ namespace FlomtManager.App.ViewModels
                 }
                 foreach (var integralParameter in IntegralParameters)
                 {
-                    ParameterValue? value = e.IntegralParameters.TryGetValue(integralParameter.Parameter.Number, out var _value) ? _value : null;
+                    ParameterValue value = e.IntegralParameters.TryGetValue(integralParameter.Parameter.Number, out var _value) ? _value : null;
                     if (value != null)
                     {
                         integralParameter.Value = value.Value;
@@ -239,7 +235,7 @@ namespace FlomtManager.App.ViewModels
             });
         }
 
-        private void _OnConnectionError(object? sender, DeviceConnectionErrorEventArgs e)
+        private void _OnConnectionError(object sender, DeviceConnectionErrorEventArgs e)
         {
             if (e.Exception is ModbusException ex)
             {

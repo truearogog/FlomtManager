@@ -1,4 +1,6 @@
-﻿namespace FlomtManager.Core.Models
+﻿using FlomtManager.Core.Entities;
+
+namespace FlomtManager.Core.Models
 {
     public class DataGroupValues
     {
