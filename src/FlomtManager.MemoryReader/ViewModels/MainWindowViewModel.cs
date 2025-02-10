@@ -1,15 +1,15 @@
-﻿using Avalonia.Controls.Notifications;
+﻿using System.Buffers;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO.Ports;
+using System.Reflection;
+using Avalonia.Controls.Notifications;
 using FlomtManager.Core.Constants;
 using FlomtManager.Core.Enums;
 using FlomtManager.Modbus;
 using HexIO;
 using ReactiveUI;
 using Serilog;
-using System.Buffers;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.IO.Ports;
-using System.Reflection;
 
 namespace FlomtManager.MemoryReader.ViewModels
 {
@@ -17,22 +17,22 @@ namespace FlomtManager.MemoryReader.ViewModels
     {
         public FormViewModel Form { get; set; } = new();
 
-        private string? _successMessage;
-        public string? SuccessMessage
+        private string _successMessage;
+        public string SuccessMessage
         {
             get => _successMessage;
             set => this.RaiseAndSetIfChanged(ref _successMessage, value);
         }
 
-        private string? _errorMessage;
-        public string? ErrorMessage
+        private string _errorMessage;
+        public string ErrorMessage
         {
             get => _errorMessage;
             set => this.RaiseAndSetIfChanged(ref _errorMessage, value);
         }
 
-        private IModbusProtocol? _modbusProtocol = null;
-        public IModbusProtocol? ModbusProtocol
+        private IModbusProtocol _modbusProtocol = null;
+        public IModbusProtocol ModbusProtocol
         {
             get => _modbusProtocol;
             set => this.RaiseAndSetIfChanged(ref _modbusProtocol, value);
@@ -66,10 +66,10 @@ namespace FlomtManager.MemoryReader.ViewModels
         public ObservableCollection<int> DataBits { get; set; } = [5, 6, 7, 8];
         public ObservableCollection<StopBits> StopBits { get; set; } = new(Enum.GetValues<StopBits>());
 
-        private CancellationTokenSource? _cancellationTokenSource;
+        private CancellationTokenSource _cancellationTokenSource;
 
-        public event EventHandler? DirectoryRequested;
-        public event EventHandler<(NotificationType, string)>? NotificationRequested;
+        public event EventHandler DirectoryRequested;
+        public event EventHandler<(NotificationType, string)> NotificationRequested;
 
         public MainWindowViewModel()
         {

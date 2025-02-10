@@ -207,7 +207,6 @@ namespace FlomtManager.App.ViewModels
         private void UpdateData()
         {
             DataGroupChart.UpdateData();
-            DataGroupChart.UpdateData();
         }
 
         private void _OnConnectionData(object sender, DeviceConnectionDataEventArgs e)

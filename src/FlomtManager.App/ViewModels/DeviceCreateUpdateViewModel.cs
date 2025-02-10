@@ -67,7 +67,6 @@ namespace FlomtManager.App.ViewModels
 
             var entity = new Device()
             {
-                Id = Form.Id,
                 Name = Form.Name,
                 Address = Form.Address,
                 ConnectionType = Form.ConnectionType,

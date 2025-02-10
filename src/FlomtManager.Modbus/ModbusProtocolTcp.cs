@@ -7,7 +7,7 @@ namespace FlomtManager.Modbus
     {
         private readonly IPAddress _ipAddress = IPAddress.Parse(ipAddress);
         private readonly int _port = port;
-        private Socket? _socket;
+        private Socket _socket;
 
         public override bool IsOpen => _socket?.Connected ?? false;
 
@@ -15,6 +15,7 @@ namespace FlomtManager.Modbus
         {
             _socket?.Shutdown(SocketShutdown.Both);
             _socket?.Close();
+            GC.SuppressFinalize(this);
         }
 
         public override ValueTask OpenAsync(CancellationToken cancellationToken)

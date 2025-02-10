@@ -1,4 +1,5 @@
-﻿using FlomtManager.Core.Entities;
+﻿using System.Collections.Immutable;
+using FlomtManager.Core.Entities;
 using FlomtManager.Core.Enums;
 using FlomtManager.Modbus;
 
@@ -10,7 +11,7 @@ namespace FlomtManager.Core.Services
         Task<DeviceDefinition> ReadDeviceDefinition(
             IModbusProtocol modbusProtocol, byte slaveId, CancellationToken cancellationToken = default);
 
-        IEnumerable<Parameter> ParseParameterDefinitions(ReadOnlySpan<byte> bytes);
+        IReadOnlyList<Parameter> ParseParameterDefinitions(ReadOnlySpan<byte> bytes);
         Task<IEnumerable<Parameter>> ReadParameterDefinitions(
             IModbusProtocol modbusProtocol, byte slaveId, DeviceDefinition deviceDefinition, CancellationToken cancellationToken = default);
 

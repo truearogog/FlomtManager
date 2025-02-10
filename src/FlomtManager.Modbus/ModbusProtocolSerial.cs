@@ -4,7 +4,7 @@ namespace FlomtManager.Modbus
 {
     public class ModbusProtocolSerial(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits) : ModbusProtocolBase
     {
-        private SerialPort? _serialPort;
+        private SerialPort _serialPort;
         private readonly string _portName = portName;
         private readonly int _baudRate = baudRate;
         private readonly Parity _parity = parity;
@@ -16,6 +16,7 @@ namespace FlomtManager.Modbus
         public override void Dispose()
         {
             _serialPort?.Close();
+            GC.SuppressFinalize(this);
         }
 
         public override ValueTask OpenAsync(CancellationToken cancellationToken)

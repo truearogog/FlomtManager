@@ -63,7 +63,7 @@ internal sealed class ModbusService : IModbusService
         6...9 -'Q',0,0,0 - symbolic name of the parameter - 4 characters max or up to 0
         10...15 - 'm3/h',0,0 - parameter units - 6 characters max or up to 0
     */
-    public IEnumerable<Parameter> ParseParameterDefinitions(ReadOnlySpan<byte> bytes)
+    public IReadOnlyList<Parameter> ParseParameterDefinitions(ReadOnlySpan<byte> bytes)
     {
         var hues = new List<float>();
 
@@ -82,7 +82,7 @@ internal sealed class ModbusService : IModbusService
                     Number = parameterBytes[0],
                     ParameterType = type,
                     Comma = comma,
-                    ErrorMask = (ushort)(parameterBytes[2] + parameterBytes[3] * 256),
+                    ErrorMask = (ushort)(parameterBytes[2] + parameterBytes[3] << 8),
                     IntegrationNumber = parameterBytes[4],
                     Name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray()),
                     Unit = Encoding.ASCII.GetString(parameterBytes.Skip(10).TakeWhile(x => x != '\0').ToArray()),
@@ -92,7 +92,7 @@ internal sealed class ModbusService : IModbusService
                 parameters.Add(parameter);
             }
         }
-        return parameters;
+        return parameters.AsReadOnly();
     }
 
     public async Task<IEnumerable<Parameter>> ReadParameterDefinitions(
@@ -113,14 +113,18 @@ internal sealed class ModbusService : IModbusService
             0101.XXX(40-47) - S32C0D1...S32C7D1 - 32 bit value ignore 1 last digits
             0110.XXX(48-55) - S32C0D2...S32C7D2 - 32 bit value ignore 2 last digits
             0111.XXX(56-63) - S32C0D3...S32C7D3 - 32 bit value ignore 3 last digits
-            64 - 16 bit unsigned Errors
-            65 - 32 bit T working time in seconds (HHHH:MM:SS)
-            66 - 16 bit unsigned working time in seconds in archive interval
-            67 - 16 bit unsigned Working minutes in the archive interval
-            68 - 16 bit unsigned Working hours in the archived interval
-            69 - 8 bit * 6 SS:MM:HH DD.MM.YY
-            70 - U32 seconds since 2000 year
-            71 - 127 - reserved
+            01000.XXX(64-71) - S48C0...S48C7     - 64(48) bit value fixed coma(used 48 bits)
+            01001.XXX(72-79) - S48C0D1...S48C7D1 - 64(48) bit value ignore 1 last digit
+            01010.XXX(80-87) - S48C0D2...S48C7D2 - 64(48) bit value ignore 2 last digit
+            01011.XXX(88-95) - S48C0D3...S48C7D3 - 64(48) bit value ignore 3 last digit
+            96 -  16 bit unsigned Errors
+            97 -  32 bit T working time in seconds (HHHH:MM:SS)
+            98 -  16 bit unsigned working time in seconds in archive interval
+            99 -  16 bit unsigned Working minutes in the archive interval
+            100 - 16 bit unsigned Working hours in the archived interval
+            101 - 8 bit * 6 SS:MM:HH DD.MM.YY
+            102 - U32 seconds sine 2000 year
+            103 - 127 - reserved
     */
     public (ParameterType Type, byte Comma) ParseParameterTypeByte(byte parameterTypeByte)
     {
@@ -134,13 +138,17 @@ internal sealed class ModbusService : IModbusService
             >= 40 and <= 47 => (ParameterType.S32CD1, GetCommaFromByte(parameterTypeByte)),
             >= 48 and <= 55 => (ParameterType.S32CD2, GetCommaFromByte(parameterTypeByte)),
             >= 56 and <= 63 => (ParameterType.S32CD3, GetCommaFromByte(parameterTypeByte)),
-            64 => (ParameterType.Error, 1),
-            65 => (ParameterType.WorkingTimeInSeconds, 1),
-            66 => (ParameterType.WorkingTimeInSecondsInArchiveInterval, 1),
-            67 => (ParameterType.WorkingTimeInMinutesInArchiveInterval, 1),
-            68 => (ParameterType.WorkingTimeInHoursInArchiveInterval, 1),
-            69 => (ParameterType.Time, 1),
-            70 => (ParameterType.SecondsSince2000, 1),
+            >= 64 and <= 71 => (ParameterType.S48C, GetCommaFromByte(parameterTypeByte)),
+            >= 72 and <= 79 => (ParameterType.S48CD1, GetCommaFromByte(parameterTypeByte)),
+            >= 80 and <= 87 => (ParameterType.S48CD2, GetCommaFromByte(parameterTypeByte)),
+            >= 88 and <= 95 => (ParameterType.S48CD3, GetCommaFromByte(parameterTypeByte)),
+            96 => (ParameterType.Error, 1),
+            97 => (ParameterType.WorkingTimeInSeconds, 1),
+            98 => (ParameterType.WorkingTimeInSecondsInArchiveInterval, 1),
+            99 => (ParameterType.WorkingTimeInMinutesInArchiveInterval, 1),
+            100 => (ParameterType.WorkingTimeInHoursInArchiveInterval, 1),
+            101 => (ParameterType.Time, 1),
+            102 => (ParameterType.SecondsSince2000, 1),
             _ => throw new NotSupportedException(),
         };
     }
@@ -171,6 +179,10 @@ internal sealed class ModbusService : IModbusService
             ParameterType.S32CD1 => ParseS32C(bytes, comma, 1),
             ParameterType.S32CD2 => ParseS32C(bytes, comma, 2),
             ParameterType.S32CD3 => ParseS32C(bytes, comma, 3),
+            ParameterType.S48C => ParseS48C(bytes, comma, 0), 
+            ParameterType.S48CD1 => ParseS48C(bytes, comma, 1), 
+            ParameterType.S48CD2 => ParseS48C(bytes, comma, 2), 
+            ParameterType.S48CD3 => ParseS48C(bytes, comma, 3), 
             ParameterType.Error => BitConverter.ToUInt16(bytes),
             ParameterType.WorkingTimeInSeconds => BinaryPrimitives.ReadUInt32LittleEndian(bytes),
             ParameterType.WorkingTimeInSecondsInArchiveInterval => BitConverter.ToUInt16(bytes),
@@ -194,6 +206,10 @@ internal sealed class ModbusService : IModbusService
             ParameterType.S32CD1 => StringParseS32C(bytes, comma, 1),
             ParameterType.S32CD2 => StringParseS32C(bytes, comma, 2),
             ParameterType.S32CD3 => StringParseS32C(bytes, comma, 3),
+            ParameterType.S48C => StringParseS48C(bytes, comma, 0),
+            ParameterType.S48CD1 => StringParseS48C(bytes, comma, 1),
+            ParameterType.S48CD2 => StringParseS48C(bytes, comma, 2),
+            ParameterType.S48CD3 => StringParseS48C(bytes, comma, 3),
             ParameterType.Error => BitConverter.ToUInt16(bytes).ToString(),
             ParameterType.WorkingTimeInSeconds => StringParseSeconds(bytes),
             ParameterType.WorkingTimeInSecondsInArchiveInterval => BitConverter.ToUInt16(bytes).ToString(),
@@ -245,7 +261,7 @@ internal sealed class ModbusService : IModbusService
         var value = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
         var mantissa = value & 0x3FFF;
         var sign = ((value >> 14) & 1) == 0 ? 1 : -1;
-        var exponent = -(value >> 15);
+        var exponent = value >> 15;
         var commaMultiplier = GetComma(comma);
         return mantissa * sign * MathF.Pow(10, exponent) * commaMultiplier;
     }
@@ -279,6 +295,18 @@ internal sealed class ModbusService : IModbusService
     public string StringParseS32C(ReadOnlySpan<byte> bytes, byte comma, byte trim)
     {
         return FloatToString(ParseS32C(bytes, comma, trim), comma);
+    }
+
+    public float ParseS48C(ReadOnlySpan<byte> bytes, byte comma, byte trim)
+    {
+        var value = BinaryPrimitives.ReadInt64LittleEndian(bytes);
+        var commaMultiplier = GetComma(comma);
+        return (value * commaMultiplier).TrimDecimalPlaces(trim);
+    }
+
+    public string StringParseS48C(ReadOnlySpan<byte> bytes, byte comma, byte trim)
+    {
+        return FloatToString(ParseS48C(bytes, comma, trim), comma);
     }
 
     public string StringParseSeconds(ReadOnlySpan<byte> bytes)

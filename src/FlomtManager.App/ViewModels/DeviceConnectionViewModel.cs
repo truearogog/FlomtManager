@@ -1,4 +1,6 @@
-﻿using System.Collections.Frozen;
+﻿using System.Buffers.Binary;
+using System.Collections.Frozen;
+using System.Diagnostics;
 using System.Timers;
 using Avalonia.Platform.Storage;
 using FlomtManager.App.Models;
@@ -46,7 +48,7 @@ namespace FlomtManager.App.ViewModels
         private Device _device;
         private DeviceDefinition _deviceDefinition;
         private IModbusProtocol _modbusProtocol;
-        private Timer _dataReadTimer;
+        private readonly Timer _dataReadTimer;
 
         public event EventHandler<DeviceConnectionDataEventArgs> OnConnectionData;
         public event EventHandler<DeviceConnectionErrorEventArgs> OnConnectionError;
@@ -74,7 +76,7 @@ namespace FlomtManager.App.ViewModels
             _dataReadTimer.Elapsed += _dataReadTimer_Elapsed;
         }
 
-        private SemaphoreSlim _semaphore = new(1, 1);
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
         private async void _dataReadTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             await _semaphore.WaitAsync();
@@ -89,7 +91,7 @@ namespace FlomtManager.App.ViewModels
                 // read parameter values
                 var currentParameters = await ReadParameterLine(_deviceDefinition.CurrentParameterLineStart, _deviceDefinition.CurrentParameterLineLength,
                     _deviceDefinition.CurrentParameterLineDefinition);
-                var integralParameters = await ReadParameterLine(_deviceDefinition.IntegralParameterLineStart, _deviceDefinition.CurrentParameterLineLength,
+                var integralParameters = await ReadParameterLine(_deviceDefinition.IntegralParameterLineStart, _deviceDefinition.IntegralParameterLineLength,
                     _deviceDefinition.IntegralParameterLineDefinition);
 
                 // get error parameter value and apply it to parameters
@@ -361,7 +363,7 @@ namespace FlomtManager.App.ViewModels
                 var date = dateHours.AddHours(-i);
                 var blockBytes = bytes.Slice(i * _deviceDefinition.AverageParameterArchiveLineLength, _deviceDefinition.AverageParameterArchiveLineLength);
                 if (!blockBytes.Span.SequenceEqual(emptyBlock) && 
-                    !await _dataGroupRepository.GetAll().AnyAsync(x => x.DateTime == date && x.DeviceId == _device.Id))
+                    !await _dataGroupRepository.GetAll().AnyAsync(x => x.DateTime == date && x.DeviceId == _device.Id, cancellationToken))
                 {
                     dataGroups.Add(new()
                     {
@@ -396,6 +398,16 @@ namespace FlomtManager.App.ViewModels
                 {
                     var parameter = _parameters[parameterByte];
                     var size = _parameterTypeSizes[parameter.ParameterType];
+                    //if (parameter.Number == 5)
+                    //{
+                    //    var a = BinaryPrimitives.ReadUInt16LittleEndian(parameterLine.AsSpan(current, size));
+                    //    var mantissa = a & 0x3FFF;
+                    //    var sign = ((a >> 14) & 1) == 0 ? 1 : -1;
+                    //    var exponent = a >> 15;
+                    //    var commaMultiplier = _modbusService.GetComma(parameter.Comma);
+                    //    var b = mantissa * sign * MathF.Pow(10, exponent) * commaMultiplier;
+                    //    Debug.WriteLine("{0} {1} {2} {3} {4}", mantissa, sign, exponent, commaMultiplier, b);
+                    //}
                     var value = _modbusService.StringParseBytesToValue(parameterLine.AsSpan(current, size), parameter.ParameterType, parameter.Comma);
                     result.Add(parameter.Number, new() { Value = value });
                     current += size;

@@ -12,7 +12,7 @@ namespace FlomtManager.Modbus
         public abstract ValueTask CloseAsync(CancellationToken cancellationToken);
 
         public async Task<ushort[]> ReadRegistersAsync(byte slaveId, ushort start, ushort count,
-            Action<int, int>? progressHandler = null, CancellationToken cancellationToken = default)
+            Action<int, int> progressHandler = null, CancellationToken cancellationToken = default)
         {
             var bytes = await ReadRegistersBytesAsync(slaveId, start, count, progressHandler, cancellationToken);
             var registers = new ushort[count];
@@ -26,7 +26,7 @@ namespace FlomtManager.Modbus
         }
 
         public async Task<byte[]> ReadRegistersBytesAsync(byte slaveId, ushort start, ushort count,
-            Action<int, int>? progressHandler = null, CancellationToken cancellationToken = default)
+            Action<int, int> progressHandler = null, CancellationToken cancellationToken = default)
         {
             int byteCount = count * 2, left = byteCount;
             var result = new byte[byteCount];

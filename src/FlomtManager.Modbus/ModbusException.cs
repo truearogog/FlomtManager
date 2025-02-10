@@ -1,6 +1,4 @@
 ﻿namespace FlomtManager.Modbus
 {
-    public class ModbusException(string message) : Exception(message)
-    {
-    }
+    public class ModbusException(string message) : Exception(message);
 }

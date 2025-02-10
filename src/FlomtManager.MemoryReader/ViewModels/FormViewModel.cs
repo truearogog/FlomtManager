@@ -1,24 +1,24 @@
-﻿using FlomtManager.Core.Constants;
-using FlomtManager.Core.Enums;
-using ReactiveUI;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.IO.Ports;
+using FlomtManager.Core.Constants;
+using FlomtManager.Core.Enums;
+using ReactiveUI;
 
 namespace FlomtManager.MemoryReader.ViewModels
 {
     public class FormViewModel : ViewModelBase
     {
-        private string? _directory;
+        private string _directory;
         [Required]
-        public string? Directory
+        public string Directory
         {
             get => _directory;
             set => this.RaiseAndSetIfChanged(ref _directory, value);
         }
 
-        private string? _fileName;
-        public string? FileName
+        private string _fileName;
+        public string FileName
         {
             get => _fileName;
             set => this.RaiseAndSetIfChanged(ref _fileName, value);
@@ -98,8 +98,8 @@ namespace FlomtManager.MemoryReader.ViewModels
             set => this.RaiseAndSetIfChanged(ref _stopBits, value);
         }
 
-        private string? _ipAddress;
-        public string? IpAddress
+        private string _ipAddress;
+        public string IpAddress
         {
             get => _ipAddress;
             set => this.RaiseAndSetIfChanged(ref _ipAddress, value);
