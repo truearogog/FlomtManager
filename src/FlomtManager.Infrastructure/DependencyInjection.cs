@@ -15,7 +15,10 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("AppDb") ?? throw new Exception("Database connection string is null");
 
-        services.AddDbContext<IAppDb, AppDb>(options => options.UseSqlite(connectionString));
+        services.AddDbContext<IAppDb, AppDb>(options =>
+        {
+            options.UseSqlite(connectionString).EnableSensitiveDataLogging();
+        });
 
         services.AddTransient<IDataGroupRepository, DataGroupRepository>();
         services.AddTransient<IDeviceDefinitionRepository, DeviceDefinitionRepository>();

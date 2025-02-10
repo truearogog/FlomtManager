@@ -97,7 +97,8 @@ namespace FlomtManager.MemoryReader.ViewModels
                     ConnectionType.Network => new ModbusProtocolTcp(Form.IpAddress ?? string.Empty, Form.Port),
                     _ => throw new NotSupportedException()
                 };
-                await ModbusProtocol.OpenAsync(CancellationToken.None);
+                _cancellationTokenSource = new();
+                await ModbusProtocol.OpenAsync(_cancellationTokenSource.Token);
             }
             catch (Exception ex)
             {

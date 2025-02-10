@@ -38,7 +38,7 @@ namespace FlomtManager.MemoryReader
             base.OnFrameworkInitializationCompleted();
         }
 
-        private void Window_Closing(object? sender, Avalonia.Controls.WindowClosingEventArgs e)
+        private void Window_Closing(object sender, Avalonia.Controls.WindowClosingEventArgs e)
         {
             if (sender is MainWindow mainWindow && mainWindow.DataContext is MainWindowViewModel mainWindowViewModel)
             {

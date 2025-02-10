@@ -25,7 +25,7 @@ internal sealed class DataService(
         {
             return [];
         }
-        var parameters = (await parameterRepository.GetAll().Where(x => x.DeviceId == deviceId).ToListAsync()).ToFrozenDictionary(x => x.Number, x => x);
+        var parameters = (await parameterRepository.GetAll().Where(x => x.DeviceId == deviceId).ToListAsync(cancellationToken)).ToFrozenDictionary(x => x.Number, x => x);
         var dataGroups = await dataGroupRepository.GetAll().Where(x => x.DeviceId == deviceId).OrderBy(x => x.DateTime).ToListAsync(cancellationToken);
         var averageParameterDefinition = definition.AverageParameterArchiveLineDefinition!;
         var realParameters = averageParameterDefinition.Where(parameters.ContainsKey).Select(x => parameters[x]).ToArray();

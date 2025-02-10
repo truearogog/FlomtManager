@@ -149,7 +149,7 @@ namespace FlomtManager.App.ViewModels
             {
                 ArgumentNullException.ThrowIfNull(Device);
                 ArgumentNullException.ThrowIfNull(DeviceConnection);
-                _connectionCancellationTokenSource = new CancellationTokenSource();
+                _connectionCancellationTokenSource = new();
                 await DeviceConnection.Connect(Device, _connectionCancellationTokenSource.Token);
                 AddParameters();
             }

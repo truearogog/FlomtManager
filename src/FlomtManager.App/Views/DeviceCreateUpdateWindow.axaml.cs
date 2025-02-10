@@ -20,7 +20,7 @@ namespace FlomtManager.App.Views
             }
         }
 
-        private void _CloseRequested(object? sender, EventArgs e)
+        private void _CloseRequested(object sender, EventArgs e)
         {
             Close();
         }

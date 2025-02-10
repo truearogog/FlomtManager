@@ -75,7 +75,7 @@ namespace FlomtManager.App.Views
             }
         }
 
-        private void _OnDataUpdate(object? sender, IEnumerable<DataGroupValues> dataGroups)
+        private void _OnDataUpdate(object sender, IEnumerable<DataGroupValues> dataGroups)
         {
             var parameters = dataGroups.FirstOrDefault()?.Parameters;
             if (parameters == null)
@@ -109,7 +109,7 @@ namespace FlomtManager.App.Views
             Chart.Refresh();
         }
 
-        private void _OnParameterToggled(object? sender, byte parameterNumber)
+        private void _OnParameterToggled(object sender, byte parameterNumber)
         {
             if (_charts.TryGetValue(parameterNumber, out var chart))
             {
@@ -118,7 +118,7 @@ namespace FlomtManager.App.Views
             }
         }
 
-        private void Chart_PointerPressed(object? sender, PointerPressedEventArgs e)
+        private void Chart_PointerPressed(object sender, PointerPressedEventArgs e)
         {
             var point = e.GetCurrentPoint(Chart);
             var coordinates = Chart.Plot.GetCoordinates((float)point.Position.X, (float)point.Position.Y);
@@ -172,7 +172,7 @@ namespace FlomtManager.App.Views
             }
         }
 
-        private void Chart_PointerMoved(object? sender, PointerEventArgs e)
+        private void Chart_PointerMoved(object sender, PointerEventArgs e)
         {
             var point = e.GetCurrentPoint(Chart);
             var coordinates = Chart.Plot.GetCoordinates((float)point.Position.X, (float)point.Position.Y);
@@ -216,7 +216,7 @@ namespace FlomtManager.App.Views
             return double.Round(adate * 24) / 24;
         }
 
-        private void Chart_PointerReleased(object? sender, PointerReleasedEventArgs e)
+        private void Chart_PointerReleased(object sender, PointerReleasedEventArgs e)
         {
             var point = e.GetCurrentPoint(Chart);
             if (point.Properties.PointerUpdateKind == PointerUpdateKind.RightButtonReleased)
@@ -323,7 +323,7 @@ namespace FlomtManager.App.Views
             return null;
         }
 
-        private void _ActualThemeVariantChanged(object? sender, EventArgs e)
+        private void _ActualThemeVariantChanged(object sender, EventArgs e)
         {
             SetChartTheme();
         }

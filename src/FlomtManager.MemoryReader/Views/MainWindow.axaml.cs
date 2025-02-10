@@ -42,7 +42,7 @@ namespace FlomtManager.MemoryReader.Views
             }
         }
 
-        private async void _DirectoryRequested(object? sender, EventArgs e)
+        private async void _DirectoryRequested(object sender, EventArgs e)
         {
             if (DataContext is MainWindowViewModel viewModel)
             {
@@ -69,7 +69,7 @@ namespace FlomtManager.MemoryReader.Views
             }
         }
 
-        private void _NotificationRequested(object? sender, (NotificationType type, string message) notification)
+        private void _NotificationRequested(object sender, (NotificationType type, string message) notification)
         {
             _windowNotificationManager?.Show(new Notification(notification.type.ToString(), notification.message, notification.type));
         }

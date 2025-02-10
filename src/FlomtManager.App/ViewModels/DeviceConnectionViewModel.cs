@@ -1,6 +1,4 @@
-﻿using System.Buffers.Binary;
-using System.Collections.Frozen;
-using System.Diagnostics;
+﻿using System.Collections.Frozen;
 using System.Timers;
 using Avalonia.Platform.Storage;
 using FlomtManager.App.Models;
@@ -159,8 +157,8 @@ namespace FlomtManager.App.ViewModels
                 {
                     _deviceDefinitionRepository.Add(deviceDefinition);
                     await _deviceDefinitionRepository.SaveChangesAsync(cancellationToken);
-                    device.DeviceDefinitionId = deviceDefinition.Id;
-                    await _deviceRepository.SaveChangesAsync(cancellationToken);
+                    await _deviceRepository.GetAll().Where(x => x.Id == device.Id)
+                        .ExecuteUpdateAsync(x => x.SetProperty(y => y.DeviceDefinitionId, deviceDefinition.Id));
 
                     _deviceStore.UpdateDevice(await _deviceRepository.GetByIdAsyncNonTracking(device.Id, cancellationToken));
 
@@ -298,8 +296,9 @@ namespace FlomtManager.App.ViewModels
                 {
                     _deviceDefinitionRepository.Add(deviceDefinition);
                     await _deviceDefinitionRepository.SaveChangesAsync(cancellationToken);
-                    device.DeviceDefinitionId = deviceDefinition.Id;
-                    await _deviceRepository.SaveChangesAsync();
+                    await _deviceRepository.GetAll().Where(x => x.Id == device.Id)
+                        .ExecuteUpdateAsync(x => x.SetProperty(y => y.DeviceDefinitionId, deviceDefinition.Id));
+
                     _deviceStore.UpdateDevice(await _deviceRepository.GetByIdAsyncNonTracking(device.Id, cancellationToken));
 
                     var parameterBytes = bytes.AsMemory(deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * 16);
@@ -398,16 +397,6 @@ namespace FlomtManager.App.ViewModels
                 {
                     var parameter = _parameters[parameterByte];
                     var size = _parameterTypeSizes[parameter.ParameterType];
-                    //if (parameter.Number == 5)
-                    //{
-                    //    var a = BinaryPrimitives.ReadUInt16LittleEndian(parameterLine.AsSpan(current, size));
-                    //    var mantissa = a & 0x3FFF;
-                    //    var sign = ((a >> 14) & 1) == 0 ? 1 : -1;
-                    //    var exponent = a >> 15;
-                    //    var commaMultiplier = _modbusService.GetComma(parameter.Comma);
-                    //    var b = mantissa * sign * MathF.Pow(10, exponent) * commaMultiplier;
-                    //    Debug.WriteLine("{0} {1} {2} {3} {4}", mantissa, sign, exponent, commaMultiplier, b);
-                    //}
                     var value = _modbusService.StringParseBytesToValue(parameterLine.AsSpan(current, size), parameter.ParameterType, parameter.Comma);
                     result.Add(parameter.Number, new() { Value = value });
                     current += size;

@@ -37,7 +37,7 @@ namespace FlomtManager.App.Views
             }
         }
 
-        private void _OnDataUpdate(object? sender, IEnumerable<DataGroupValues> dataGroups)
+        private void _OnDataUpdate(object sender, IEnumerable<DataGroupValues> dataGroups)
         {
             var parameters = dataGroups.FirstOrDefault()?.Parameters;
             if (parameters == null)
