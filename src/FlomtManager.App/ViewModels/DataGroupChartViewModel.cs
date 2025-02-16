@@ -33,6 +33,7 @@ namespace FlomtManager.App.ViewModels
         public ObservableCollection<ParameterViewModel> Parameters { get; set; } = [];
         public event EventHandler<IEnumerable<DataGroupValues>> OnDataUpdate;
         public event EventHandler<byte> OnParameterToggled;
+        public event EventHandler<bool> OnYAxesToggled;
         public event EventHandler<IntegrationChangedEventArgs> OnIntegrationChanged;
 
         private double _integrationSpanMinDate;
@@ -54,6 +55,13 @@ namespace FlomtManager.App.ViewModels
         {
             get => _currentDisplayDate;
             set => this.RaiseAndSetIfChanged(ref _currentDisplayDate, value);
+        }
+
+        private bool _yAxesVisible;
+        public bool YAxesVisible
+        {
+            get => _yAxesVisible;
+            set => this.RaiseAndSetIfChanged(ref _yAxesVisible, value);
         }
 
         public DataGroupChartViewModel(IDataService dataService)
@@ -182,6 +190,12 @@ namespace FlomtManager.App.ViewModels
         public void ToggleParameter(byte parameterNumber)
         {
             OnParameterToggled?.Invoke(this, parameterNumber);
+        }
+
+        public void ToggleYAxes()
+        {
+            YAxesVisible = !YAxesVisible;
+            OnYAxesToggled?.Invoke(this, YAxesVisible);
         }
     }
 }

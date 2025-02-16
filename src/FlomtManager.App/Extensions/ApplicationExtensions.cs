@@ -1,7 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Media;
 using Avalonia.Styling;
-using SkiaSharp;
 
 namespace FlomtManager.App.Extensions
 {

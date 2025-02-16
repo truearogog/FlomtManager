@@ -6,7 +6,6 @@ using FlomtManager.App.Extensions;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
 using FlomtManager.Core.Entities;
-using FlomtManager.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlomtManager.App.Views

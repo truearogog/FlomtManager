@@ -1,9 +1,8 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Media;
 using Avalonia.Skia;
-using Avalonia.Styling;
 using DynamicData;
 using FlomtManager.App.Extensions;
 using FlomtManager.App.ViewModels;
@@ -15,7 +14,6 @@ using ScottPlot;
 using ScottPlot.Control;
 using ScottPlot.Plottables;
 using SkiaSharp;
-using System.Diagnostics;
 
 namespace FlomtManager.App.Views
 {
@@ -56,6 +54,7 @@ namespace FlomtManager.App.Views
             {
                 viewModel.OnDataUpdate += _OnDataUpdate;
                 viewModel.OnParameterToggled += _OnParameterToggled;
+                viewModel.OnYAxesToggled += _OnYAxesToggled;
                 viewModel.UpdateData();
 
                 _viewModel = viewModel;
@@ -70,6 +69,7 @@ namespace FlomtManager.App.Views
             {
                 viewModel.OnDataUpdate -= _OnDataUpdate;
                 viewModel.OnParameterToggled -= _OnParameterToggled;
+                viewModel.OnYAxesToggled -= _OnYAxesToggled;
 
                 _viewModel = null;
             }
@@ -97,8 +97,16 @@ namespace FlomtManager.App.Views
                 {
                     var ys = dataGroups.Select(x => x.Values[current]).ToArray();
                     var signalXY = Chart.Plot.Add.SignalXY(xs, ys);
-                    signalXY.Color = ScottPlot.Color.FromSKColor(SKColor.Parse(parameter.Color));
+                    signalXY.Color = Color.FromSKColor(SKColor.Parse(parameter.Color));
                     signalXY.LineStyle.Width = 2.5f;
+
+                    var yAxis = Chart.Plot.Axes.AddLeftAxis();
+                    yAxis.IsVisible = (DataContext as DataGroupChartViewModel)?.YAxesVisible ?? false;
+                    yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
+                    yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
+
+                    signalXY.Axes.YAxis = yAxis;
+
                     _charts[parameter.Number] = signalXY;
                 }
                 current++;
@@ -114,8 +122,18 @@ namespace FlomtManager.App.Views
             if (_charts.TryGetValue(parameterNumber, out var chart))
             {
                 chart.IsVisible = !chart.IsVisible;
+                chart.Axes.YAxis!.IsVisible = chart.IsVisible && ((DataContext as DataGroupChartViewModel)?.YAxesVisible ?? false);
                 Chart.Refresh();
             }
+        }
+
+        private void _OnYAxesToggled(object sender, bool visible)
+        {
+            foreach (var chart in _charts.Values.Where(x => x.IsVisible))
+            {
+                chart.Axes.YAxis!.IsVisible = visible;
+            }
+            Chart.Refresh();
         }
 
         private void Chart_PointerPressed(object sender, PointerPressedEventArgs e)
@@ -266,6 +284,9 @@ namespace FlomtManager.App.Views
                 },
             };
 
+            Chart.Plot.Axes.Remove(Edge.Top);
+            Chart.Plot.Axes.Remove(Edge.Right);
+            Chart.Plot.Axes.Remove(Edge.Left);
             Chart.Plot.Axes.DateTimeTicksBottom();
             Chart.Interaction = interaction;
             Chart.Refresh();
@@ -337,7 +358,10 @@ namespace FlomtManager.App.Views
             Chart.Plot.FigureBackground = ScottPlot.Color.FromSKColor(backgroundColor);
 
             var axesColor = App.Current!.GetBrushResource("SemiGrey9", themeVariant).Color.ToSKColor();
-            Chart.Plot.Style.ColorAxes(ScottPlot.Color.FromSKColor(axesColor));
+            Chart.Plot.Axes.Bottom.FrameLineStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
+            Chart.Plot.Axes.Bottom.MajorTickStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
+            Chart.Plot.Axes.Bottom.MinorTickStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
+            Chart.Plot.Axes.Bottom.TickLabelStyle.ForeColor = ScottPlot.Color.FromSKColor(axesColor);
 
             var gridColor = App.Current!.GetBrushResource("SemiGrey1", themeVariant).Color.ToSKColor();
             Chart.Plot.Style.ColorGrids(ScottPlot.Color.FromSKColor(gridColor));
