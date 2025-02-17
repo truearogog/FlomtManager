@@ -89,6 +89,8 @@ namespace FlomtManager.App.Views
                 _charts.Remove(parameterNumber);
             }
 
+            Chart.Plot.Axes.Remove(Edge.Left);
+
             var current = 0;
             var xs = dataGroups.Select(x => x.DateTime.ToOADate()).ToArray();
             foreach (var parameter in parameters)
@@ -286,7 +288,6 @@ namespace FlomtManager.App.Views
 
             Chart.Plot.Axes.Remove(Edge.Top);
             Chart.Plot.Axes.Remove(Edge.Right);
-            Chart.Plot.Axes.Remove(Edge.Left);
             Chart.Plot.Axes.DateTimeTicksBottom();
             Chart.Interaction = interaction;
             Chart.Refresh();
@@ -358,10 +359,19 @@ namespace FlomtManager.App.Views
             Chart.Plot.FigureBackground = ScottPlot.Color.FromSKColor(backgroundColor);
 
             var axesColor = App.Current!.GetBrushResource("SemiGrey9", themeVariant).Color.ToSKColor();
-            Chart.Plot.Axes.Bottom.FrameLineStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
-            Chart.Plot.Axes.Bottom.MajorTickStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
-            Chart.Plot.Axes.Bottom.MinorTickStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
-            Chart.Plot.Axes.Bottom.TickLabelStyle.ForeColor = ScottPlot.Color.FromSKColor(axesColor);
+            void SetAxisTheme(IAxis axis)
+            {
+                axis.FrameLineStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
+                axis.MajorTickStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
+                axis.MinorTickStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
+                axis.TickLabelStyle.ForeColor = ScottPlot.Color.FromSKColor(axesColor);
+            }
+            var chartAxes = _charts.Values.Select(x => x.Axes.YAxis.GetHashCode()).ToHashSet();
+            if (!chartAxes.Contains(Chart.Plot.Axes.Left.GetHashCode()))
+            {
+                SetAxisTheme(Chart.Plot.Axes.Left);
+            }
+            SetAxisTheme(Chart.Plot.Axes.Bottom);
 
             var gridColor = App.Current!.GetBrushResource("SemiGrey1", themeVariant).Color.ToSKColor();
             Chart.Plot.Style.ColorGrids(ScottPlot.Color.FromSKColor(gridColor));
