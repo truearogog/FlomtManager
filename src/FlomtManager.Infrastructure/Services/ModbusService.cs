@@ -87,6 +87,8 @@ internal sealed class ModbusService : IModbusService
                     Name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray()),
                     Unit = Encoding.ASCII.GetString(parameterBytes.Skip(10).TakeWhile(x => x != '\0').ToArray()),
                     Color = color.ToString(),
+                    ChartYScalingType = ChartScalingType.Auto,
+                    ChartYZoom = 1,
                 };
 
                 parameters.Add(parameter);

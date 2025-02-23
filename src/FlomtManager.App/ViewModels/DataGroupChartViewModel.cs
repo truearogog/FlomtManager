@@ -175,7 +175,9 @@ namespace FlomtManager.App.ViewModels
                     Name = "Time",
                     Unit = string.Empty,
                     Color = Avalonia.Media.Colors.DarkGray.ToSKColor().ToString(),
-                    ParameterType = ParameterType.Time
+                    ParameterType = ParameterType.Time,
+                    ChartYScalingType = ChartScalingType.Auto,
+                    ChartYZoom = 1
                 }
             });
             foreach (var parameter in parameters)

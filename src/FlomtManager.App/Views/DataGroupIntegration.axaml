@@ -11,13 +11,16 @@
 	<UserControl.DataTemplates>
 		<DataTemplate DataType="{x:Type vm:ParameterViewModel}">
 			<Border Classes.Error="{Binding Error}" Padding="2">
-				<StackPanel>
-					<TextBlock Classes="Tertiary" Text="{Binding Parameter.Name}" />
-					<Grid ColumnDefinitions="*,auto">
-						<TextBlock Grid.Column="0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-						<TextBlock Grid.Column="1" Text="{Binding Parameter.Unit}" />
-					</Grid>
-				</StackPanel>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition SharedSizeGroup="A" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="auto" />
+					</Grid.ColumnDefinitions>
+					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
+					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
+				</Grid>
 			</Border>
 		</DataTemplate>
 	</UserControl.DataTemplates>
@@ -33,7 +36,7 @@
 				<TextBlock Classes="Tertiary" Text="Integration end time" />
 				<SelectableTextBlock Text="{Binding IntegrationEnd, Converter={StaticResource IsNullElseConverter}, ConverterParameter='-'}" />
 			</StackPanel>
-			<ItemsControl ItemsSource="{Binding Parameters}">
+			<ItemsControl ItemsSource="{Binding Parameters}" Grid.IsSharedSizeScope="True">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>
 						<StackPanel Spacing="2" />

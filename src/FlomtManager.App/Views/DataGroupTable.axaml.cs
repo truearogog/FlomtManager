@@ -56,7 +56,7 @@ namespace FlomtManager.App.Views
                     Path = nameof(DataGroupValues.DateTime),
                     Mode = BindingMode.OneWay,
                 },
-                Width = DataGridLength.Auto
+                Width = DataGridLength.Auto,
             });
 
             var current = 0;

@@ -14,22 +14,27 @@ using ScottPlot;
 using ScottPlot.Control;
 using ScottPlot.Plottables;
 using SkiaSharp;
+using Parameter = FlomtManager.Core.Entities.Parameter;
 
 namespace FlomtManager.App.Views
 {
     public partial class DataGroupChart : UserControl
     {
-        private HorizontalSpan? _selectionSpan;
-        private AxisSpanUnderMouse? _spanBeingDragged;
-        private Crosshair? _crosshair;
+        private HorizontalSpan _selectionSpan;
+        private AxisSpanUnderMouse _spanBeingDragged;
+        private double _spanLeftOffset, _spanRightOffset;
+        private Crosshair _crosshair;
 
-        // parameter number, plot
-        private Dictionary<byte, SignalXY> _charts = [];
+        private readonly Dictionary<byte, ChartInfo> _chartInfos = [];
 
         private bool _lockX = true;
         private bool _lockY = false;
+        private double _yAxisZoom = 1.0d;
 
-        private DataGroupChartViewModel? _viewModel;
+        private double _minX = double.NegativeInfinity;
+        private double _maxX = double.PositiveInfinity;
+
+        private DataGroupChartViewModel _viewModel;
 
         public DataGroupChart()
         {
@@ -83,10 +88,13 @@ namespace FlomtManager.App.Views
                 return;
             }
 
-            foreach (var (parameterNumber, chart) in _charts)
+            _minX = dataGroups.First().DateTime.ToOADate();
+            _maxX = dataGroups.Last().DateTime.ToOADate();
+
+            foreach (var chartInfo in _chartInfos.Values)
             {
-                Chart.Plot.Remove(chart);
-                _charts.Remove(parameterNumber);
+                Chart.Plot.Remove(chartInfo.Chart);
+                _chartInfos.Remove(chartInfo.Parameter.Number);
             }
 
             Chart.Plot.Axes.Remove(Edge.Left);
@@ -97,19 +105,31 @@ namespace FlomtManager.App.Views
             {
                 if (parameter.ParameterType.GetAttribute<HideAttribute>()?.Hide(HideTargets.Chart) != true)
                 {
-                    var ys = dataGroups.Select(x => x.Values[current]).ToArray();
-                    var signalXY = Chart.Plot.Add.SignalXY(xs, ys);
-                    signalXY.Color = Color.FromSKColor(SKColor.Parse(parameter.Color));
-                    signalXY.LineStyle.Width = 2.5f;
+                    var ys = dataGroups.Select(x => x.Values[current]);
+                    if (ys.First().GetType() == typeof(float))
+                    {
+                        var floatYs = ys.OfType<float>().ToArray();
 
-                    var yAxis = Chart.Plot.Axes.AddLeftAxis();
-                    yAxis.IsVisible = (DataContext as DataGroupChartViewModel)?.YAxesVisible ?? false;
-                    yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
-                    yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
+                        var signalXY = Chart.Plot.Add.SignalXY(xs, floatYs);
+                        signalXY.Color = Color.FromSKColor(SKColor.Parse(parameter.Color));
+                        signalXY.LineStyle.Width = 2.5f;
 
-                    signalXY.Axes.YAxis = yAxis;
+                        var yAxis = Chart.Plot.Axes.AddLeftAxis();
+                        yAxis.IsVisible = (DataContext as DataGroupChartViewModel)?.YAxesVisible ?? false;
+                        yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
+                        yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
+                        signalXY.Axes.YAxis = yAxis;
 
-                    _charts[parameter.Number] = signalXY;
+                        var info = new ChartInfo
+                        {
+                            Chart = signalXY,
+                            Parameter = parameter,
+                            MinY = floatYs.Min(),
+                            MaxY = floatYs.Max(),
+                        };
+
+                        _chartInfos[parameter.Number] = info;
+                    }
                 }
                 current++;
             }
@@ -121,8 +141,9 @@ namespace FlomtManager.App.Views
 
         private void _OnParameterToggled(object sender, byte parameterNumber)
         {
-            if (_charts.TryGetValue(parameterNumber, out var chart))
+            if (_chartInfos.TryGetValue(parameterNumber, out var chartInfo))
             {
+                var chart = chartInfo.Chart;
                 chart.IsVisible = !chart.IsVisible;
                 chart.Axes.YAxis!.IsVisible = chart.IsVisible && ((DataContext as DataGroupChartViewModel)?.YAxesVisible ?? false);
                 Chart.Refresh();
@@ -131,9 +152,9 @@ namespace FlomtManager.App.Views
 
         private void _OnYAxesToggled(object sender, bool visible)
         {
-            foreach (var chart in _charts.Values.Where(x => x.IsVisible))
+            foreach (var chartInfo in _chartInfos.Values.Where(x => x.Chart.IsVisible))
             {
-                chart.Axes.YAxis!.IsVisible = visible;
+                chartInfo.Chart.Axes.YAxis!.IsVisible = visible;
             }
             Chart.Refresh();
         }
@@ -142,7 +163,9 @@ namespace FlomtManager.App.Views
         {
             var point = e.GetCurrentPoint(Chart);
             var coordinates = Chart.Plot.GetCoordinates((float)point.Position.X, (float)point.Position.Y);
-            var roundedCoordinates = coordinates with { X = RoundADateToHour(coordinates.X) };
+            var roundedX = RoundADateToHour(coordinates.X);
+            var clampedX = Math.Clamp(roundedX, _minX, _maxX);
+            var roundedCoordinates = coordinates with { X = clampedX };
             if (point.Properties.PointerUpdateKind == PointerUpdateKind.RightButtonPressed)
             {
                 RightButtonPressed();
@@ -152,9 +175,11 @@ namespace FlomtManager.App.Views
                 if (e.ClickCount == 1)
                 {
                     var thingUnderMouse = GetSpanUnderMouse((float)point.Position.X, (float)point.Position.Y);
-                    if (thingUnderMouse is not null)
+                    if (thingUnderMouse is not null && _selectionSpan is not null)
                     {
                         _spanBeingDragged = thingUnderMouse;
+                        _spanLeftOffset = _spanBeingDragged.MouseStart.X - _selectionSpan.XRange.Min;
+                        _spanRightOffset = _selectionSpan.XRange.Max - _spanBeingDragged.MouseStart.X;
                         _crosshair!.IsVisible = false;
                         Chart.Refresh();
                     }
@@ -167,7 +192,7 @@ namespace FlomtManager.App.Views
                         }
 
                         _selectionSpan = Chart.Plot.Add.HorizontalSpan(roundedCoordinates.X, roundedCoordinates.X);
-                        var lineColor = ScottPlot.Color.FromSKColor(Avalonia.Media.Colors.Red.ToSKColor()).WithAlpha(0.7);
+                        var lineColor = Color.FromSKColor(Avalonia.Media.Colors.Red.ToSKColor()).WithAlpha(0.7);
                         var fillColor = lineColor.WithAlpha(0.1);
                         _selectionSpan.LineStyle.Color = lineColor;
                         _selectionSpan.FillStyle.Color = fillColor;
@@ -196,9 +221,17 @@ namespace FlomtManager.App.Views
         {
             var point = e.GetCurrentPoint(Chart);
             var coordinates = Chart.Plot.GetCoordinates((float)point.Position.X, (float)point.Position.Y);
-            var roundedCoordinates = coordinates with { X = RoundADateToHour(coordinates.X) };
+            var roundedX = RoundADateToHour(coordinates.X);
+            var clampedX = Math.Clamp(roundedX, _minX, _maxX);
+            var roundedCoordinates = coordinates with { X = clampedX };
             if (_spanBeingDragged is not null)
             {
+                if (!_spanBeingDragged.IsResizing)
+                {
+                    clampedX = Math.Clamp(roundedX, _minX + _spanLeftOffset, _maxX - _spanRightOffset);
+                    roundedCoordinates = coordinates with { X = clampedX };
+                }
+
                 _spanBeingDragged.DragTo(roundedCoordinates);
                 Cursor = new Cursor(StandardCursorType.SizeWestEast);
                 Chart.Refresh();
@@ -250,7 +283,6 @@ namespace FlomtManager.App.Views
                 Chart.Refresh();
             }
         }
-        
 
         private void RightButtonPressed()
         {
@@ -312,25 +344,32 @@ namespace FlomtManager.App.Views
             control.Refresh();
         }
 
-        public void ZoomIn(IPlotControl control, Pixel pixel, LockedAxes locked)
+        private const double ZoomInFactor = 1.2;
+        public void ZoomIn(IPlotControl control, Pixel pixel, LockedAxes locked) => Zoom(ZoomInFactor, control, pixel);
+
+        private const double ZoomOutFactor = 1 / ZoomInFactor;
+        public void ZoomOut(IPlotControl control, Pixel pixel, LockedAxes locked) => Zoom(ZoomOutFactor, control, pixel);
+
+        private void Zoom(double frac, IPlotControl control, Pixel pixel)
         {
-            double num = 1.15;
-            double fracX = _lockX ? 1.0 : num;
-            double fracY = _lockY ? 1.0 : num;
-            control.Plot.MouseZoom(fracX, fracY, pixel);
+            var fracX = _lockX ? 1 : frac;
+            control.Plot.MouseZoom(fracX, 1, pixel);
+
+            if (!_lockY)
+            {
+                _yAxisZoom *= frac;
+
+                foreach (var chartInfo in _chartInfos.Values.Where(x => x.Parameter.ChartYScalingType == ChartScalingType.Auto))
+                {
+                    var chart = chartInfo.Chart;
+                    chart.Axes.YAxis.Range.ZoomFrac(frac, (chartInfo.MinY + chartInfo.MaxY) / 2);
+                }
+            }
+
             control.Refresh();
         }
 
-        public void ZoomOut(IPlotControl control, Pixel pixel, LockedAxes locked)
-        {
-            double num = 0.85;
-            double fracX = _lockX ? 1.0 : num;
-            double fracY = _lockY ? 1.0 : num;
-            control.Plot.MouseZoom(fracX, fracY, pixel);
-            control.Refresh();
-        }
-
-        private AxisSpanUnderMouse? GetSpanUnderMouse(float x, float y)
+        private AxisSpanUnderMouse GetSpanUnderMouse(float x, float y)
         {
             var coordinates = Chart.Plot.GetCoordinates(x, y);
             var roundedCoordinates = coordinates with { X = RoundADateToHour(coordinates.X) };
@@ -355,18 +394,19 @@ namespace FlomtManager.App.Views
             var themeVariant = App.Current!.ActualThemeVariant;
 
             var backgroundColor = App.Current!.GetBrushResource("SemiColorBackground0", themeVariant).Color.ToSKColor();
-            Chart.Plot.DataBackground = ScottPlot.Color.FromSKColor(backgroundColor);
-            Chart.Plot.FigureBackground = ScottPlot.Color.FromSKColor(backgroundColor);
+            Chart.Plot.DataBackground = Color.FromSKColor(backgroundColor);
+            Chart.Plot.FigureBackground = Color.FromSKColor(backgroundColor);
 
             var axesColor = App.Current!.GetBrushResource("SemiGrey9", themeVariant).Color.ToSKColor();
             void SetAxisTheme(IAxis axis)
             {
-                axis.FrameLineStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
-                axis.MajorTickStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
-                axis.MinorTickStyle.Color = ScottPlot.Color.FromSKColor(axesColor);
-                axis.TickLabelStyle.ForeColor = ScottPlot.Color.FromSKColor(axesColor);
+                axis.FrameLineStyle.Color = Color.FromSKColor(axesColor);
+                axis.MajorTickStyle.Color = Color.FromSKColor(axesColor);
+                axis.MinorTickStyle.Color = Color.FromSKColor(axesColor);
+                axis.TickLabelStyle.ForeColor = Color.FromSKColor(axesColor);
             }
-            var chartAxes = _charts.Values.Select(x => x.Axes.YAxis.GetHashCode()).ToHashSet();
+
+            var chartAxes = _chartInfos.Values.Select(x => x.Chart.Axes.YAxis.GetHashCode()).ToHashSet();
             if (!chartAxes.Contains(Chart.Plot.Axes.Left.GetHashCode()))
             {
                 SetAxisTheme(Chart.Plot.Axes.Left);
@@ -374,10 +414,18 @@ namespace FlomtManager.App.Views
             SetAxisTheme(Chart.Plot.Axes.Bottom);
 
             var gridColor = App.Current!.GetBrushResource("SemiGrey1", themeVariant).Color.ToSKColor();
-            Chart.Plot.Style.ColorGrids(ScottPlot.Color.FromSKColor(gridColor));
-            
+            Chart.Plot.Style.ColorGrids(Color.FromSKColor(gridColor));
+
             var crosshairColor = App.Current!.GetBrushResource("SemiBlue4", themeVariant).Color.ToSKColor();
-            _crosshair!.LineStyle.Color = ScottPlot.Color.FromSKColor(crosshairColor);
+            _crosshair!.LineStyle.Color = Color.FromSKColor(crosshairColor);
+        }
+
+        private sealed class ChartInfo
+        {
+            public SignalXY Chart { get; init; }
+            public Parameter Parameter { get; init; }
+            public double MinY { get; init; }
+            public double MaxY { get; init; }
         }
     }
 }

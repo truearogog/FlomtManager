@@ -18,7 +18,7 @@ internal sealed class DataService(
     private readonly IReadOnlyDictionary<ParameterType, byte> _parameterTypeSizes =
             Enum.GetValues<ParameterType>().ToFrozenDictionary(x => x, x => x.GetAttribute<SizeAttribute>()?.Size ?? throw new Exception("Wrong parameter size."));
 
-    public async Task<DataGroupValues[]> GetDataGroupValues(int deviceId, CancellationToken cancellationToken = default)
+    public async Task<DataGroupValues[]> GetDataGroupValues(int deviceId, bool orderDesc = false, CancellationToken cancellationToken = default)
     {
         var definition = await deviceDefinitionRepository.GetAll().Where(x => x.Id == deviceId).FirstOrDefaultAsync(cancellationToken);
         if (definition == null)
@@ -26,7 +26,18 @@ internal sealed class DataService(
             return [];
         }
         var parameters = (await parameterRepository.GetAll().Where(x => x.DeviceId == deviceId).ToListAsync(cancellationToken)).ToFrozenDictionary(x => x.Number, x => x);
-        var dataGroups = await dataGroupRepository.GetAll().Where(x => x.DeviceId == deviceId).OrderBy(x => x.DateTime).ToListAsync(cancellationToken);
+
+        var dataGroupQuery = dataGroupRepository.GetAll().Where(x => x.DeviceId == deviceId);
+        if (orderDesc)
+        {
+            dataGroupQuery = dataGroupQuery.OrderByDescending(x => x.DateTime);
+        }
+        else
+        {
+            dataGroupQuery = dataGroupQuery.OrderBy(x => x.DateTime);
+        }
+        var dataGroups = await dataGroupQuery.ToArrayAsync(cancellationToken);
+
         var averageParameterDefinition = definition.AverageParameterArchiveLineDefinition!;
         var realParameters = averageParameterDefinition.Where(parameters.ContainsKey).Select(x => parameters[x]).ToArray();
         var parameterCount = realParameters.Length;

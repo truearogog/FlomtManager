@@ -13,8 +13,9 @@
 	<UserControl.DataTemplates>
 		<DataTemplate DataType="vm:ParameterViewModel">
 			<ToggleButton 
-				CornerRadius="0" 
-				HorizontalContentAlignment="Stretch" 
+				CornerRadius="0"
+				Padding="8,4"
+				HorizontalContentAlignment="Stretch"
 				IsChecked="true"
 				Command="{Binding ((vm:DataGroupChartViewModel)DataContext).ToggleParameter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
 				CommandParameter="{Binding Parameter.Number}">
@@ -25,20 +26,30 @@
 					<Style Selector="ToggleButton:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
 						<Setter Property="Background" Value="{Binding Parameter.Color, Converter={StaticResource ColorAddLightnessConverter}, ConverterParameter='10'}" />
 					</Style>
+					<Style Selector="FlyoutPresenter">
+						<Setter Property="Padding" Value="4" />
+					</Style>
 				</ToggleButton.Styles>
-				<StackPanel>
-					<TextBlock Text="{Binding Parameter.Name}" />
-					<Grid ColumnDefinitions="*,auto">
-						<TextBlock Grid.Column="0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-						<TextBlock Grid.Column="1" Text="{Binding Parameter.Unit}" />
-					</Grid>
-				</StackPanel>
+				
+				<Grid ColumnDefinitions="auto,*,auto">
+					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
+					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
+				</Grid>
+
+				<ToggleButton.ContextFlyout>
+					<Flyout>
+						<StackPanel>
+							<CheckBox Padding="4" Content="Y Auto" IsChecked="True" Theme="{DynamicResource CardCheckBox}" />
+						</StackPanel>
+					</Flyout>
+				</ToggleButton.ContextFlyout>	
 			</ToggleButton>
 		</DataTemplate>
 	</UserControl.DataTemplates>
 
 	<Grid RowDefinitions="auto,*,auto">
-		<ItemsControl Grid.Row="0" ItemsSource="{Binding Parameters}" >
+		<ItemsControl Grid.Row="0" ItemsSource="{Binding Parameters}" Grid.IsSharedSizeScope="True" >
 			<ItemsControl.ItemsPanel>
 				<ItemsPanelTemplate>
 					<UniformGrid Rows="1" />

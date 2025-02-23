@@ -5,6 +5,6 @@
     {
         Chart = 1 << 0,
         Table = 1 << 1,
-        All = 1 << 8 - 1,
+        All = 0xff,
     }
 }

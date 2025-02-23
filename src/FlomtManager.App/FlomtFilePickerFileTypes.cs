@@ -6,8 +6,8 @@ namespace FlomtManager.App
     {
         public static FilePickerFileType Hex { get; } = new("Hex")
         {
-            Patterns = new[] { "*.hex" },
-            MimeTypes = new[] { "text/plain" }
+            Patterns = ["*.hex"],
+            MimeTypes = ["text/plain"]
         };
     }
 }

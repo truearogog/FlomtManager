@@ -16,13 +16,16 @@
 	<Window.DataTemplates>
 		<DataTemplate DataType="{x:Type vm:ParameterViewModel}">
 			<Border Classes.Error="{Binding Error}" Padding="2">
-				<StackPanel>
-					<TextBlock Classes="Tertiary" Text="{Binding Parameter.Name}" />
-					<Grid ColumnDefinitions="*,auto">
-						<TextBlock Grid.Column="0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
-						<TextBlock Grid.Column="1" Text="{Binding Parameter.Unit}" />
-					</Grid>
-				</StackPanel>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition SharedSizeGroup="A" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="auto" />
+					</Grid.ColumnDefinitions>
+					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
+					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
+				</Grid>
 			</Border>
 		</DataTemplate>
 	</Window.DataTemplates>
@@ -51,6 +54,7 @@
 				</Button>
 			</StackPanel>
 		</Border>
+		
 		<Grid
 			Grid.Row="1"
 			ColumnDefinitions="auto,*">
@@ -151,7 +155,7 @@
 							<Border Classes="PaneBorder">
 								<StackPanel Spacing="5">
 									<TextBlock Text="Integral" Classes="H6" Theme="{DynamicResource TitleTextBlock}" />
-									<ItemsControl ItemsSource="{Binding IntegralParameters}">
+									<ItemsControl ItemsSource="{Binding IntegralParameters}" Grid.IsSharedSizeScope="True">
 										<ItemsControl.ItemsPanel>
 											<ItemsPanelTemplate>
 												<StackPanel Spacing="2" />
@@ -164,7 +168,7 @@
 							<Border Classes="PaneBorder">
 								<StackPanel Spacing="5">
 									<TextBlock Text="Current" Classes="H6" Theme="{StaticResource TitleTextBlock}" />
-									<ItemsControl ItemsSource="{Binding CurrentParameters}">
+									<ItemsControl ItemsSource="{Binding CurrentParameters}" Grid.IsSharedSizeScope="True">
 										<ItemsControl.ItemsPanel>
 											<ItemsPanelTemplate>
 												<StackPanel Spacing="2" />

@@ -16,6 +16,8 @@ public sealed class Parameter : IEntity
     public required string Name { get; set; }
     public required string Unit { get; set; }
     public required string Color { get; set; }
+    public required ChartScalingType ChartYScalingType { get; set; }
+    public required double ChartYZoom { get; set; }
 
     public int DeviceId { get; set; }
     public Device Device { get; set; }
