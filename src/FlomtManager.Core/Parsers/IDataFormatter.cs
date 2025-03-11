@@ -10,4 +10,6 @@ public interface IDataFormatter
     string FormatUInt16(ushort value);
     string FormatTimeSpan(TimeSpan value);
     string FormatDateTime(DateTime value);
+
+    string GetParameterFormat(Parameter type);
 }

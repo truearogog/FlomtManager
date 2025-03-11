@@ -52,8 +52,8 @@ namespace FlomtManager.App
             if (!Design.IsDesignMode)
             {
                 var dbInitializer = Host.Services.GetRequiredService<IDbInitializer>();
-                dbInitializer.Drop().Wait(); // todo: remove
-                dbInitializer.Init().Wait();
+                //dbInitializer.Drop().Wait(); // todo: remove
+                //dbInitializer.Init().Wait();
             }
 
             DataContext = new ApplicationViewModel();

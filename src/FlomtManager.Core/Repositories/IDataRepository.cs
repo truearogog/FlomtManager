@@ -8,7 +8,7 @@ public interface IDataRepository
 
     Task<bool> HasHourData(int deviceId);
 
-    Task AddHourData(int deviceId, IReadOnlyDictionary<byte, IDataCollection> data, int size);
+    Task AddHourData(int deviceId, IReadOnlyDictionary<byte, IDataCollection> data, int size, int actualSize);
 
     Task<IReadOnlyDictionary<byte, IDataCollection>> GetHourData(int deviceId);
 }

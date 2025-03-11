@@ -7,15 +7,14 @@
     x:DataType="vm:DataGroupTableViewModel"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="FlomtManager.App.Views.DataGroupTable">
-	<!--<DataGrid 
+	<DataGrid 
 		x:Name="Table"
 		AutoGenerateColumns="False"
-		IsReadOnly="True"
-		ItemsSource="{Binding Data}">
+		IsReadOnly="True">
 		<DataGrid.Styles>
 			<Style Selector="DataGridRow:nth-child(even)">
 				<Setter Property="Background" Value="{DynamicResource SemiGrey0}" />
 			</Style>
 		</DataGrid.Styles>
-	</DataGrid>-->
+	</DataGrid>
 </UserControl>

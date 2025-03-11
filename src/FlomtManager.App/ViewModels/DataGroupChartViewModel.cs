@@ -159,28 +159,31 @@ namespace FlomtManager.App.ViewModels
             }
 
             var index = DateTimes.BinarySearchClosestValueIndex(CurrentDisplayDate);
-            foreach (var parameterViewModel in Parameters)
+            if (index != -1)
             {
-                var parameter = parameterViewModel.Parameter;
-                if (DataCollections[parameter.Number] is DataCollection<float> floatDataCollection)
+                foreach (var parameterViewModel in Parameters)
                 {
-                    parameterViewModel.Value = _dataFormatter.FormatFloat(floatDataCollection.Values[index], parameter);
-                }
-                else if (DataCollections[parameter.Number] is DataCollection<uint> uintDataCollection)
-                {
-                    parameterViewModel.Value = _dataFormatter.FormatUInt32(uintDataCollection.Values[index]);
-                }
-                else if (DataCollections[parameter.Number] is DataCollection<ushort> shortDataCollection)
-                {
-                    parameterViewModel.Value = _dataFormatter.FormatUInt16(shortDataCollection.Values[index]);
-                }
-                else if (DataCollections[parameter.Number] is DataCollection<TimeSpan> timeSpanDataCollection)
-                {
-                    parameterViewModel.Value = _dataFormatter.FormatTimeSpan(timeSpanDataCollection.Values[index]);
-                }
-                else if (DataCollections[parameter.Number] is DataCollection<DateTime> dateTimeDataCollection)
-                {
-                    parameterViewModel.Value = _dataFormatter.FormatDateTime(dateTimeDataCollection.Values[index]);
+                    var parameter = parameterViewModel.Parameter;
+                    if (DataCollections[parameter.Number] is DataCollection<float> floatDataCollection)
+                    {
+                        parameterViewModel.Value = _dataFormatter.FormatFloat(floatDataCollection.Values[index], parameter);
+                    }
+                    else if (DataCollections[parameter.Number] is DataCollection<uint> uintDataCollection)
+                    {
+                        parameterViewModel.Value = _dataFormatter.FormatUInt32(uintDataCollection.Values[index]);
+                    }
+                    else if (DataCollections[parameter.Number] is DataCollection<ushort> shortDataCollection)
+                    {
+                        parameterViewModel.Value = _dataFormatter.FormatUInt16(shortDataCollection.Values[index]);
+                    }
+                    else if (DataCollections[parameter.Number] is DataCollection<TimeSpan> timeSpanDataCollection)
+                    {
+                        parameterViewModel.Value = _dataFormatter.FormatTimeSpan(timeSpanDataCollection.Values[index]);
+                    }
+                    else if (DataCollections[parameter.Number] is DataCollection<DateTime> dateTimeDataCollection)
+                    {
+                        parameterViewModel.Value = _dataFormatter.FormatDateTime(dateTimeDataCollection.Values[index]);
+                    }
                 }
             }
         }

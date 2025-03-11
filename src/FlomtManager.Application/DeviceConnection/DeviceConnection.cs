@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using System.Diagnostics;
 using System.Text;
 using System.Timers;
 using FlomtManager.Core.Constants;
@@ -95,7 +96,7 @@ internal sealed class DeviceConnection(
 
             await ReadData();
 
-            var dataReadSpan = 
+            var dataReadSpan =
                 TimeSpan.FromSeconds(5)
                 //TimeSpan.FromHours(device.ReadHours) + TimeSpan.FromMinutes(device.ReadMinutes) + TimeSpan.FromSeconds(device.ReadSeconds)
                 ;
@@ -152,6 +153,15 @@ internal sealed class DeviceConnection(
     private async void _hourArchiveReadTimer_Elapsed(object sender, ElapsedEventArgs e) => await ReadHourArchive();
     private async Task ReadHourArchive()
     {
+        async Task CompleteRead(int lineCount)
+        {
+            RaiseConnectionArchiveReadingProgressChangedArgs(100, 100);
+            RaiseConnectionArchiveReadingStateChanged(ArchiveReadingState.Complete, lineCount);
+
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            RaiseConnectionArchiveReadingStateChanged(ArchiveReadingState.None, lineCount);
+        }
+
         try
         {
             await _hourArchiveReadSemaphore.WaitAsync();
@@ -179,8 +189,7 @@ internal sealed class DeviceConnection(
 
             if (lineCount == 0)
             {
-                RaiseConnectionArchiveReadingStateChanged(ArchiveReadingState.Complete);
-                RaiseConnectionArchiveReadingProgressChangedArgs(100, 100);
+                await CompleteRead(0);
                 return;
             }
 
@@ -230,15 +239,19 @@ internal sealed class DeviceConnection(
             var emptyBlock = Enumerable.Repeat<byte>(0, _deviceDefinition.AverageParameterArchiveLineLength).ToArray();
             var dateHours = readStartTime.Date.AddHours(readStartTime.Hour);
 
-            Parallel.For(0, lineCount, i =>
+            var actualLineCount = 0;
+
+            //Parallel.For(0, lineCount, i =
+            for (var i = 0; i < lineCount; ++i)
             {
                 var date = dateHours.AddHours(-i);
-                (data[0] as DataCollection<DateTime>).Values[i] = date;
+                var index = lineCount - actualLineCount - 1;
+                (data[0] as DataCollection<DateTime>).Values[index] = date;
 
                 var blockBytes = archiveBytes.Slice(i * _deviceDefinition.AverageParameterArchiveLineLength, _deviceDefinition.AverageParameterArchiveLineLength);
                 if (blockBytes.Span.SequenceEqual(emptyBlock))
                 {
-                    return;
+                    continue;
                 }
 
                 var current = 0;
@@ -252,23 +265,23 @@ internal sealed class DeviceConnection(
                         // parse data according to type
                         if (data[parameterByte] is DataCollection<float> floatDataCollection)
                         {
-                            floatDataCollection.Values[i] = dataParser.ParseBytesToFloat(bytes.Span, parameters[parameterByte]);
-                        }
-                        if (data[parameterByte] is DataCollection<uint> uintDataCollection)
+                            floatDataCollection.Values[index] = dataParser.ParseBytesToFloat(bytes.Span, parameters[parameterByte]);
+                        } 
+                        else if (data[parameterByte] is DataCollection<uint> uintDataCollection)
                         {
-                            uintDataCollection.Values[i] = dataParser.ParseBytesToUInt32(bytes.Span, parameters[parameterByte]);
+                            uintDataCollection.Values[index] = dataParser.ParseBytesToUInt32(bytes.Span, parameters[parameterByte]);
                         }
-                        if (data[parameterByte] is DataCollection<ushort> ushortDataCollection)
+                        else if (data[parameterByte] is DataCollection<ushort> ushortDataCollection)
                         {
-                            ushortDataCollection.Values[i] = dataParser.ParseBytesToUInt16(bytes.Span, parameters[parameterByte]);
+                            ushortDataCollection.Values[index] = dataParser.ParseBytesToUInt16(bytes.Span, parameters[parameterByte]);
                         }
-                        if (data[parameterByte] is DataCollection<TimeSpan> timeSpanDataCollection)
+                        else if (data[parameterByte] is DataCollection<TimeSpan> timeSpanDataCollection)
                         {
-                            timeSpanDataCollection.Values[i] = dataParser.ParseBytesToTimeSpan(bytes.Span, parameters[parameterByte]);
+                            timeSpanDataCollection.Values[index] = dataParser.ParseBytesToTimeSpan(bytes.Span, parameters[parameterByte]);
                         }
-                        if (data[parameterByte] is DataCollection<DateTime> dateTimeDataCollection)
+                        else if (data[parameterByte] is DataCollection<DateTime> dateTimeDataCollection)
                         {
-                            dateTimeDataCollection.Values[i] = dataParser.ParseBytesToDateTime(bytes.Span, parameters[parameterByte]);
+                            dateTimeDataCollection.Values[index] = dataParser.ParseBytesToDateTime(bytes.Span, parameters[parameterByte]);
                         }
 
                         current += size;
@@ -278,13 +291,14 @@ internal sealed class DeviceConnection(
                         current += parameterByte & 0b11;
                     }
                 }
-            });
+                ++actualLineCount;
+            }
+            //);
 
-            await dataRepository.AddHourData(device.Id, data, lineCount);
+            await dataRepository.AddHourData(device.Id, data, lineCount, actualLineCount);
             await deviceRepository.UpdateDefinitionLastArchiveRead(device.Id);
 
-            RaiseConnectionArchiveReadingStateChanged(ArchiveReadingState.Complete, lineCount);
-            RaiseConnectionArchiveReadingProgressChangedArgs(100, 100);
+            await CompleteRead(actualLineCount);
         }
         catch (Exception ex)
         {

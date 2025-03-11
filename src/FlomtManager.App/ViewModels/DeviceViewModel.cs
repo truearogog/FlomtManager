@@ -121,7 +121,7 @@ namespace FlomtManager.App.ViewModels
         {
             Device = device;
             await DataGroupChart.SetDevice(device);
-            //DataGroupTable.Device = device;
+            await DataGroupTable.SetDevice(device);
             await DataGroupIntegration.SetDevice(device);
             await UpdateParameters();
         }
@@ -221,6 +221,7 @@ namespace FlomtManager.App.ViewModels
                         if (e.LinesRead > 0)
                         {
                             await DataGroupChart.UpdateData();
+                            await DataGroupTable.UpdateData();
                         }
                     }
                 };

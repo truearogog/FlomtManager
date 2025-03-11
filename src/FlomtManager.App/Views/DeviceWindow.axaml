@@ -232,14 +232,13 @@
 					<local:DataGroupChart DataContext="{Binding DataGroupChart}" />
 				</Panel>
 
-				<TextBlock 
-					IsVisible="{
-						Binding ArchiveDisplayMode, 
-						Converter={StaticResource EqualsConverter}, 
-						ConverterParameter={x:Static enums:ArchiveDisplayMode.Table}}"
-					Text="Table" />
-				<!--<local:DataGroupTable DataContext="{Binding DataGroupTable}" />-->
-				
+				<Panel IsVisible="{
+					Binding ArchiveDisplayMode, 
+					Converter={StaticResource EqualsConverter}, 
+					ConverterParameter={x:Static enums:ArchiveDisplayMode.Table}}">
+					<local:DataGroupTable DataContext="{Binding DataGroupTable}" />
+				</Panel>
+
 			</Panel>
 		</Grid>
 		

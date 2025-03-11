@@ -28,7 +28,8 @@ internal sealed class DataRepository(IDbConnectionFactory connectionFactory) : I
             """, new { TableName = "HourArchive_" + deviceId }) != 0;
     }
 
-    public async Task AddHourData(int deviceId, IReadOnlyDictionary<byte, IDataCollection> data, int size)
+    // take from end
+    public async Task AddHourData(int deviceId, IReadOnlyDictionary<byte, IDataCollection> data, int size, int actualSize)
     {
         await using var connection = connectionFactory.CreateConnection();
 
@@ -49,11 +50,12 @@ internal sealed class DataRepository(IDbConnectionFactory connectionFactory) : I
         sb.AppendLine(") VALUES");
 
         var dynamicParameters = new DynamicParameters();
+        var dynamicParameterIndex = 0;
 
-        for (var i = 0; i < size; i++)
+        for (var i = size - actualSize; i < size; i++)
         {
             sb.Append('(');
-            var dynamicParameter = "p" + i;
+            var dynamicParameter = "p" + dynamicParameterIndex++;
             dynamicParameters.Add(dynamicParameter, dateTimeCollection.Values[i]);
             sb.Append('@');
             sb.Append(dynamicParameter);

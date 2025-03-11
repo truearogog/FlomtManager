@@ -37,7 +37,6 @@ namespace FlomtManager.App.Views
         public DataGroupChart()
         {
             InitializeComponent();
-            Debug.WriteLine(this);
             ConfigureChart();
             LockY();
 
@@ -279,6 +278,7 @@ namespace FlomtManager.App.Views
         private void ConfigureChart()
         {
             _crosshair = Chart.Plot.Add.Crosshair(0, 0);
+            _crosshair.HorizontalLineIsVisible = false;
 
             Chart.ContextMenu = null;
 

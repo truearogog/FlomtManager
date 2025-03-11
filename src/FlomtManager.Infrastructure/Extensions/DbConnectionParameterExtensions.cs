@@ -84,11 +84,7 @@ internal static class DbConnectionParameterExtensions
             if ((parameterByte & 0x80) == 0)
             {
                 var parameter = parameters.First(x => x.Number == parameterByte);
-                if (all)
-                {
-                    resultParameters.Add(parameter);
-                }
-                else if (!parameter.Type.HideType())
+                if (all || !parameter.Type.HideType())
                 {
                     resultParameters.Add(parameter);
                 }
