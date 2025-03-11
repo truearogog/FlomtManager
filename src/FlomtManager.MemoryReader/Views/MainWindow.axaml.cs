@@ -7,7 +7,7 @@ namespace FlomtManager.MemoryReader.Views
 {
     public partial class MainWindow : Window
     {
-        private WindowNotificationManager? _windowNotificationManager;
+        private WindowNotificationManager _windowNotificationManager;
 
         public MainWindow()
         {

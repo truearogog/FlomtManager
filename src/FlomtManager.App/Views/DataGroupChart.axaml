@@ -12,7 +12,7 @@
 
 	<UserControl.DataTemplates>
 		<DataTemplate DataType="vm:ParameterViewModel">
-			<ToggleButton 
+			<ToggleButton
 				CornerRadius="0"
 				Padding="8,4"
 				HorizontalContentAlignment="Stretch"
@@ -33,22 +33,14 @@
 				
 				<Grid ColumnDefinitions="auto,*,auto">
 					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
-					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, TargetNullValue='-'}" />
 					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
 				</Grid>
-
-				<ToggleButton.ContextFlyout>
-					<Flyout>
-						<StackPanel>
-							<CheckBox Padding="4" Content="Y Auto" IsChecked="True" Theme="{DynamicResource CardCheckBox}" />
-						</StackPanel>
-					</Flyout>
-				</ToggleButton.ContextFlyout>	
 			</ToggleButton>
 		</DataTemplate>
 	</UserControl.DataTemplates>
 
-	<Grid RowDefinitions="auto,*,auto">
+	<Grid RowDefinitions="auto,*">
 		<ItemsControl Grid.Row="0" ItemsSource="{Binding Parameters}" Grid.IsSharedSizeScope="True" >
 			<ItemsControl.ItemsPanel>
 				<ItemsPanelTemplate>
@@ -57,10 +49,5 @@
 			</ItemsControl.ItemsPanel>
 		</ItemsControl>
 		<ScottPlot:AvaPlot Grid.Row="1" x:Name="Chart" Margin="4" />
-		<StackPanel Grid.Row="2" Orientation="Horizontal" Margin="4">
-			<ToggleButton 
-				Content="Y Axes"
-				Command="{Binding ToggleYAxes}" />
-		</StackPanel>
 	</Grid>
 </UserControl>

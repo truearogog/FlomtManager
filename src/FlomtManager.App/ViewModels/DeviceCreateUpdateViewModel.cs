@@ -1,19 +1,19 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO.Ports;
-using FlomtManager.App.Stores;
-using FlomtManager.Core.Entities;
 using FlomtManager.Core.Enums;
+using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
+using FlomtManager.Core.Stores;
 using FlomtManager.Framework.Helpers;
 using ReactiveUI;
 using Serilog;
 
 namespace FlomtManager.App.ViewModels
 {
-    public class DeviceCreateUpdateViewModel : ViewModelBase
+    public class DeviceCreateUpdateViewModel : ViewModel
     {
         private readonly IDeviceRepository _deviceRepository;
-        private readonly DeviceStore _deviceStore;
+        private readonly IDeviceStore _deviceStore;
 
         public DeviceFormViewModel Form { get; set; } = new();
 
@@ -33,7 +33,7 @@ namespace FlomtManager.App.ViewModels
 
         public EventHandler CloseRequested;
 
-        public DeviceCreateUpdateViewModel(IDeviceRepository deviceRepository, DeviceStore deviceStore)
+        public DeviceCreateUpdateViewModel(IDeviceRepository deviceRepository, IDeviceStore deviceStore)
         {
             _deviceRepository = deviceRepository;
             _deviceStore = deviceStore;
@@ -57,7 +57,7 @@ namespace FlomtManager.App.ViewModels
             CloseRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        public async void CreateDevice()
+        public async Task CreateDevice()
         {
             var validationErrors = ValidationHelper.Validate(Form);
             if (validationErrors.Any())
@@ -65,26 +65,12 @@ namespace FlomtManager.App.ViewModels
                 return;
             }
 
-            var entity = new Device()
-            {
-                Name = Form.Name,
-                Address = Form.Address,
-                ConnectionType = Form.ConnectionType,
-                SlaveId = Form.SlaveId,
-                PortName = Form.PortName,
-                BaudRate = Form.BaudRate,
-                Parity = Form.Parity,
-                DataBits = Form.DataBits,
-                StopBits = Form.StopBits,
-                IpAddress = Form.IpAddress,
-                Port = Form.Port,
-            };
-
             try
             {
-                _deviceRepository.Add(entity);
-                await _deviceRepository.SaveChangesAsync();
-                _deviceStore.CreateDevice(await _deviceRepository.GetByIdAsyncNonTracking(entity.Id));
+                var device = GetDevice();
+                var id = await _deviceRepository.Create(device);
+                device = device with { Id = id };
+                _deviceStore.Add(device);
 
                 Close();
             }
@@ -105,20 +91,9 @@ namespace FlomtManager.App.ViewModels
 
             try
             {
-                var entity = await _deviceRepository.GetByIdAsync(Form.Id);
-                entity.Name = Form.Name;
-                entity.Address = Form.Address;
-                entity.ConnectionType = Form.ConnectionType;
-                entity.SlaveId = Form.SlaveId;
-                entity.PortName = Form.PortName;
-                entity.BaudRate = Form.BaudRate;
-                entity.Parity = Form.Parity;
-                entity.DataBits = Form.DataBits;
-                entity.StopBits = Form.StopBits;
-                entity.IpAddress = Form.IpAddress;
-                entity.Port = Form.Port;
-                await _deviceRepository.SaveChangesAsync();
-                _deviceStore.UpdateDevice(await _deviceRepository.GetByIdAsyncNonTracking(entity.Id));
+                var device = GetDevice();
+                await _deviceRepository.Update(device);
+                _deviceStore.Update(device);
 
                 Close();
             }
@@ -145,6 +120,25 @@ namespace FlomtManager.App.ViewModels
                 StopBits = device.StopBits,
                 IpAddress = device.IpAddress,
                 Port = device.Port,
+            };
+        }
+
+        private Device GetDevice()
+        {
+            return new Device
+            {
+                Id = Form.Id,
+                Name = Form.Name,
+                Address = Form.Address,
+                ConnectionType = Form.ConnectionType,
+                SlaveId = Form.SlaveId,
+                PortName = Form.PortName,
+                BaudRate = Form.BaudRate,
+                Parity = Form.Parity,
+                DataBits = Form.DataBits,
+                StopBits = Form.StopBits,
+                IpAddress = Form.IpAddress,
+                Port = Form.Port,
             };
         }
     }

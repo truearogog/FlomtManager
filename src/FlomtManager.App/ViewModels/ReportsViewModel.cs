@@ -1,6 +1,6 @@
 ﻿namespace FlomtManager.App.ViewModels
 {
-    public class ReportsViewModel : ViewModelBase
+    public class ReportsViewModel : ViewModel
     {
     }
 }

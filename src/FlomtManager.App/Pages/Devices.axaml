@@ -21,7 +21,10 @@
 				</StackPanel>
 			</Button>
 		</StackPanel>
-		<ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto">
+		<ScrollViewer 
+			Grid.Row="1"
+			HorizontalScrollBarVisibility="Auto"
+			Theme="{DynamicResource StaticScrollViewer}">
 			<ItemsControl ItemsSource="{Binding Devices}">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>
@@ -43,7 +46,9 @@
 									<Button 
 										Classes="Primary"
 										Theme="{DynamicResource BorderlessButton}" 
-										Command="{Binding ((vm:DevicesViewModel)DataContext).ViewDevice, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+										Command="{
+											Binding ((vm:DevicesViewModel)DataContext).ViewDevice, 
+											RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
 										CommandParameter="{Binding}">
 										<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
 											<i:Icon Value="fa-solid fa-eye" />
@@ -53,7 +58,9 @@
 									<Button 
 										Classes="Primary"
 										Theme="{DynamicResource BorderlessButton}" 
-										Command="{Binding ((vm:DevicesViewModel)DataContext).UpdateDevice, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+										Command="{
+											Binding ((vm:DevicesViewModel)DataContext).UpdateDevice, 
+											RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
 										CommandParameter="{Binding}">
 										<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
 											<i:Icon Value="fa-solid fa-pen-to-square" />

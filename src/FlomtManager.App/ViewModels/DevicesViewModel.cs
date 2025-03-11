@@ -1,15 +1,14 @@
 ﻿using System.Collections.ObjectModel;
-using FlomtManager.App.Stores;
-using FlomtManager.Core.Entities;
+using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
-using Microsoft.EntityFrameworkCore;
+using FlomtManager.Core.Stores;
 
 namespace FlomtManager.App.ViewModels
 {
-    public class DevicesViewModel : ViewModelBase
+    public class DevicesViewModel : ViewModel
     {
         private readonly IDeviceRepository _deviceRepository;
-        private readonly DeviceStore _deviceStore;
+        private readonly IDeviceStore _deviceStore;
 
         public event EventHandler DeviceCreateRequested;
         public event EventHandler<Device> DeviceUpdateRequested;
@@ -17,14 +16,14 @@ namespace FlomtManager.App.ViewModels
 
         public ObservableCollection<Device> Devices { get; set; } = [];
 
-        public DevicesViewModel(IDeviceRepository deviceRepository, DeviceStore deviceStore)
+        public DevicesViewModel(IDeviceRepository deviceRepository, IDeviceStore deviceStore)
         {
             _deviceRepository = deviceRepository;
             _deviceStore = deviceStore;
 
-            _deviceStore.DeviceCreated += _DeviceCreated;
-            _deviceStore.DeviceUpdated += _DeviceUpdated;
-            _deviceStore.DeviceDeleted += _DeviceDeleted;
+            _deviceStore.DeviceAdded += _deviceStore_DeviceAdded; ;
+            _deviceStore.DeviceUpdated += _deviceStore_DeviceUpdated; ;
+            _deviceStore.DeviceRemoved += _deviceStore_DeviceRemoved; ;
 
             AddDevices();
         }
@@ -47,38 +46,36 @@ namespace FlomtManager.App.ViewModels
         private async void AddDevices()
         {
             Devices.Clear();
-            await foreach (var device in _deviceRepository.GetAll().AsAsyncEnumerable())
+
+            await foreach (var device in await _deviceRepository.GetAllAsync())
             {
                 Devices.Add(device);
             }
         }
 
-        private void _DeviceCreated(Device device)
+        private void _deviceStore_DeviceAdded(object sender, Device e)
         {
-            Devices.Add(device);
+            Devices.Add(e);
         }
 
-        private void _DeviceUpdated(Device device)
+        private void _deviceStore_DeviceUpdated(object sender, Device e)
         {
-            if (device != null)
+            var item = Devices.Where(x => x.Id == e.Id).FirstOrDefault();
+            var index = 0;
+            if ((index = Devices.IndexOf(item)) != -1)
             {
-                var item = Devices.Where(x => x.Id == device.Id).FirstOrDefault();
-                var index = 0;
-                if (item != null && (index = Devices.IndexOf(item)) != -1)
-                {
-                    Devices[index] = device;
-                }
-                else
-                {
-                    Devices.Add(device);
-                }
+                Devices[index] = e;
+            }
+            else
+            {
+                Devices.Add(e);
             }
         }
 
-        private void _DeviceDeleted(int id)
+        private void _deviceStore_DeviceRemoved(object sender, Device e)
         {
-            var device = Devices.FirstOrDefault(x => x.Id == id);
-            Devices.Remove(device!);
+            var device = Devices.FirstOrDefault(x => x.Id == e.Id);
+            Devices.Remove(device);
         }
     }
 }

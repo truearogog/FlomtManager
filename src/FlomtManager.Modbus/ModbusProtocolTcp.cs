@@ -3,46 +3,45 @@ using System.Net.Sockets;
 
 namespace FlomtManager.Modbus
 {
-    public class ModbusProtocolTcp(string ipAddress, int port) : ModbusProtocolBase
+    public class ModbusProtocolTcp(string ipAddress, int port) : ModbusProtocol
     {
-        private readonly IPAddress _ipAddress = IPAddress.Parse(ipAddress);
-        private readonly int _port = port;
         private Socket _socket;
 
         public override bool IsOpen => _socket?.Connected ?? false;
 
-        public override void Dispose()
+        public override async ValueTask DisposeAsync()
         {
-            _socket?.Shutdown(SocketShutdown.Both);
-            _socket?.Close();
+            await CloseAsync();
             GC.SuppressFinalize(this);
         }
 
-        public override ValueTask OpenAsync(CancellationToken cancellationToken)
+        public override ValueTask OpenAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            _socket = new Socket(_ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            return _socket.ConnectAsync(_ipAddress, _port, cancellationToken);
+            var ipAddress_ = IPAddress.Parse(ipAddress);
+            _socket = new Socket(ipAddress_.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            return _socket.ConnectAsync(ipAddress_, port, cancellationToken);
         }
 
-        public override ValueTask CloseAsync(CancellationToken cancellationToken)
+        public override ValueTask CloseAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_socket);
             _socket!.Shutdown(SocketShutdown.Both);
             _socket!.Close();
+            _socket!.Dispose();
             _socket = null;
             return ValueTask.CompletedTask;
         }
 
-        protected override async Task SendAsync(byte[] message, CancellationToken cancellationToken)
+        protected override async Task SendAsync(byte[] message, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_socket);
             await _socket!.SendAsync(message, SocketFlags.None, cancellationToken);
         }
 
-        protected override async Task<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
+        protected override async Task<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_socket);

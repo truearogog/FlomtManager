@@ -1,25 +1,25 @@
 ﻿using System.Collections.ObjectModel;
 using Avalonia.Controls.Notifications;
-using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using FlomtManager.App.Models;
-using FlomtManager.App.Stores;
-using FlomtManager.Core.Attributes;
-using FlomtManager.Core.Entities;
+using FlomtManager.App.Enums;
+using FlomtManager.Core.DeviceConnection;
+using FlomtManager.Core.Enums;
+using FlomtManager.Core.Events;
 using FlomtManager.Core.Models;
+using FlomtManager.Core.Providers;
 using FlomtManager.Core.Repositories;
-using FlomtManager.Framework.Extensions;
+using FlomtManager.Core.Stores;
+using FlomtManager.Core.ViewModels;
 using FlomtManager.Modbus;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 
 namespace FlomtManager.App.ViewModels
 {
-    public class DeviceViewModel : ViewModelBase
+    internal class DeviceViewModel : ViewModel
     {
-        private readonly DeviceStore _deviceStore;
-        private readonly IDeviceDefinitionRepository _deviceDefinitionRepository;
+        private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly IDeviceStore _deviceStore;
+        private readonly IDeviceConnectionFactory _connectionViewModelFactory;
         private readonly IParameterRepository _parameterRepository;
 
         public event EventHandler CloseRequested;
@@ -27,228 +27,300 @@ namespace FlomtManager.App.ViewModels
         public event EventHandler<(NotificationType, string)> NotificationRequested;
         public event EventHandler ReadFromFileRequested;
 
-        private Device _device;
+        private Device _device = default;
         public Device Device
         {
             get => _device;
             set 
             {
                 this.RaiseAndSetIfChanged(ref _device, value);
-                DataGroupChart.Device = _device;
-                DataGroupIntegration.Device = _device;
-                DataGroupTable.Device = _device;
-                AddParameters();
             }
+        }
+
+        private ArchiveDisplayMode _archiveDisplayMode = ArchiveDisplayMode.Chart;
+        public ArchiveDisplayMode ArchiveDisplayMode
+        {
+            get => _archiveDisplayMode;
+            set => this.RaiseAndSetIfChanged(ref _archiveDisplayMode, value);
         }
 
         public ObservableCollection<ParameterViewModel> CurrentParameters { get; set; } = [];
         public ObservableCollection<ParameterViewModel> IntegralParameters { get; set; } = [];
 
-        public DeviceConnectionViewModel DeviceConnection { get; set; }
+        #region Device Connection
+
+        private DateTime? _lastTimeDataRead = null;
+        public DateTime? LastTimeDataRead
+        {
+            get => _lastTimeDataRead;
+            set => this.RaiseAndSetIfChanged(ref _lastTimeDataRead, value);
+        }
+
+        private DateTime? _lastTimeArchiveRead = null;
+        public DateTime? LastTimeArchiveRead
+        {
+            get => _lastTimeArchiveRead;
+            set => this.RaiseAndSetIfChanged(ref _lastTimeArchiveRead, value);
+        }
+
+        private int _archiveReadingProgress = 0;
+        public int ArchiveReadingProgress
+        {
+            get => _archiveReadingProgress;
+            set => this.RaiseAndSetIfChanged(ref _archiveReadingProgress, value);
+        }
+
+        private ArchiveReadingState _archiveReadingState = ArchiveReadingState.None;
+        public ArchiveReadingState ArchiveReadingState
+        {
+            get => _archiveReadingState;
+            set => this.RaiseAndSetIfChanged(ref _archiveReadingState, value);
+        }
+
+        private ConnectionState _connectionState = ConnectionState.Disconnected;
+        public ConnectionState ConnectionState
+        {
+            get => _connectionState;
+            set => this.RaiseAndSetIfChanged(ref _connectionState, value);
+        }
+
+        public IDeviceConnection Connection { get; set; }
+
+        #endregion
+
         public DataGroupChartViewModel DataGroupChart { get; set; }
         public DataGroupTableViewModel DataGroupTable { get; set; }
         public DataGroupIntegrationViewModel DataGroupIntegration { get; set; }
 
-        public ObservableCollection<DataGroupValues> DataGroups { get; set; } = [];
-
         public DeviceViewModel(
-            DeviceStore deviceStore,
-            IDeviceDefinitionRepository deviceDefinitionRepository,
-            IParameterRepository parameterRepository)
+            IDateTimeProvider dateTimeProvider,
+            IDeviceStore deviceStore,
+            IDeviceConnectionFactory connectionViewModelFactory,
+            IParameterRepository parameterRepository,
+            DataGroupChartViewModel dataGroupChartViewModel,
+            DataGroupTableViewModel dataGroupTableViewModel,
+            DataGroupIntegrationViewModel dataGroupIntegrationViewModel)
         {
+            _dateTimeProvider = dateTimeProvider;
             _deviceStore = deviceStore;
-            _deviceDefinitionRepository = deviceDefinitionRepository;
+            _connectionViewModelFactory = connectionViewModelFactory;
             _parameterRepository = parameterRepository;
 
             _deviceStore.DeviceUpdated += _DeviceUpdated;
-            _deviceStore.DeviceDeleted += _DeviceDeleted;
-
-            DeviceConnection = App.Host.Services.GetRequiredService<DeviceConnectionViewModel>();
-            DeviceConnection.OnConnectionData += _OnConnectionData;
-            DeviceConnection.OnConnectionError += _OnConnectionError;
+            _deviceStore.DeviceRemoved += _DeviceRemoved;
             
-            DataGroupChart = App.Host.Services.GetRequiredService<DataGroupChartViewModel>();
+            DataGroupChart = dataGroupChartViewModel;
             DataGroupChart.OnIntegrationChanged += _OnIntegrationChanged;
 
-            DataGroupTable = App.Host.Services.GetRequiredService<DataGroupTableViewModel>();
+            DataGroupTable = dataGroupTableViewModel;
 
-            DataGroupIntegration = App.Host.Services.GetRequiredService<DataGroupIntegrationViewModel>();
+            DataGroupIntegration = dataGroupIntegrationViewModel;
         }
 
-        private void _OnIntegrationChanged(object sender, IntegrationChangedEventArgs e)
+        public async Task SetDevice(Device device)
         {
-            DataGroupIntegration.UpdateValues(e);
+            Device = device;
+            await DataGroupChart.SetDevice(device);
+            //DataGroupTable.Device = device;
+            await DataGroupIntegration.SetDevice(device);
+            await UpdateParameters();
         }
 
-        private async void AddParameters()
+        private async Task UpdateParameters()
         {
-            if (Device == null)
+            if (Device == default)
             {
                 return;
             }
 
-            var parameters = await _parameterRepository.GetAll().Where(x => x.DeviceId == Device.Id).ToListAsync();
-
-            var deviceDefinition = Device.DeviceDefinition ?? await _deviceDefinitionRepository.GetAll().FirstOrDefaultAsync(x => x.Id == Device.Id);
-            if (deviceDefinition == null)
+            CurrentParameters.Clear();
+            var currentParameters = await _parameterRepository.GetCurrentParametersByDeviceId(Device.Id);
+            foreach (var currentParameter in currentParameters)
             {
-                return;
+                CurrentParameters.Add(new() { Parameter = currentParameter });
             }
 
-            AddParameters(deviceDefinition.CurrentParameterLineDefinition!, CurrentParameters, parameters);
-            AddParameters(deviceDefinition.IntegralParameterLineDefinition!, IntegralParameters, parameters);            
-        }
-
-        private static void AddParameters(byte[] parameterLineDefinition, ObservableCollection<ParameterViewModel> parameterCollection, IEnumerable<Parameter> parameters)
-        {
-            if (!parameters.Any())
+            IntegralParameters.Clear();
+            var integralParameters = await _parameterRepository.GetIntegralParametersByDeviceId(Device.Id);
+            foreach (var integralParameter in integralParameters)
             {
-                return;
-            }
-
-            parameterCollection.Clear();
-            foreach (var parameterByte in parameterLineDefinition)
-            {
-                if ((parameterByte & 0x80) == 0)
-                {
-                    var parameter = parameters.First(x => x.Number == parameterByte);
-                    if (parameter.ParameterType.GetAttribute<HideAttribute>() == null)
-                    {
-                        parameterCollection.Add(new() { Parameter = parameter });
-                    }
-                }
+                IntegralParameters.Add(new() { Parameter = integralParameter });
             }
         }
 
-        public void UpdateDevice(Device device)
+        public void RequestDeviceUpdate(Device device)
         {
             DeviceUpdateRequested?.Invoke(this, device);
         }
 
-        private void _DeviceUpdated(Device device)
+        private async void _DeviceUpdated(object sender, Device device)
         {
-            if (Device?.Id == device.Id)
+            if (Device.Id == device.Id)
             {
-                Device = device;
+                await SetDevice(device);
             }
         }
 
-        private void _DeviceDeleted(int id)
+        private void _DeviceRemoved(object sender, Device device)
         {
-            if (Device?.Id == id)
+            if (Device.Id == device.Id)
             {
                 CloseRequested?.Invoke(this, EventArgs.Empty);
-                TryDisconnect();
             }
         }
 
-        private CancellationTokenSource _connectionCancellationTokenSource;
-        public async void TryConnect()
+        public void SetDataDisplayMode(ArchiveDisplayMode mode)
+        {
+            ArchiveDisplayMode = mode;
+        }
+
+        public async Task TryConnect()
         {
             try
             {
-                ArgumentNullException.ThrowIfNull(Device);
-                ArgumentNullException.ThrowIfNull(DeviceConnection);
-                _connectionCancellationTokenSource = new();
-                await DeviceConnection.Connect(Device, _connectionCancellationTokenSource.Token);
-                AddParameters();
+                Connection = _connectionViewModelFactory.Create(Device);
+
+                Connection.OnConnectionError += async (sender, e) =>
+                {
+                    RequestNotification(NotificationType.Error, e.Exception.Message);
+                    await TryDisconnect();
+                };
+
+                Connection.OnConnectionStateChanged += (sender, e) => ConnectionState = e.State;
+
+                Connection.OnConnectionDataChanged += (sender, e) =>
+                {
+                    foreach (var currentParameter in CurrentParameters)
+                    {
+                        ParameterValue value = e.CurrentParameterValues.TryGetValue(currentParameter.Parameter.Number, out var _value) ? _value : null;
+                        if (value != null)
+                        {
+                            currentParameter.Value = value.Value;
+                            currentParameter.Error = value.Error;
+                        }
+                    }
+                    foreach (var integralParameter in IntegralParameters)
+                    {
+                        ParameterValue value = e.IntegralParameterValues.TryGetValue(integralParameter.Parameter.Number, out var _value) ? _value : null;
+                        if (value != null)
+                        {
+                            integralParameter.Value = value.Value;
+                            integralParameter.Error = value.Error;
+                        }
+                    }
+
+                    LastTimeDataRead = _dateTimeProvider.Now;
+                };
+
+                Connection.OnConnectionArchiveReadingStateChanged += async (sender, e) =>
+                {
+                    ArchiveReadingState = e.State;
+                    if (e.State == ArchiveReadingState.Complete)
+                    {
+                        LastTimeArchiveRead = _dateTimeProvider.Now;
+                        if (e.LinesRead > 0)
+                        {
+                            await DataGroupChart.UpdateData();
+                        }
+                    }
+                };
+
+                Connection.OnConnectionArchiveReadingProgressChangedArgs += (sender, e) =>
+                {
+                    ArchiveReadingProgress = (int)((double)e.Progress / e.MaxProgress * 100);
+                };
+
+                await Connection.Connect();
             }
             catch (ModbusException ex)
             {
                 RequestNotification(NotificationType.Error, ex.Message);
-            }
-            catch (OperationCanceledException)
-            {
-                RequestNotification(NotificationType.Warning, "Connection cancelled.");
-            }
-            catch
-            {
-                RequestNotification(NotificationType.Error, "Connection error.");
+                await (Connection?.DisposeAsync() ?? ValueTask.CompletedTask);
+                Connection = null;
             }
         }
 
-        public void TryCancelConnect()
+        public async Task TryDisconnect()
         {
-            ArgumentNullException.ThrowIfNull(_connectionCancellationTokenSource);
-            _connectionCancellationTokenSource.Cancel();
+            await (Connection?.Disconnect() ?? Task.CompletedTask);
+            await (Connection?.DisposeAsync() ?? ValueTask.CompletedTask);
+            Connection = null;
         }
 
-        public async void TryDisconnect()
+        private void _OnIntegrationChanged(object sender, IntegrationChangedArgs e)
         {
-            _connectionCancellationTokenSource?.Cancel();
-            ArgumentNullException.ThrowIfNull(DeviceConnection);
-            await DeviceConnection.Disconnect();
+            DataGroupIntegration.UpdateValues(e);
         }
 
-        public async void ReadArchivesFromDevice()
-        {
-            ArgumentNullException.ThrowIfNull(DeviceConnection);
-            await DeviceConnection.ReadArchivesFromDevice();
-            AddParameters();
-            UpdateData();
-            DataGroupIntegration.Device = Device;
-        }
+        //private CancellationTokenSource _connectionCancellationTokenSource;
+        //public async void TryConnect()
+        //{
+        //    try
+        //    {
+        //        if (!Device.HasValue)
+        //        {
+        //            throw new ArgumentNullException(nameof(Device));
+        //        }
+        //        ArgumentNullException.ThrowIfNull(DeviceConnection);
+        //        _connectionCancellationTokenSource = new();
+        //        await DeviceConnection.Connect(Device, _connectionCancellationTokenSource.Token);
+        //        UpdateParameters();
+        //    }
+        //    catch (ModbusException ex)
+        //    {
+        //        RequestNotification(NotificationType.Error, ex.Message);
+        //    }
+        //    catch (OperationCanceledException)
+        //    {
+        //        RequestNotification(NotificationType.Warning, "Connection cancelled.");
+        //    }
+        //    catch
+        //    {
+        //        RequestNotification(NotificationType.Error, "Connection error.");
+        //    }
+        //}
 
-        public void ReadArchivesFromFile()
-        {
-            ReadFromFileRequested?.Invoke(this, EventArgs.Empty);
-        }
+        //public void TryCancelConnect()
+        //{
+        //    ArgumentNullException.ThrowIfNull(_connectionCancellationTokenSource);
+        //    _connectionCancellationTokenSource.Cancel();
+        //}
 
-        public async Task ReadArchivesFromFile(IStorageFile storageFile)
-        {
-            ArgumentNullException.ThrowIfNull(Device);
-            ArgumentNullException.ThrowIfNull(DeviceConnection);
-            await DeviceConnection.ReadArchivesFromFile(Device, storageFile);
-            AddParameters();
-            UpdateData();
-            DataGroupIntegration.Device = Device;
-        }
+        //public async void TryDisconnect()
+        //{
+        //    _connectionCancellationTokenSource?.Cancel();
+        //    ArgumentNullException.ThrowIfNull(DeviceConnection);
+        //    await DeviceConnection.Disconnect();
+        //}
 
-        private void UpdateData()
-        {
-            DataGroupChart.UpdateData();
-        }
+        //public async void ReadArchivesFromDevice()
+        //{
+        //    ArgumentNullException.ThrowIfNull(DeviceConnection);
+        //    await DeviceConnection.ReadArchivesFromDevice();
+        //    UpdateParameters();
+        //    UpdateData();
+        //    DataGroupIntegration.Device = Device;
+        //}
 
-        private void _OnConnectionData(object sender, DeviceConnectionDataEventArgs e)
-        {
-            Dispatcher.UIThread.Invoke(() =>
-            {
-                foreach (var currentParameter in CurrentParameters)
-                {
-                    ParameterValue value = e.CurrentParameters.TryGetValue(currentParameter.Parameter.Number, out var _value) ? _value : null;
-                    if (value != null)
-                    {
-                        currentParameter.Value = value.Value;
-                        currentParameter.Error = value.Error;
-                    }
-                }
-                foreach (var integralParameter in IntegralParameters)
-                {
-                    ParameterValue value = e.IntegralParameters.TryGetValue(integralParameter.Parameter.Number, out var _value) ? _value : null;
-                    if (value != null)
-                    {
-                        integralParameter.Value = value.Value;
-                        integralParameter.Error = value.Error;
-                    }
-                }
-            });
-        }
+        //public void ReadArchivesFromFile()
+        //{
+        //    ReadFromFileRequested?.Invoke(this, EventArgs.Empty);
+        //}
 
-        private void _OnConnectionError(object sender, DeviceConnectionErrorEventArgs e)
-        {
-            if (e.Exception is ModbusException ex)
-            {
-                RequestNotification(NotificationType.Error, ex.Message);
-            }
-            else if (e.Exception is OperationCanceledException)
-            {
-                RequestNotification(NotificationType.Error, "Connection cancelled.");
-            }
-            else
-            {
-                RequestNotification(NotificationType.Error, "Connection error.");
-            }
-        }
+        //public async Task ReadArchivesFromFile(IStorageFile storageFile)
+        //{
+        //    ArgumentNullException.ThrowIfNull(Device);
+        //    ArgumentNullException.ThrowIfNull(DeviceConnection);
+        //    await DeviceConnection.ReadArchivesFromFile(Device, storageFile);
+        //    UpdateParameters();
+        //    UpdateData();
+        //    DataGroupIntegration.Device = Device;
+        //}
+
+        //private void UpdateData()
+        //{
+        //    DataGroupChart.UpdateData();
+        //}
 
         private void RequestNotification(NotificationType type, string message)
         {

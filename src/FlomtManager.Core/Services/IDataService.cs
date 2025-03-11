@@ -1,9 +1,7 @@
-﻿using FlomtManager.Core.Models;
-
-namespace FlomtManager.Core.Services
+﻿namespace FlomtManager.Core.Services
 {
     public interface IDataService
     {
-        Task<DataGroupValues[]> GetDataGroupValues(int deviceId, bool orderDesc = false, CancellationToken cancellationToken = default);
+        //Task<DataGroupValues[]> GetDataGroupValues(int deviceId, bool orderDesc = false, CancellationToken cancellationToken = default);
     }
 }

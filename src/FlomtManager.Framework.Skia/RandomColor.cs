@@ -4,7 +4,7 @@ namespace FlomtManager.Framework.Skia
 {
     public static class RandomColor
     {
-        private const int SAME_HUE_RANGE = 5;
+        private const int SAME_HUE_RANGE = 10;
 
         public static SKColor Next(IEnumerable<float> hues = null)
         {

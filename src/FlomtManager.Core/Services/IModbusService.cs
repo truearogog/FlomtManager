@@ -1,6 +1,5 @@
-﻿using System.Collections.Immutable;
-using FlomtManager.Core.Entities;
-using FlomtManager.Core.Enums;
+﻿using FlomtManager.Core.Enums;
+using FlomtManager.Core.Models;
 using FlomtManager.Modbus;
 
 namespace FlomtManager.Core.Services

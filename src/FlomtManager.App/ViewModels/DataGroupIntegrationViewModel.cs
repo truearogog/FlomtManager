@@ -1,15 +1,14 @@
 ﻿using System.Collections.ObjectModel;
 using FlomtManager.App.Models;
-using FlomtManager.Core.Entities;
+using FlomtManager.Core.Events;
+using FlomtManager.Core.Models;
 using FlomtManager.Core.Repositories;
-using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 
 namespace FlomtManager.App.ViewModels
 {
-    public class DataGroupIntegrationViewModel(IDeviceDefinitionRepository deviceDefinitionRepository, IParameterRepository parameterRepository) : ViewModelBase
+    public class DataGroupIntegrationViewModel(IParameterRepository parameterRepository) : ViewModel
     {
-        private readonly IDeviceDefinitionRepository _deviceDefinitionRepository = deviceDefinitionRepository;
         private readonly IParameterRepository _parameterRepository = parameterRepository;
 
         private Device _device;
@@ -19,7 +18,6 @@ namespace FlomtManager.App.ViewModels
             set
             {
                 this.RaiseAndSetIfChanged(ref _device, value);
-                AddParameters();
             }
         }
 
@@ -39,39 +37,37 @@ namespace FlomtManager.App.ViewModels
 
         public ObservableCollection<ParameterViewModel> Parameters { get; set; } = [];
 
-        private async void AddParameters()
+        public async Task SetDevice(Device device)
         {
-            ArgumentNullException.ThrowIfNull(Device);
-            var deviceDefinition = await _deviceDefinitionRepository.GetByIdAsync(Device.Id);
-            if (deviceDefinition != null)
+            Device = device;
+            await UpdateParameters();
+        }
+
+        private async Task UpdateParameters()
+        {
+            if (Device == default)
             {
-                Parameters.Clear();
-                var parameters = await _parameterRepository.GetAll().Where(x => x.DeviceId == Device.Id).ToListAsync();
-                foreach (var parameterByte in deviceDefinition.AverageParameterArchiveLineDefinition!)
-                {
-                    var parameter = parameters.FirstOrDefault(x => x.Number == parameterByte);
-                    if (parameter != null && parameter.IntegrationNumber != 0)
-                    {
-                        var integrationParameter = parameters.FirstOrDefault(x => x.Number == parameter.IntegrationNumber);
-                        if (integrationParameter != null)
-                        {
-                            Parameters.Add(new() { Parameter = integrationParameter });
-                        }
-                    }
-                }
+                return;
+            }
+
+            Parameters.Clear();
+            var integrationParameters = await _parameterRepository.GetIntegralParametersByDeviceId(Device.Id);
+            foreach (var integrationParameter in integrationParameters)
+            {
+                Parameters.Add(new() { Parameter = integrationParameter });
             }
         }
 
-        public void UpdateValues(IntegrationChangedEventArgs args)
+        public void UpdateValues(IntegrationChangedArgs args)
         {
             IntegrationStart = args.IntegrationStart;
             IntegrationEnd = args.IntegrationEnd;
-            foreach (var (number, value) in args.IntegrationData)
+            foreach (var (number, value) in args.IntegratedValues)
             {
                 var parameter = Parameters.FirstOrDefault(x => x.Parameter.Number == number);
                 if (parameter != null)
                 {
-                    parameter.Value = value.ToString("0.###");
+                    parameter.Value = value;
                 }
             }
         }

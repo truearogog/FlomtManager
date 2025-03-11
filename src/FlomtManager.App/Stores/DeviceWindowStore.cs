@@ -4,9 +4,9 @@ namespace FlomtManager.App.Stores
 {
     public class DeviceWindowStore
     {
-        private Dictionary<int, Window> _deviceWindows = [];
+        private readonly Dictionary<int, Window> _deviceWindows = [];
 
-        public bool TryGetWindow(int deviceId, out Window? window)
+        public bool TryGetWindow(int deviceId, out Window window)
         {
             var result = _deviceWindows.TryGetValue(deviceId, out var _window);
             window = _window;

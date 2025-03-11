@@ -5,14 +5,14 @@ using Avalonia.Platform.Storage;
 using FlomtManager.App.Extensions;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
-using FlomtManager.Core.Entities;
+using FlomtManager.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlomtManager.App.Views
 {
     public partial class DeviceWindow : Window
     {
-        private WindowNotificationManager? _windowNotificationManager;
+        private WindowNotificationManager _windowNotificationManager;
 
         public DeviceWindow()
         {
@@ -32,8 +32,9 @@ namespace FlomtManager.App.Views
             if (DataContext is DeviceViewModel viewModel)
             {
                 var deviceWindowStore = App.Host.Services.GetRequiredService<DeviceWindowStore>();
-                deviceWindowStore.RemoveWindow(viewModel.Device!.Id);
-                viewModel.TryDisconnect();
+                deviceWindowStore.RemoveWindow(viewModel.Device.Id);
+
+                viewModel.TryDisconnect().Wait();
             }
         }
 
@@ -106,7 +107,7 @@ namespace FlomtManager.App.Views
                     return;
                 }
                 var file = result[0];
-                await viewModel.ReadArchivesFromFile(file);
+                //await viewModel.ReadArchivesFromFile(file);
             }
         }
     }

@@ -6,7 +6,8 @@
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
     xmlns:vm="using:FlomtManager.App.ViewModels"
 	xmlns:pages="using:FlomtManager.App.Pages"
-    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
+	Width="500" Height="300"
     x:Class="FlomtManager.App.Views.MainWindow"
     x:DataType="vm:MainWindowViewModel"
     Icon="/Assets/avalonia-logo.ico"
@@ -56,7 +57,7 @@
 			<TabItem Header="Devices">
 				<pages:Devices DataContext="{Binding DevicesViewModel}" />
 			</TabItem>
-			<TabItem Header="Reports">
+			<!--<TabItem Header="Reports">
 				<pages:Reports />
 			</TabItem>
 			<TabItem Header="Settings">
@@ -64,7 +65,7 @@
 			</TabItem>
 			<TabItem Header="About">
 				<pages:About />
-			</TabItem>
+			</TabItem>-->
 		</TabControl>
 	</Grid>
 </Window>

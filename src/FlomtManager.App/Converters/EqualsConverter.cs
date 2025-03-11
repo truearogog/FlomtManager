@@ -1,19 +1,17 @@
-﻿using Avalonia.Data.Converters;
-using System;
-using System.Globalization;
+﻿using System.Globalization;
+using Avalonia.Data.Converters;
 
-namespace FlomtManager.App.Converters
+namespace FlomtManager.App.Converters;
+
+public class EqualsConverter : IValueConverter
 {
-    public class EqualsConverter : IValueConverter
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return value?.Equals(parameter) ?? false;
-        }
+        return value?.Equals(parameter) ?? false;
+    }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return true;
-        }
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return true;
     }
 }

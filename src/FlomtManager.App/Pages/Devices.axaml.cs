@@ -4,7 +4,7 @@ using FlomtManager.App.Extensions;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
 using FlomtManager.App.Views;
-using FlomtManager.Core.Entities;
+using FlomtManager.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlomtManager.App.Pages
@@ -65,7 +65,7 @@ namespace FlomtManager.App.Pages
             window.ShowDialog(parentWindow);
         }
 
-        private void _DeviceViewRequested(object sender, Device device)
+        private async void _DeviceViewRequested(object sender, Device device)
         {
             var deviceWindowStore = App.Host.Services.GetRequiredService<DeviceWindowStore>();
             if (deviceWindowStore.TryGetWindow(device.Id, out var window))
@@ -75,7 +75,7 @@ namespace FlomtManager.App.Pages
             }
 
             var viewModel = App.Host.Services.GetRequiredService<DeviceViewModel>();
-            viewModel.Device = device;
+            await viewModel.SetDevice(device);
 
             var newWindow = new DeviceWindow
             {

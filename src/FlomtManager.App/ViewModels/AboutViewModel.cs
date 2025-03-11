@@ -1,6 +1,6 @@
 ﻿namespace FlomtManager.App.ViewModels
 {
-    public class AboutViewModel : ViewModelBase
+    public class AboutViewModel : ViewModel
     {
     }
 }

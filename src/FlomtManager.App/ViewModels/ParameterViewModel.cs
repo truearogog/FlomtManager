@@ -1,11 +1,11 @@
-﻿using FlomtManager.Core.Entities;
+﻿using FlomtManager.Core.Models;
 using ReactiveUI;
 
 namespace FlomtManager.App.ViewModels
 {
-    public class ParameterViewModel : ViewModelBase
+    public class ParameterViewModel : ViewModel
     {
-        public required Parameter Parameter { get; init; }
+        public Parameter Parameter { get; init; }
 
         private string _value = string.Empty;
         public string Value

@@ -5,7 +5,7 @@ using ReactiveUI;
 
 namespace FlomtManager.App.ViewModels
 {
-    public class DeviceFormViewModel : ViewModelBase
+    public class DeviceFormViewModel : ViewModel
     {
         private int _id = 0;
         public int Id
