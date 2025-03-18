@@ -1,6 +1,5 @@
-﻿using Avalonia.Data.Converters;
-using System;
-using System.Globalization;
+﻿using System.Globalization;
+using Avalonia.Data.Converters;
 
 namespace FlomtManager.App.Converters
 {
@@ -13,7 +12,7 @@ namespace FlomtManager.App.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return (string?)value == "Edit" ? 1 : 0;
+            return (string)value == "Edit" ? 1 : 0;
         }
     }
 }

@@ -3,13 +3,13 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="using:FlomtManager.App.ViewModels"
+	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
 	mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="450"
 	x:Class="FlomtManager.App.Views.DataGroupIntegration"
-    x:DataType="vm:DataGroupIntegrationViewModel">
+    x:DataType="vm:IDataIntegrationViewModel">
 	
 	<UserControl.DataTemplates>
-		<DataTemplate DataType="{x:Type vm:ParameterViewModel}">
+		<DataTemplate DataType="{x:Type vm:IParameterViewModel}">
 			<Border Classes.Error="{Binding Error}" Padding="2">
 				<Grid>
 					<Grid.ColumnDefinitions>
@@ -18,7 +18,8 @@
 						<ColumnDefinition Width="auto" />
 					</Grid.ColumnDefinitions>
 					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
-					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+					<TextBlock Grid.Column="1" Margin="4,0" 
+						Text="{Binding Value, TargetNullValue='-'}" />
 					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
 				</Grid>
 			</Border>
@@ -30,11 +31,11 @@
 			<TextBlock Text="Integration" Classes="H6" Theme="{DynamicResource TitleTextBlock}" />
 			<StackPanel>
 				<TextBlock Classes="Tertiary" Text="Integration start time" />
-				<SelectableTextBlock Text="{Binding IntegrationStart, Converter={StaticResource IsNullElseConverter}, ConverterParameter='-'}" />
+				<SelectableTextBlock Text="{Binding IntegrationStart, TargetNullValue='-'}" />
 			</StackPanel>
 			<StackPanel>
 				<TextBlock Classes="Tertiary" Text="Integration end time" />
-				<SelectableTextBlock Text="{Binding IntegrationEnd, Converter={StaticResource IsNullElseConverter}, ConverterParameter='-'}" />
+				<SelectableTextBlock Text="{Binding IntegrationEnd, TargetNullValue='-'}" />
 			</StackPanel>
 			<ItemsControl ItemsSource="{Binding Parameters}" Grid.IsSharedSizeScope="True">
 				<ItemsControl.ItemsPanel>

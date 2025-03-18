@@ -1,58 +1,55 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
 using FlomtManager.App.Views;
-using FlomtManager.Core;
+using FlomtManager.Application;
+using FlomtManager.Domain.Abstractions.Data;
 using FlomtManager.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
 namespace FlomtManager.App
 {
-    public partial class App : Application
+    public partial class App : Avalonia.Application
     {
-        public static IHost Host;
+        public static IServiceProvider Services;
 
         public App()
         {
-            Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
+            var host = Host.CreateDefaultBuilder()
                 .UseSerilog()
                 .ConfigureServices((context, services) =>
                 {
-                    services.AppAppEF(context.Configuration);
-                    services.AddServices();
+                    if (!Design.IsDesignMode)
+                    {
+                        services
+                            .AppDatabase(context.Configuration)
+                            .AddRepositories()
+                            .AddServices()
+                            .AddStores()
+                            .AddApplication()
+                            ;
 
-                    // register stores
-                    services.AddSingleton<DeviceWindowStore>();
-                    services.AddSingleton<DeviceStore>();
-
-                    // register views and viewmodels
-                    services.AddSingleton<MainWindow>();
-                    services.AddSingleton<MainWindowViewModel>();
-                    services.AddSingleton<DevicesViewModel>();
-                    services.AddTransient<DeviceViewModel>();
-                    services.AddTransient<DeviceCreateUpdateViewModel>();
-                    services.AddTransient<DeviceConnectionViewModel>();
-                    services.AddTransient<DataGroupChartViewModel>();
-                    services.AddTransient<DataGroupTableViewModel>();
-                    services.AddTransient<DataGroupIntegrationViewModel>();
+                        services.AddSingleton<MainViewModel>();
+                        services.AddSingleton<DeviceWindowStore>();
+                    }
                 })
                 .Build();
-            Host.Start();
+            host.Start();
+
+            Services = host.Services;
 
             if (!Design.IsDesignMode)
             {
-                var db = Host.Services.GetRequiredService<IAppDb>() as DbContext
-                    ?? throw new InvalidOperationException($"{nameof(IAppDb)} must implement {nameof(DbContext)}.");
-                db.Database.Migrate();
+                var dbInitializer = Services.GetRequiredService<IDbInitializer>();
+                dbInitializer.Drop().Wait(); // todo: remove
+                dbInitializer.Init().Wait();
             }
 
-            DataContext = new ApplicationViewModel();
+            DataContext = new AppViewModel();
         }
 
         public override void Initialize()
@@ -64,8 +61,10 @@ namespace FlomtManager.App
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                var mainWindow = Host.Services.GetRequiredService<MainWindow>();
-                mainWindow.DataContext = Host.Services.GetRequiredService<MainWindowViewModel>();
+                var mainWindow = new MainWindow
+                {
+                    DataContext = Services.GetRequiredService<MainViewModel>()
+                };
                 desktop.MainWindow = mainWindow;
             }
 

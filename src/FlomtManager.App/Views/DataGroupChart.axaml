@@ -4,20 +4,20 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
-	xmlns:vm="using:FlomtManager.App.ViewModels"
+	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
 	xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
-    x:DataType="vm:DataGroupChartViewModel"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:DataType="vm:IDataChartViewModel"
     x:Class="FlomtManager.App.Views.DataGroupChart">
 
 	<UserControl.DataTemplates>
-		<DataTemplate DataType="vm:ParameterViewModel">
-			<ToggleButton 
+		<DataTemplate DataType="vm:IParameterViewModel">
+			<ToggleButton
 				CornerRadius="0"
 				Padding="8,4"
 				HorizontalContentAlignment="Stretch"
 				IsChecked="true"
-				Command="{Binding ((vm:DataGroupChartViewModel)DataContext).ToggleParameter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+				Command="{Binding ((vm:IDataChartViewModel)DataContext).ToggleParameter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
 				CommandParameter="{Binding Parameter.Number}">
 				<ToggleButton.Styles>
 					<Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
@@ -33,22 +33,25 @@
 				
 				<Grid ColumnDefinitions="auto,*,auto">
 					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
-					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, Converter={StaticResource IsNullOrEmptyElseConverter}, ConverterParameter='-'}" />
+					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, TargetNullValue='-'}" />
 					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
 				</Grid>
 
 				<ToggleButton.ContextFlyout>
 					<Flyout>
 						<StackPanel>
-							<CheckBox Padding="4" Content="Y Auto" IsChecked="True" Theme="{DynamicResource CardCheckBox}" />
+							<CheckBox
+								Content="Show Axis"
+								Padding="8,4"
+								Theme="{DynamicResource CardCheckBox}" />
 						</StackPanel>
 					</Flyout>
-				</ToggleButton.ContextFlyout>	
+				</ToggleButton.ContextFlyout>
 			</ToggleButton>
 		</DataTemplate>
 	</UserControl.DataTemplates>
 
-	<Grid RowDefinitions="auto,*,auto">
+	<Grid RowDefinitions="auto,*">
 		<ItemsControl Grid.Row="0" ItemsSource="{Binding Parameters}" Grid.IsSharedSizeScope="True" >
 			<ItemsControl.ItemsPanel>
 				<ItemsPanelTemplate>
@@ -57,10 +60,5 @@
 			</ItemsControl.ItemsPanel>
 		</ItemsControl>
 		<ScottPlot:AvaPlot Grid.Row="1" x:Name="Chart" Margin="4" />
-		<StackPanel Grid.Row="2" Orientation="Horizontal" Margin="4">
-			<ToggleButton 
-				Content="Y Axes"
-				Command="{Binding ToggleYAxes}" />
-		</StackPanel>
 	</Grid>
 </UserControl>

@@ -1,10 +1,10 @@
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using FlomtManager.MemoryReader.Models;
 using FlomtManager.MemoryReader.ViewModels;
 using FlomtManager.MemoryReader.Views;
-using System.Text.Json;
 
 namespace FlomtManager.MemoryReader
 {

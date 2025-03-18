@@ -1,5 +1,5 @@
-﻿using FlomtManager.MemoryReader.ViewModels;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using FlomtManager.MemoryReader.ViewModels;
 
 namespace FlomtManager.MemoryReader.Models
 {

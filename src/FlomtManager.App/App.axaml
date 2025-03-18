@@ -1,11 +1,11 @@
 <Application 
 	xmlns="https://github.com/avaloniaui"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:FlomtManager.App.ViewModels"
 	xmlns:conv="using:FlomtManager.App.Converters"
 	xmlns:local="using:FlomtManager.App"
-	xmlns:vm="using:FlomtManager.App.ViewModels"
 	x:Class="FlomtManager.App.App"
-	x:DataType="vm:ApplicationViewModel"
+	x:DataType="vm:AppViewModel"
 	RequestedThemeVariant="Dark">
 	
 	<Application.DataTemplates>
@@ -22,8 +22,7 @@
 	<Application.Resources>
 		<conv:AddEditConverter x:Key="AddEditConverter" />
 		<conv:EqualsConverter x:Key="EqualsConverter" />
-		<conv:IsNullElseConverter x:Key="IsNullElseConverter" />
-		<conv:IsNullOrEmptyElseConverter x:Key="IsNullOrEmptyElseConverter" />
+		<conv:NotEqualsConverter x:Key="NotEqualsConverter" />
 		<conv:ColorAddLightnessConverter x:Key="ColorAddLightnessConverter" />
 	</Application.Resources>
 	

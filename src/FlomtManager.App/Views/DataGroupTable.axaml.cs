@@ -1,16 +1,19 @@
+using System.ComponentModel;
 using Avalonia;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Data;
-using FlomtManager.App.ViewModels;
-using FlomtManager.Core.Attributes;
-using FlomtManager.Core.Enums;
-using FlomtManager.Core.Models;
-using FlomtManager.Framework.Extensions;
+using Avalonia.Threading;
+using FlomtManager.Domain.Abstractions.Parsers;
+using FlomtManager.Domain.Abstractions.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FlomtManager.App.Views
 {
     public partial class DataGroupTable : UserControl
     {
+        private IDataTableViewModel _viewModel;
+
         public DataGroupTable()
         {
             InitializeComponent();
@@ -20,10 +23,12 @@ namespace FlomtManager.App.Views
         {
             base.OnDataContextChanged(e);
 
-            if (DataContext is DataGroupTableViewModel viewModel)
+            if (DataContext is IDataTableViewModel viewModel)
             {
-                viewModel.OnDataUpdate += _OnDataUpdate;
-                viewModel.UpdateData();
+                viewModel.OnDataUpdated += _OnDataUpdated;
+
+                Task.Run(viewModel.UpdateData);
+                _viewModel = viewModel;
             }
         }
 
@@ -31,55 +36,56 @@ namespace FlomtManager.App.Views
         {
             base.OnDetachedFromVisualTree(e);
 
-            if (DataContext is DataGroupTableViewModel viewModel)
+            if (DataContext is IDataTableViewModel viewModel)
             {
-                viewModel.OnDataUpdate -= _OnDataUpdate;
+                viewModel.OnDataUpdated -= _OnDataUpdated;
+
+                _viewModel = null;
             }
         }
 
-        private void _OnDataUpdate(object sender, IEnumerable<DataGroupValues> dataGroups)
+        private void _OnDataUpdated(object sender, EventArgs eventArgs)
         {
-            var parameters = dataGroups.FirstOrDefault()?.Parameters;
-            if (parameters == null)
-            {
-                return;
-            }
+            var dataFormatter = App.Services.GetRequiredService<IDataFormatter>();
 
-            Table.Columns.Clear();
-            Table.Columns.Add(new DataGridTextColumn
+            Dispatcher.UIThread.Invoke(() =>
             {
-                Header = "Time",
-                CanUserSort = true,
-                CanUserReorder = false,
-                Binding = new Binding()
-                {
-                    Path = nameof(DataGroupValues.DateTime),
-                    Mode = BindingMode.OneWay,
-                },
-                Width = DataGridLength.Auto,
-            });
+                Table.Columns.Clear();
 
-            var current = 0;
-            foreach (var parameter in parameters)
-            {
-                if (parameter.ParameterType.GetAttribute<HideAttribute>()?.Hide(HideTargets.Table) != true)
+                var bindingFormat = $"{nameof(IDataTableViewModel.ValueCollection.Values)}[{{0}}]";
+
+                foreach (var parameter in _viewModel.Parameters)
                 {
+                    var header = $"{parameter.Name}" + (string.IsNullOrEmpty(parameter.Unit) ? "" : $", {parameter.Unit}");
+                    var index = _viewModel.ParameterPositions[parameter.Number];
+                    var format = dataFormatter.GetParameterFormat(parameter);
+                    var path = string.Format(bindingFormat, index);
+
                     Table.Columns.Add(new DataGridTextColumn
                     {
-                        Header = parameter.Name,
+                        Header = header,
                         CanUserSort = true,
-                        CanUserReorder = true,
-                        Binding = new Binding()
+                        CanUserReorder = false,
+                        Binding = new Binding
                         {
-                            Path = $"{nameof(DataGroupValues.Values)}[{current}]",
-                            StringFormat = "{0}",
                             Mode = BindingMode.OneWay,
+                            Path = path,
+                            StringFormat = format,
                         },
-                        Width = new DataGridLength(1, DataGridLengthUnitType.Star)
+                        Width = parameter.Number switch
+                        {
+                            0 => DataGridLength.Auto,
+                            _ => new DataGridLength(1, DataGridLengthUnitType.Star)
+                        }
                     });
                 }
-                current++;
-            }
+
+                var sortDescription = DataGridSortDescription.FromPath(string.Format(bindingFormat, 0), ListSortDirection.Descending);
+                var collectionView = new DataGridCollectionView(_viewModel.Data);
+                collectionView.SortDescriptions.Add(sortDescription);
+
+                Table.ItemsSource = collectionView;
+            });
         }
     }
 }

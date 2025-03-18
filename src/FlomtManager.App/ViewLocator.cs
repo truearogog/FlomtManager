@@ -1,9 +1,6 @@
-#nullable disable
-
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using FlomtManager.App.ViewModels;
-using System;
+using FlomtManager.Domain.Abstractions.ViewModels;
 
 namespace FlomtManager.App
 {
@@ -24,7 +21,7 @@ namespace FlomtManager.App
 
         public bool Match(object data)
         {
-            return data is ViewModelBase;
+            return data is IViewModel;
         }
     }
 }

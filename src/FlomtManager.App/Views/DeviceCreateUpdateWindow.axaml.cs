@@ -1,5 +1,5 @@
 using Avalonia.Controls;
-using FlomtManager.App.ViewModels;
+using FlomtManager.Domain.Abstractions.ViewModels;
 
 namespace FlomtManager.App.Views
 {
@@ -14,13 +14,13 @@ namespace FlomtManager.App.Views
         {
             base.OnDataContextChanged(e);
 
-            if (DataContext is DeviceCreateUpdateViewModel viewModel)
+            if (DataContext is IDeviceCreateUpdateViewModel viewModel)
             {
-                viewModel.CloseRequested = _CloseRequested;
+                viewModel.CloseRequested += viewModel_CloseRequested;
             }
         }
 
-        private void _CloseRequested(object sender, EventArgs e)
+        private void viewModel_CloseRequested(object sender, EventArgs e)
         {
             Close();
         }

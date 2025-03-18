@@ -2,33 +2,28 @@
 
 namespace FlomtManager.Modbus
 {
-    public class ModbusProtocolSerial(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits) : ModbusProtocolBase
+    public class ModbusProtocolSerial(string portName, int baudRate, Parity parity, int dataBits, StopBits stopBits) : ModbusProtocol
     {
         private SerialPort _serialPort;
-        private readonly string _portName = portName;
-        private readonly int _baudRate = baudRate;
-        private readonly Parity _parity = parity;
-        private readonly int _dataBits = dataBits;
-        private readonly StopBits _stopBits = stopBits;
 
         public override bool IsOpen => _serialPort?.IsOpen ?? false;
 
-        public override void Dispose()
+        public override async ValueTask DisposeAsync()
         {
-            _serialPort?.Close();
+            await CloseAsync();
             GC.SuppressFinalize(this);
         }
 
-        public override ValueTask OpenAsync(CancellationToken cancellationToken)
+        public override ValueTask OpenAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             _serialPort = new SerialPort()
             {
-                PortName = _portName,
-                BaudRate = _baudRate,
-                Parity = _parity,
-                DataBits = _dataBits,
-                StopBits = _stopBits,
+                PortName = portName,
+                BaudRate = baudRate,
+                Parity = parity,
+                DataBits = dataBits,
+                StopBits = stopBits,
                 ReadTimeout = 1000,
                 WriteTimeout = 1000,
             };
@@ -36,15 +31,17 @@ namespace FlomtManager.Modbus
             return ValueTask.CompletedTask;
         }
 
-        public override ValueTask CloseAsync(CancellationToken cancellationToken)
+        public override ValueTask CloseAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_serialPort);
-            _serialPort!.Close();
+            _serialPort.Close();
+            _serialPort.Dispose();
+            _serialPort = null;
             return ValueTask.CompletedTask;
         }
 
-        protected override Task SendAsync(byte[] message, CancellationToken cancellationToken)
+        protected override Task SendAsync(byte[] message, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_serialPort);
@@ -52,7 +49,7 @@ namespace FlomtManager.Modbus
             return Task.CompletedTask;
         }
 
-        protected override Task<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken)
+        protected override Task<byte[]> ReceiveAsync(int count, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(_serialPort);

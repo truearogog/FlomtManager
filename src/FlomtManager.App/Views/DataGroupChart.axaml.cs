@@ -1,20 +1,17 @@
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Skia;
 using DynamicData;
 using FlomtManager.App.Extensions;
-using FlomtManager.App.ViewModels;
-using FlomtManager.Core.Attributes;
-using FlomtManager.Core.Enums;
-using FlomtManager.Core.Models;
-using FlomtManager.Framework.Extensions;
+using FlomtManager.Domain.Abstractions.ViewModels;
+using FlomtManager.Domain.Enums;
+using FlomtManager.Domain.Models;
+using FlomtManager.Domain.Models.Collections;
 using ScottPlot;
 using ScottPlot.Control;
 using ScottPlot.Plottables;
 using SkiaSharp;
-using Parameter = FlomtManager.Core.Entities.Parameter;
 
 namespace FlomtManager.App.Views
 {
@@ -34,12 +31,11 @@ namespace FlomtManager.App.Views
         private double _minX = double.NegativeInfinity;
         private double _maxX = double.PositiveInfinity;
 
-        private DataGroupChartViewModel _viewModel;
+        private IDataChartViewModel _viewModel;
 
         public DataGroupChart()
         {
             InitializeComponent();
-            Debug.WriteLine(this);
             ConfigureChart();
             LockY();
 
@@ -55,13 +51,12 @@ namespace FlomtManager.App.Views
         {
             base.OnDataContextChanged(e);
 
-            if (DataContext is DataGroupChartViewModel viewModel)
+            if (DataContext is IDataChartViewModel viewModel)
             {
-                viewModel.OnDataUpdate += _OnDataUpdate;
+                viewModel.OnDataUpdated += _OnDataUpdated;
                 viewModel.OnParameterToggled += _OnParameterToggled;
-                viewModel.OnYAxesToggled += _OnYAxesToggled;
-                viewModel.UpdateData();
 
+                Task.Run(viewModel.UpdateData);
                 _viewModel = viewModel;
             }
         }
@@ -70,27 +65,18 @@ namespace FlomtManager.App.Views
         {
             base.OnDetachedFromVisualTree(e);
 
-            if (DataContext is DataGroupChartViewModel viewModel)
+            if (DataContext is IDataChartViewModel viewModel)
             {
-                viewModel.OnDataUpdate -= _OnDataUpdate;
+                viewModel.OnDataUpdated -= _OnDataUpdated;
                 viewModel.OnParameterToggled -= _OnParameterToggled;
-                viewModel.OnYAxesToggled -= _OnYAxesToggled;
 
                 _viewModel = null;
             }
         }
 
-        private void _OnDataUpdate(object sender, IEnumerable<DataGroupValues> dataGroups)
+        private void _OnDataUpdated(object sender, EventArgs eventArgs)
         {
-            var parameters = dataGroups.FirstOrDefault()?.Parameters;
-            if (parameters == null)
-            {
-                return;
-            }
-
-            _minX = dataGroups.First().DateTime.ToOADate();
-            _maxX = dataGroups.Last().DateTime.ToOADate();
-
+            // clean charts
             foreach (var chartInfo in _chartInfos.Values)
             {
                 Chart.Plot.Remove(chartInfo.Chart);
@@ -99,42 +85,45 @@ namespace FlomtManager.App.Views
 
             Chart.Plot.Axes.Remove(Edge.Left);
 
-            var current = 0;
-            var xs = dataGroups.Select(x => x.DateTime.ToOADate()).ToArray();
-            foreach (var parameter in parameters)
+            foreach (var parameter in _viewModel.VisibleParameters)
             {
-                if (parameter.ParameterType.GetAttribute<HideAttribute>()?.Hide(HideTargets.Chart) != true)
+                SignalXY signal;
+                var data = _viewModel.DataCollections[parameter.Number];
+                if (data is DataCollection<float> floatDataCollection)
                 {
-                    var ys = dataGroups.Select(x => x.Values[current]);
-                    if (ys.First().GetType() == typeof(float))
-                    {
-                        var floatYs = ys.OfType<float>().ToArray();
-
-                        var signalXY = Chart.Plot.Add.SignalXY(xs, floatYs);
-                        signalXY.Color = Color.FromSKColor(SKColor.Parse(parameter.Color));
-                        signalXY.LineStyle.Width = 2.5f;
-
-                        var yAxis = Chart.Plot.Axes.AddLeftAxis();
-                        yAxis.IsVisible = (DataContext as DataGroupChartViewModel)?.YAxesVisible ?? false;
-                        yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
-                        yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
-                        signalXY.Axes.YAxis = yAxis;
-
-                        var info = new ChartInfo
-                        {
-                            Chart = signalXY,
-                            Parameter = parameter,
-                            MinY = floatYs.Min(),
-                            MaxY = floatYs.Max(),
-                        };
-
-                        _chartInfos[parameter.Number] = info;
-                    }
+                    signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, floatDataCollection.Values);
                 }
-                current++;
+                else if (data is DataCollection<uint> uintDataCollection)
+                {
+                    signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, uintDataCollection.Values);
+                }
+                else if (data is DataCollection<ushort> ushortDataCollection)
+                {
+                    signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, ushortDataCollection.Values);
+                }
+                else continue;
+
+                signal.Color = Color.FromSKColor(SKColor.Parse(parameter.Color));
+                signal.LineWidth = 2.5f;
+
+                var yAxis = Chart.Plot.Axes.AddLeftAxis();
+                yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
+                yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
+                signal.Axes.YAxis = yAxis;
+
+                var info = new ChartInfo
+                {
+                    Chart = signal,
+                    Parameter = parameter,
+                };
+
+                _chartInfos[parameter.Number] = info;
             }
 
-            Chart.Plot.Axes.SetLimitsX(xs.First() - 1, xs.Last() + 1);
+            _minX = _viewModel.DateTimes.First();
+            _maxX = _viewModel.DateTimes.Last();
+
+            Chart.Plot.Axes.SetLimitsX(_minX - 1, _maxX + 1);
             Chart.Plot.Axes.AutoScaleY();
             Chart.Refresh();
         }
@@ -145,18 +134,9 @@ namespace FlomtManager.App.Views
             {
                 var chart = chartInfo.Chart;
                 chart.IsVisible = !chart.IsVisible;
-                chart.Axes.YAxis!.IsVisible = chart.IsVisible && ((DataContext as DataGroupChartViewModel)?.YAxesVisible ?? false);
+                chart.Axes.YAxis!.IsVisible = chart.IsVisible;
                 Chart.Refresh();
             }
-        }
-
-        private void _OnYAxesToggled(object sender, bool visible)
-        {
-            foreach (var chartInfo in _chartInfos.Values.Where(x => x.Chart.IsVisible))
-            {
-                chartInfo.Chart.Axes.YAxis!.IsVisible = visible;
-            }
-            Chart.Refresh();
         }
 
         private void Chart_PointerPressed(object sender, PointerPressedEventArgs e)
@@ -244,8 +224,8 @@ namespace FlomtManager.App.Views
             }
             else
             {
-                _viewModel!.CurrentDisplayDate = roundedCoordinates.X;
-                _crosshair!.Position = roundedCoordinates;
+                _viewModel.CurrentDisplayDate = roundedCoordinates.X;
+                _crosshair.Position = roundedCoordinates;
                 Chart.Refresh();
 
                 var spanUnderMouse = GetSpanUnderMouse((float)point.Position.X, (float)point.Position.Y);
@@ -297,6 +277,7 @@ namespace FlomtManager.App.Views
         private void ConfigureChart()
         {
             _crosshair = Chart.Plot.Add.Crosshair(0, 0);
+            _crosshair.HorizontalLineIsVisible = false;
 
             Chart.ContextMenu = null;
 
@@ -321,6 +302,7 @@ namespace FlomtManager.App.Views
             Chart.Plot.Axes.Remove(Edge.Top);
             Chart.Plot.Axes.Remove(Edge.Right);
             Chart.Plot.Axes.DateTimeTicksBottom();
+            Chart.Plot.Axes.Bottom.MinimumSize = (float)(DateTime.Today.ToOADate() - DateTime.Today.Add(TimeSpan.FromHours(1)).ToOADate());
             Chart.Interaction = interaction;
             Chart.Refresh();
         }

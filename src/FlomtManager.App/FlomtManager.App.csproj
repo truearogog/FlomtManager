@@ -25,8 +25,6 @@
 	    <PackageReference Include="Semi.Avalonia.DataGrid" Version="$(SemiAvaloniaVersion)" />
 
 	    <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtenstionsVersion)" />
-	    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
-		<PackageReference Include="HexIO" Version="3.0.5" />
 
 	    <PackageReference Include="Serilog" Version="$(SerilogVersion)" />
 	    <PackageReference Include="Serilog.Extensions.Hosting" Version="$(SerilogExtensionsVersion)" />
@@ -35,6 +33,7 @@
 	</ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\FlomtManager.Application\FlomtManager.Application.csproj" />
       <ProjectReference Include="..\FlomtManager.Core\FlomtManager.Core.csproj" />
       <ProjectReference Include="..\FlomtManager.Framework.Skia\FlomtManager.Framework.Skia.csproj" />
       <ProjectReference Include="..\FlomtManager.Framework\FlomtManager.Framework.csproj" />
@@ -46,5 +45,15 @@
         <None Update="appsettings.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Enums\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\MainWindow.axaml.cs">
+        <DependentUpon>MainWindow.axaml</DependentUpon>
+      </Compile>
     </ItemGroup>
 </Project>

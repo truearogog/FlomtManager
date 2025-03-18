@@ -8,6 +8,14 @@
 
 	<Style Selector="ListBox.RadioButtonListBox">
 		<Setter Property="BorderBrush" Value="Transparent"/>
+		<Setter Property="ItemsPanel">
+			<Setter.Value>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Vertical">
+					</StackPanel>
+				</ItemsPanelTemplate>
+			</Setter.Value>
+		</Setter>
 	</Style>
 	<Style Selector="ListBox.RadioButtonListBox ListBoxItem">
 		<Setter Property="Template">
@@ -16,13 +24,19 @@
 					<Border 
 						Margin="0,4"
 						Background="Transparent">
-						<RadioButton 
+						<RadioButton
+							Padding="8,4"
+							HorizontalAlignment="Stretch"
 							Content="{TemplateBinding ContentPresenter.Content}"
 							VerticalAlignment="Center"
-							IsChecked="{Binding Path=IsSelected, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"/>
+							IsChecked="{Binding Path=IsSelected, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+							Theme="{DynamicResource CardRadioButton}"/>
 					</Border>
 				</ControlTemplate>
 			</Setter.Value>
 		</Setter>
+	</Style>
+	<Style Selector="ListBox.RadioButtonListBox ListBoxItem Border">
+		<Setter Property="Margin" Value="0" />
 	</Style>
 </Styles>

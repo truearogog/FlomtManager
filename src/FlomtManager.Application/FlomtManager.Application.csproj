@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+		<PackageReference Include="HexIO" Version="3.0.5" />
+	</ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\FlomtManager.Core\FlomtManager.Core.csproj" />
+        <ProjectReference Include="..\FlomtManager.Domain\FlomtManager.Domain.csproj" />
+        <ProjectReference Include="..\FlomtManager.Framework.Skia\FlomtManager.Framework.Skia.csproj" />
+        <ProjectReference Include="..\FlomtManager.Framework\FlomtManager.Framework.csproj" />
+    </ItemGroup>
+
+</Project>
