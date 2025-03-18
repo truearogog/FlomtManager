@@ -1,10 +1,10 @@
 ﻿using System.Buffers.Binary;
 using System.Collections.ObjectModel;
 using System.Text;
-using FlomtManager.Core.Constants;
-using FlomtManager.Core.Enums;
-using FlomtManager.Core.Models;
-using FlomtManager.Core.Parsers;
+using FlomtManager.Domain.Abstractions.Parsers;
+using FlomtManager.Domain.Constants;
+using FlomtManager.Domain.Enums;
+using FlomtManager.Domain.Models;
 using FlomtManager.Framework.Skia;
 
 namespace FlomtManager.Application.Parsers;

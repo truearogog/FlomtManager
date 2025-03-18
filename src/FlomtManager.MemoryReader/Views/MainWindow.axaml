@@ -4,7 +4,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
-	xmlns:enums="using:FlomtManager.Core.Enums"
+	xmlns:domainEnums="using:FlomtManager.Domain.Enums"
     xmlns:vm="using:FlomtManager.MemoryReader.ViewModels"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="FlomtManager.MemoryReader.Views.MainWindow"
@@ -145,7 +145,10 @@
 
 				<StackPanel
 					Spacing="10"
-					IsVisible="{Binding Form.ConnectionType, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionType.Serial}}" >
+					IsVisible="{
+						Binding Form.ConnectionType, 
+						Converter={StaticResource EqualsConverter}, 
+						ConverterParameter={x:Static domainEnums:ConnectionType.Serial}}" >
 					<StackPanel>
 						<TextBlock Classes="Tertiary" Text="Slave Id" />
 						<TextBox Watermark="Slave Id" Text="{Binding Form.SlaveId}" />
@@ -179,7 +182,10 @@
 
 				<StackPanel
 					Spacing="10"
-					IsVisible="{Binding Form.ConnectionType, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static enums:ConnectionType.Network}}" >
+					IsVisible="{
+						Binding Form.ConnectionType, 
+						Converter={StaticResource EqualsConverter}, 
+						ConverterParameter={x:Static domainEnums:ConnectionType.Network}}" >
 					<StackPanel>
 						<TextBlock Classes="Tertiary" Text="Slave Id" />
 						<TextBox Watermark="Slave Id" Text="{Binding Form.SlaveId}" />

@@ -1,7 +1,7 @@
-﻿using FlomtManager.Core.Data;
-using FlomtManager.Core.Models;
-using FlomtManager.Core.Providers;
-using FlomtManager.Core.Repositories;
+﻿using FlomtManager.Domain.Abstractions.Data;
+using FlomtManager.Domain.Abstractions.Providers;
+using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Models;
 using FlomtManager.Infrastructure.Extensions;
 
 namespace FlomtManager.Infrastructure.Repositories;
@@ -61,9 +61,9 @@ public sealed class DeviceRepository(IDbConnectionFactory connectionFactory, IDa
         return await connection.CreateDefinition(deviceDefinition);
     }
 
-    public async Task UpdateDefinitionLastArchiveRead(int deviceId)
+    public async Task UpdateDefinitionLastArchiveRead(int deviceId, DateTime? dateTime = null)
     {
         await using var connection = connectionFactory.CreateConnection();
-        await connection.UpdateDefinitionLastArchiveRead(deviceId, dateTimeProvider.Now);
+        await connection.UpdateDefinitionLastArchiveRead(deviceId, dateTime ?? dateTimeProvider.Now);
     }
 }

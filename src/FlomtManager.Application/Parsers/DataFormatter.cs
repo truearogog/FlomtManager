@@ -1,6 +1,6 @@
-﻿using FlomtManager.Core.Enums;
-using FlomtManager.Core.Models;
-using FlomtManager.Core.Parsers;
+﻿using FlomtManager.Domain.Abstractions.Parsers;
+using FlomtManager.Domain.Enums;
+using FlomtManager.Domain.Models;
 
 namespace FlomtManager.Application.Parsers;
 

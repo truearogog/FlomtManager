@@ -3,10 +3,11 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 using Dapper;
-using FlomtManager.Core.Data;
-using FlomtManager.Core.Extensions;
-using FlomtManager.Core.Models.Collections;
-using FlomtManager.Core.Repositories;
+using FlomtManager.Core;
+using FlomtManager.Domain.Abstractions.Data;
+using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Extensions;
+using FlomtManager.Domain.Models.Collections;
 using FlomtManager.Framework.Extensions;
 using FlomtManager.Infrastructure.Extensions;
 

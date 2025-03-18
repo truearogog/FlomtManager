@@ -4,9 +4,9 @@
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
-	xmlns:vm="using:FlomtManager.App.ViewModels"
+	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
 	xmlns:models="using:FlomtManager.Core.Models"
-	x:DataType="vm:DevicesViewModel"
+	x:DataType="vm:IDevicesViewModel"
 	mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 	x:Class="FlomtManager.App.Pages.Devices">
 	<Grid Margin="4" RowDefinitions="auto,*">
@@ -47,7 +47,7 @@
 										Classes="Primary"
 										Theme="{DynamicResource BorderlessButton}" 
 										Command="{
-											Binding ((vm:DevicesViewModel)DataContext).ViewDevice, 
+											Binding ((vm:IDevicesViewModel)DataContext).ViewDevice, 
 											RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
 										CommandParameter="{Binding}">
 										<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
@@ -59,7 +59,7 @@
 										Classes="Primary"
 										Theme="{DynamicResource BorderlessButton}" 
 										Command="{
-											Binding ((vm:DevicesViewModel)DataContext).UpdateDevice, 
+											Binding ((vm:IDevicesViewModel)DataContext).UpdateDevice, 
 											RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
 										CommandParameter="{Binding}">
 										<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">

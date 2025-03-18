@@ -3,8 +3,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="using:FlomtManager.App.ViewModels"
-    x:DataType="vm:DataGroupTableViewModel"
+	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
+    x:DataType="vm:IDataTableViewModel"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="FlomtManager.App.Views.DataGroupTable">
 	<DataGrid 

@@ -5,7 +5,7 @@ using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
 using FlomtManager.App.Views;
 using FlomtManager.Application;
-using FlomtManager.Core.Data;
+using FlomtManager.Domain.Abstractions.Data;
 using FlomtManager.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,11 +15,11 @@ namespace FlomtManager.App
 {
     public partial class App : Avalonia.Application
     {
-        public static IHost Host;
+        public static IServiceProvider Services;
 
         public App()
         {
-            Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
+            var host = Host.CreateDefaultBuilder()
                 .UseSerilog()
                 .ConfigureServices((context, services) =>
                 {
@@ -33,30 +33,23 @@ namespace FlomtManager.App
                             .AddApplication()
                             ;
 
+                        services.AddSingleton<MainViewModel>();
                         services.AddSingleton<DeviceWindowStore>();
-
-                        // register views and viewmodels
-                        services.AddSingleton<MainWindow>();
-                        services.AddSingleton<MainWindowViewModel>();
-                        services.AddSingleton<DevicesViewModel>();
-                        services.AddTransient<DeviceViewModel>();
-                        services.AddTransient<DeviceCreateUpdateViewModel>();
-                        services.AddTransient<DataGroupChartViewModel>();
-                        services.AddTransient<DataGroupTableViewModel>();
-                        services.AddTransient<DataGroupIntegrationViewModel>();
                     }
                 })
                 .Build();
-            Host.Start();
+            host.Start();
+
+            Services = host.Services;
 
             if (!Design.IsDesignMode)
             {
-                var dbInitializer = Host.Services.GetRequiredService<IDbInitializer>();
-                //dbInitializer.Drop().Wait(); // todo: remove
-                //dbInitializer.Init().Wait();
+                var dbInitializer = Services.GetRequiredService<IDbInitializer>();
+                dbInitializer.Drop().Wait(); // todo: remove
+                dbInitializer.Init().Wait();
             }
 
-            DataContext = new ApplicationViewModel();
+            DataContext = new AppViewModel();
         }
 
         public override void Initialize()
@@ -68,8 +61,10 @@ namespace FlomtManager.App
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                var mainWindow = Host.Services.GetRequiredService<MainWindow>();
-                mainWindow.DataContext = Host.Services.GetRequiredService<MainWindowViewModel>();
+                var mainWindow = new MainWindow
+                {
+                    DataContext = Services.GetRequiredService<MainViewModel>()
+                };
                 desktop.MainWindow = mainWindow;
             }
 

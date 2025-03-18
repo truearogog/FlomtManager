@@ -1,20 +1,18 @@
-using System;
 using System.ComponentModel;
-using System.Reflection;
 using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Threading;
-using FlomtManager.App.ViewModels;
-using FlomtManager.Core.Parsers;
+using FlomtManager.Domain.Abstractions.Parsers;
+using FlomtManager.Domain.Abstractions.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlomtManager.App.Views
 {
     public partial class DataGroupTable : UserControl
     {
-        private DataGroupTableViewModel _viewModel;
+        private IDataTableViewModel _viewModel;
 
         public DataGroupTable()
         {
@@ -25,7 +23,7 @@ namespace FlomtManager.App.Views
         {
             base.OnDataContextChanged(e);
 
-            if (DataContext is DataGroupTableViewModel viewModel)
+            if (DataContext is IDataTableViewModel viewModel)
             {
                 viewModel.OnDataUpdated += _OnDataUpdated;
 
@@ -38,7 +36,7 @@ namespace FlomtManager.App.Views
         {
             base.OnDetachedFromVisualTree(e);
 
-            if (DataContext is DataGroupTableViewModel viewModel)
+            if (DataContext is IDataTableViewModel viewModel)
             {
                 viewModel.OnDataUpdated -= _OnDataUpdated;
 
@@ -48,13 +46,13 @@ namespace FlomtManager.App.Views
 
         private void _OnDataUpdated(object sender, EventArgs eventArgs)
         {
-            var dataFormatter = App.Host.Services.GetRequiredService<IDataFormatter>();
+            var dataFormatter = App.Services.GetRequiredService<IDataFormatter>();
 
             Dispatcher.UIThread.Invoke(() =>
             {
                 Table.Columns.Clear();
 
-                var bindingFormat = $"{nameof(DataGroupTableViewModel.ValueCollection.Values)}[{{0}}]";
+                var bindingFormat = $"{nameof(IDataTableViewModel.ValueCollection.Values)}[{{0}}]";
 
                 foreach (var parameter in _viewModel.Parameters)
                 {

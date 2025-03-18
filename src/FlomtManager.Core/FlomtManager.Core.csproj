@@ -1,11 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
-		<PackageReference Include="ReactiveUI" Version="18.3.1" />
-		<PackageReference Include="System.IO.Ports" Version="$(SystemIOVersion)" />
-		<PackageReference Include="MemoryPack" Version="1.21.4" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\FlomtManager.Modbus\FlomtManager.Modbus.csproj" />
 	</ItemGroup>
 </Project>

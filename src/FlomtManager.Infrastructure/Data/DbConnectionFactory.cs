@@ -1,5 +1,5 @@
 ﻿using System.Data.Common;
-using FlomtManager.Core.Data;
+using FlomtManager.Domain.Abstractions.Data;
 using Microsoft.Data.Sqlite;
 
 namespace FlomtManager.Infrastructure.Data;

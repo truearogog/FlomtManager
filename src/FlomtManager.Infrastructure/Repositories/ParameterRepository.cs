@@ -1,7 +1,7 @@
-﻿using FlomtManager.Core.Data;
-using FlomtManager.Core.Models;
-using FlomtManager.Core.Providers;
-using FlomtManager.Core.Repositories;
+﻿using FlomtManager.Domain.Abstractions.Data;
+using FlomtManager.Domain.Abstractions.Providers;
+using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Models;
 using FlomtManager.Infrastructure.Extensions;
 
 namespace FlomtManager.Infrastructure.Repositories;
@@ -22,6 +22,13 @@ internal sealed class ParameterRepository(IDbConnectionFactory connectionFactory
         parameters = parameters.Select(parameter => parameter with { Created = now, Updated = now });
         await using var connection = connectionFactory.CreateConnection();
         await connection.CreateParameters(parameters);
+    }
+
+    public async Task UpdateShowYAxis(int id, bool showYAxis)
+    {
+        var now = dateTimeProvider.Now;
+        await using var connection = connectionFactory.CreateConnection();
+        await connection.UpdateShowYAxis(id, showYAxis, now);
     }
 
     public async Task<IEnumerable<Parameter>> GetAllByDeviceId(int deviceId)

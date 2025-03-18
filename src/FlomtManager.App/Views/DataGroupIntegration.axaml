@@ -3,13 +3,13 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:vm="using:FlomtManager.App.ViewModels"
+	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
 	mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="450"
 	x:Class="FlomtManager.App.Views.DataGroupIntegration"
-    x:DataType="vm:DataGroupIntegrationViewModel">
+    x:DataType="vm:IDataIntegrationViewModel">
 	
 	<UserControl.DataTemplates>
-		<DataTemplate DataType="{x:Type vm:ParameterViewModel}">
+		<DataTemplate DataType="{x:Type vm:IParameterViewModel}">
 			<Border Classes.Error="{Binding Error}" Padding="2">
 				<Grid>
 					<Grid.ColumnDefinitions>

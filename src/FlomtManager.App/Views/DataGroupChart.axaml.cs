@@ -1,14 +1,13 @@
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Skia;
 using DynamicData;
 using FlomtManager.App.Extensions;
-using FlomtManager.App.ViewModels;
-using FlomtManager.Core.Enums;
-using FlomtManager.Core.Models;
-using FlomtManager.Core.Models.Collections;
+using FlomtManager.Domain.Abstractions.ViewModels;
+using FlomtManager.Domain.Enums;
+using FlomtManager.Domain.Models;
+using FlomtManager.Domain.Models.Collections;
 using ScottPlot;
 using ScottPlot.Control;
 using ScottPlot.Plottables;
@@ -32,7 +31,7 @@ namespace FlomtManager.App.Views
         private double _minX = double.NegativeInfinity;
         private double _maxX = double.PositiveInfinity;
 
-        private DataGroupChartViewModel _viewModel;
+        private IDataChartViewModel _viewModel;
 
         public DataGroupChart()
         {
@@ -52,7 +51,7 @@ namespace FlomtManager.App.Views
         {
             base.OnDataContextChanged(e);
 
-            if (DataContext is DataGroupChartViewModel viewModel)
+            if (DataContext is IDataChartViewModel viewModel)
             {
                 viewModel.OnDataUpdated += _OnDataUpdated;
                 viewModel.OnParameterToggled += _OnParameterToggled;
@@ -66,7 +65,7 @@ namespace FlomtManager.App.Views
         {
             base.OnDetachedFromVisualTree(e);
 
-            if (DataContext is DataGroupChartViewModel viewModel)
+            if (DataContext is IDataChartViewModel viewModel)
             {
                 viewModel.OnDataUpdated -= _OnDataUpdated;
                 viewModel.OnParameterToggled -= _OnParameterToggled;

@@ -1,9 +1,8 @@
-﻿using FlomtManager.Core.DeviceConnection;
-using FlomtManager.Core.Models;
-using FlomtManager.Core.Parsers;
-using FlomtManager.Core.Repositories;
-using FlomtManager.Core.Stores;
-using FlomtManager.Core.ViewModels;
+﻿using FlomtManager.Domain.Abstractions.DeviceConnection;
+using FlomtManager.Domain.Abstractions.Parsers;
+using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Abstractions.Stores;
+using FlomtManager.Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlomtManager.Application.DeviceConnection;

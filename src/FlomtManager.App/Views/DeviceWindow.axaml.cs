@@ -5,7 +5,8 @@ using Avalonia.Platform.Storage;
 using FlomtManager.App.Extensions;
 using FlomtManager.App.Stores;
 using FlomtManager.App.ViewModels;
-using FlomtManager.Core.Models;
+using FlomtManager.Domain.Abstractions.ViewModels;
+using FlomtManager.Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlomtManager.App.Views
@@ -29,9 +30,9 @@ namespace FlomtManager.App.Views
         protected override void OnClosing(WindowClosingEventArgs e)
         {
             base.OnClosing(e);
-            if (DataContext is DeviceViewModel viewModel)
+            if (DataContext is IDeviceViewModel viewModel)
             {
-                var deviceWindowStore = App.Host.Services.GetRequiredService<DeviceWindowStore>();
+                var deviceWindowStore = App.Services.GetRequiredService<DeviceWindowStore>();
                 deviceWindowStore.RemoveWindow(viewModel.Device.Id);
 
                 viewModel.TryDisconnect().Wait();
@@ -42,12 +43,11 @@ namespace FlomtManager.App.Views
         {
             base.OnDataContextChanged(e);
 
-            if (DataContext is DeviceViewModel viewModel)
+            if (DataContext is IDeviceViewModel viewModel)
             {
-                viewModel.CloseRequested += _CloseRequested;
-                viewModel.DeviceUpdateRequested += _DeviceUpdateRequested;
-                viewModel.NotificationRequested += _NotificationRequested;
-                viewModel.ReadFromFileRequested += _ReadFromFileRequested;
+                viewModel.CloseRequested += viewModel_CloseRequested;
+                viewModel.DeviceUpdateRequested += viewModel_DeviceUpdateRequested;
+                viewModel.ReadFromFileRequested += viewModel_ReadFromFileRequested;
             }
         }
 
@@ -55,23 +55,22 @@ namespace FlomtManager.App.Views
         {
             base.OnDetachedFromVisualTree(e);
 
-            if (DataContext is DeviceViewModel viewModel)
+            if (DataContext is IDeviceViewModel viewModel)
             {
-                viewModel.CloseRequested -= _CloseRequested;
-                viewModel.DeviceUpdateRequested -= _DeviceUpdateRequested;
-                viewModel.NotificationRequested -= _NotificationRequested;
-                viewModel.ReadFromFileRequested -= _ReadFromFileRequested;
+                viewModel.CloseRequested -= viewModel_CloseRequested;
+                viewModel.DeviceUpdateRequested -= viewModel_DeviceUpdateRequested;
+                viewModel.ReadFromFileRequested -= viewModel_ReadFromFileRequested;
             }
         }
 
-        private void _CloseRequested(object sender, EventArgs e)
+        private void viewModel_CloseRequested(object sender, EventArgs e)
         {
             Close();
         }
 
-        private void _DeviceUpdateRequested(object sender, Device device)
+        private void viewModel_DeviceUpdateRequested(object sender, Device device)
         {
-            var viewModel = App.Host.Services.GetRequiredService<DeviceCreateUpdateViewModel>();
+            var viewModel = App.Services.GetRequiredService<IDeviceCreateUpdateViewModel>();
             viewModel.SetDevice(device);
 
             var window = new DeviceCreateUpdateWindow
@@ -87,9 +86,9 @@ namespace FlomtManager.App.Views
             _windowNotificationManager?.Show(new Notification(notification.type.ToString(), notification.message, notification.type));
         }
 
-        private async void _ReadFromFileRequested(object sender, EventArgs e)
+        private async void viewModel_ReadFromFileRequested(object sender, EventArgs e)
         {
-            if (DataContext is DeviceViewModel viewModel)
+            if (DataContext is IDeviceViewModel viewModel)
             {
                 var sp = GetTopLevel(this)?.StorageProvider;
                 if (sp == null)
@@ -107,7 +106,8 @@ namespace FlomtManager.App.Views
                     return;
                 }
                 var file = result[0];
-                //await viewModel.ReadArchivesFromFile(file);
+                using var stream = await file.OpenReadAsync();
+                await viewModel.ReadFile(stream);
             }
         }
     }

@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using FlomtManager.Core.Data;
+using FlomtManager.Domain.Abstractions.Data;
 using FlomtManager.Infrastructure.Data.TypeHandlers;
 
 namespace FlomtManager.Infrastructure.Data;

@@ -4,18 +4,18 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
+	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
 	xmlns:local="using:FlomtManager.App.Views"
 	xmlns:enums="using:FlomtManager.App.Enums"
-	xmlns:coreEnums="using:FlomtManager.Core.Enums"
-	xmlns:vm="using:FlomtManager.App.ViewModels"
+	xmlns:domainEnums="using:FlomtManager.Domain.Enums"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
     x:Class="FlomtManager.App.Views.DeviceWindow"
-    x:DataType="vm:DeviceViewModel"
+    x:DataType="vm:IDeviceViewModel"
     Icon="/Assets/avalonia-logo.ico"
     Title="{Binding Device.Name}">
 
 	<Window.DataTemplates>
-		<DataTemplate DataType="{x:Type vm:ParameterViewModel}">
+		<DataTemplate DataType="{x:Type vm:IParameterViewModel}">
 			<Border Classes.Error="{Binding Error}" Padding="2">
 				<Grid>
 					<Grid.ColumnDefinitions>
@@ -53,7 +53,7 @@
 					IsEnabled="{
 						Binding ConnectionState, 
 						Converter={StaticResource EqualsConverter}, 
-						ConverterParameter={x:Static coreEnums:ConnectionState.Disconnected}}">
+						ConverterParameter={x:Static domainEnums:ConnectionState.Disconnected}}">
 					<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
 						<i:Icon Value="fa-solid fa-pen-to-square" />
 						<TextBlock Text="Edit" />
@@ -69,9 +69,9 @@
 							IsChecked="{
 								Binding ArchiveDisplayMode, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static enums:ArchiveDisplayMode.Chart}}"
+								ConverterParameter={x:Static domainEnums:ArchiveDisplayMode.Chart}}"
 							Command="{Binding SetDataDisplayMode}"
-							CommandParameter="{x:Static enums:ArchiveDisplayMode.Chart}"
+							CommandParameter="{x:Static domainEnums:ArchiveDisplayMode.Chart}"
 							Theme="{DynamicResource PureCardRadioButton}">
 							<StackPanel Orientation="Horizontal" Spacing="4">
 								<i:Icon Value="fa-solid fa-chart-line" />
@@ -84,10 +84,10 @@
 							IsChecked="{
 								Binding ArchiveDisplayMode, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static enums:ArchiveDisplayMode.Table}}"
+								ConverterParameter={x:Static domainEnums:ArchiveDisplayMode.Table}}"
 							Theme="{DynamicResource PureCardRadioButton}"
 							Command="{Binding SetDataDisplayMode}"
-							CommandParameter="{x:Static enums:ArchiveDisplayMode.Table}">
+							CommandParameter="{x:Static domainEnums:ArchiveDisplayMode.Table}">
 							<StackPanel Orientation="Horizontal" Spacing="4">
 								<i:Icon Value="fa-solid fa-table" />
 								<TextBlock Text="Table" />
@@ -143,33 +143,44 @@
 									<Panel IsVisible="{
 											Binding Device.ConnectionType, 
 											Converter={StaticResource NotEqualsConverter},
-											ConverterParameter={x:Static coreEnums:ConnectionType.File}}">
+											ConverterParameter={x:Static domainEnums:ConnectionType.File}}">
 										
 										<Button Content="Connect" Command="{Binding TryConnect}"
 											IsVisible="{
 												Binding ConnectionState, 
 												Converter={StaticResource EqualsConverter}, 
-												ConverterParameter={x:Static coreEnums:ConnectionState.Disconnected}}" />
+												ConverterParameter={x:Static domainEnums:ConnectionState.Disconnected}}" />
 										
 										<Button Content="Connecting" IsEnabled="False"
 											IsVisible="{
 												Binding ConnectionState, 
 												Converter={StaticResource EqualsConverter}, 
-												ConverterParameter={x:Static coreEnums:ConnectionState.Connecting}}" />
+												ConverterParameter={x:Static domainEnums:ConnectionState.Connecting}}" />
 										
 										<Button Content="Disconnect" Command="{Binding TryDisconnect}"
 											IsVisible="{
 												Binding ConnectionState, 
 												Converter={StaticResource EqualsConverter}, 
-												ConverterParameter={x:Static coreEnums:ConnectionState.Connected}}" />
+												ConverterParameter={x:Static domainEnums:ConnectionState.Connected}}" />
 									</Panel>
-
+									
 									<Panel
 										IsVisible="{
 											Binding Device.ConnectionType, 
 											Converter={StaticResource EqualsConverter}, 
-											ConverterParameter={x:Static coreEnums:ConnectionType.File}}">
-										<Button Content="Read File" />
+											ConverterParameter={x:Static domainEnums:ConnectionType.File}}">
+										
+										<Button Content="Read File" Command="{Binding RequestReadFile}"
+											IsVisible="{
+												Binding ConnectionState, 
+												Converter={StaticResource NotEqualsConverter}, 
+												ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}" />
+										
+										<Button Content="Reading File" IsEnabled="False"
+											IsVisible="{
+												Binding ConnectionState, 
+												Converter={StaticResource EqualsConverter}, 
+												ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}" />
 									</Panel>
 								</StackPanel>
 							</Border>
@@ -217,7 +228,7 @@
 								</StackPanel>
 							</Border>
 
-							<local:DataGroupIntegration DataContext="{Binding DataGroupIntegration}" />
+							<local:DataGroupIntegration DataContext="{Binding DataIntegration}" />
 						</StackPanel>
 					</ScrollViewer>
 				</Grid>
@@ -228,15 +239,15 @@
 				<Panel IsVisible="{
 					Binding ArchiveDisplayMode,
 					Converter={StaticResource EqualsConverter},
-					ConverterParameter={x:Static enums:ArchiveDisplayMode.Chart}}">
-					<local:DataGroupChart DataContext="{Binding DataGroupChart}" />
+					ConverterParameter={x:Static domainEnums:ArchiveDisplayMode.Chart}}">
+					<local:DataGroupChart DataContext="{Binding DataChart}" />
 				</Panel>
 
 				<Panel IsVisible="{
 					Binding ArchiveDisplayMode, 
 					Converter={StaticResource EqualsConverter}, 
-					ConverterParameter={x:Static enums:ArchiveDisplayMode.Table}}">
-					<local:DataGroupTable DataContext="{Binding DataGroupTable}" />
+					ConverterParameter={x:Static domainEnums:ArchiveDisplayMode.Table}}">
+					<local:DataGroupTable DataContext="{Binding DataTable}" />
 				</Panel>
 
 			</Panel>
@@ -263,6 +274,9 @@
 						<Style Selector="Ellipse.ConnectedStatus">
 							<Setter Property="Fill" Value="{StaticResource SemiGreen5Color}" />
 						</Style>
+						<Style Selector="Ellipse.ReadingFileStatus">
+							<Setter Property="Fill" Value="{StaticResource SemiBlue4Color}" />
+						</Style>
 					</StackPanel.Styles>
 
 					<Border Classes="StatusBorder">
@@ -272,15 +286,19 @@
 							Classes.DisconnectedStatus="{
 								Binding ConnectionState, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static coreEnums:ConnectionState.Disconnected}}"
+								ConverterParameter={x:Static domainEnums:ConnectionState.Disconnected}}"
 							Classes.ConnectingStatus="{
 								Binding ConnectionState, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static coreEnums:ConnectionState.Connecting}}"
+								ConverterParameter={x:Static domainEnums:ConnectionState.Connecting}}"
 							Classes.ConnectedStatus="{
 								Binding ConnectionState, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static coreEnums:ConnectionState.Connected}}"
+								ConverterParameter={x:Static domainEnums:ConnectionState.Connected}}"
+							Classes.ReadingFileStatus="{
+								Binding ConnectionState, 
+								Converter={StaticResource EqualsConverter}, 
+								ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}"
 							/>
 					</Border>
 					
@@ -295,15 +313,15 @@
 								IsVisible="{
 									Binding ArchiveReadingState, 
 									Converter={StaticResource NotEqualsConverter},
-									ConverterParameter={x:Static coreEnums:ArchiveReadingState.None}}"
+									ConverterParameter={x:Static domainEnums:ArchiveReadingState.None}}"
 								Classes.Warning="{
 									Binding ArchiveReadingState, 
 									Converter={StaticResource EqualsConverter},
-									ConverterParameter={x:Static coreEnums:ArchiveReadingState.Reading}}"
+									ConverterParameter={x:Static domainEnums:ArchiveReadingState.Reading}}"
 								Classes.Success="{
 									Binding ArchiveReadingState, 
 									Converter={StaticResource EqualsConverter},
-									ConverterParameter={x:Static coreEnums:ArchiveReadingState.Complete}}"
+									ConverterParameter={x:Static domainEnums:ArchiveReadingState.Complete}}"
 								Width="250"
 								Height="10"
 								Maximum="100"

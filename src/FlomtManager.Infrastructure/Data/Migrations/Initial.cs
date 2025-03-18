@@ -1,7 +1,8 @@
 ﻿using System.Data;
 using System.Data.Common;
 using Dapper;
-using FlomtManager.Core.Data;
+using FlomtManager.Core;
+using FlomtManager.Domain.Enums;
 
 namespace FlomtManager.Infrastructure.Data.Migrations;
 
@@ -20,6 +21,9 @@ internal sealed class Initial : Migration
 
                 ConnectionType {SqlTypes.Int},
                 SlaveId {SqlTypes.Int},
+                DataReadIntervalHours {SqlTypes.Int},
+                DataReadIntervalMinutes {SqlTypes.Int},
+                DataReadIntervalSeconds {SqlTypes.Int},
 
                 IpAddress NVARCHAR(30),
                 PortName CHAR(10),
@@ -33,20 +37,25 @@ internal sealed class Initial : Migration
             """, transaction);
 
         await connection.ExecuteAsync($"""
-            INSERT INTO Devices (Created, Updated, Name, Address, ConnectionType, SlaveId, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port)
-            VALUES (@Now, @Now, @Name, @Address, @ConnectionType, @SlaveId, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port);
+            INSERT INTO Devices (Created, Updated, Name, Address, ConnectionType, SlaveId, DataReadIntervalSeconds, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port)
+            VALUES (@Now, @Now, @Name, @Address, @ConnectionType, @SlaveId, @DataReadIntervalSeconds, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port);
             """, new
         {
             Now = DateTime.UtcNow,
+
             Name = "SF-38",
             Address = "Kāvu 8",
-            ConnectionType = Core.Enums.ConnectionType.Network,
+
+            ConnectionType = ConnectionType.Network,
             SlaveId = 1,
+            DataReadIntervalSeconds = 5,
+
             PortName = "COM1",
             BaudRate = 9600,
             Parity = 0,
             DataBits = 8,
             StopBits = 1,
+
             IpAddress = "185.147.58.54",
             Port = 5000
         }, transaction);
@@ -85,7 +94,6 @@ internal sealed class Initial : Migration
             	AveragePerHourBlockLineCount {SqlTypes.Int} NOT NULL,
 
             	CRC {SqlTypes.Int} NOT NULL,
-
             	LastArchiveRead {SqlTypes.DateTime} NULL,
 
                 FOREIGN KEY (DeviceId) REFERENCES Devices(Id) ON DELETE CASCADE
@@ -110,6 +118,7 @@ internal sealed class Initial : Migration
                 Unit CHAR(6),
                 Color TEXT,
 
+                ShowYAxis {SqlTypes.Int},
                 ChartYScalingType {SqlTypes.Int},
                 ChartYZoom {SqlTypes.Real},
 
@@ -123,6 +132,15 @@ internal sealed class Initial : Migration
         await connection.ExecuteAsync("DROP TABLE IF EXISTS Parameters;", transaction);
 
         await connection.ExecuteAsync("DROP TABLE IF EXISTS DeviceDefinitions;", transaction);
+
+        if ((await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Devices';", transaction)) != 0)
+        {
+            var deviceIds = await connection.QueryAsync<int>("SELECT Id FROM Devices;", transaction);
+            foreach (var deviceId in deviceIds)
+            {
+                await connection.ExecuteAsync($"DROP TABLE IF EXISTS HourArchive_{deviceId};", transaction);
+            }
+        }
 
         await connection.ExecuteAsync("DROP TABLE IF EXISTS Devices;", transaction);
     }

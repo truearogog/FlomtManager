@@ -1,5 +1,5 @@
-﻿using FlomtManager.Core.Models;
-using FlomtManager.Core.Stores;
+﻿using FlomtManager.Domain.Abstractions.Stores;
+using FlomtManager.Domain.Models;
 
 namespace FlomtManager.Infrastructure.Stores;
 

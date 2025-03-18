@@ -4,9 +4,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:i="https://github.com/projektanker/icons.avalonia"
-	xmlns:enums="using:FlomtManager.Core.Enums"
-    xmlns:vm="using:FlomtManager.App.ViewModels"
-    x:DataType="vm:DeviceCreateUpdateViewModel"
+    xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
+	xmlns:domainEnums="using:FlomtManager.Domain.Enums"
+    x:DataType="vm:IDeviceCreateUpdateViewModel"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
     x:Class="FlomtManager.App.Views.DeviceCreateUpdateWindow"
 	Icon="/Assets/avalonia-logo.ico"
@@ -23,9 +23,6 @@
 		<Style Selector="ComboBox">
 			<Setter Property="HorizontalAlignment" Value="Stretch" />
 		</Style>
-		<Style Selector="TextBox">
-			<Setter Property="MinWidth" Value="300" />
-		</Style>
 	</Window.Styles>
 
 	<Panel Margin="10">
@@ -35,21 +32,26 @@
 					Binding Form.Id, 
 					StringFormat='{}{0} device', 
 					Converter={StaticResource AddEditConverter}}" />
-			
+
+			<TextBlock Classes="Danger" Text="{Binding ErrorMessage}"
+				IsVisible="{
+					Binding ErrorMessage, 
+					Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
 			<ScrollViewer HorizontalScrollBarVisibility="Disabled">
 				<StackPanel Orientation="Horizontal" Spacing="10">
-					<StackPanel Spacing="10">
+					<StackPanel Spacing="10" MinWidth="250">
 						<StackPanel>
-							<TextBlock Classes="Tertiary" Text="Name" />
+							<TextBlock Classes="Secondary" Text="Name" />
 							<TextBox Watermark="Name" Text="{Binding Form.Name}" />
 						</StackPanel>
 						<StackPanel>
-							<TextBlock Classes="Tertiary" Text="Address" />
+							<TextBlock Classes="Secondary" Text="Address" />
 							<TextBox Watermark="Address" Text="{Binding Form.Address}" />
 						</StackPanel>
 
 						<StackPanel>
-							<TextBlock Classes="Tertiary" Text="Connection Type" />
+							<TextBlock Classes="Secondary" Text="Connection Type" />
 							<ListBox
 								ItemsSource="{Binding ConnectionTypes}"
 								SelectedItem="{Binding Form.ConnectionType}"
@@ -57,19 +59,40 @@
 						</StackPanel>
 					</StackPanel>
 
-					<StackPanel Grid.Column="1" Spacing="10">
-						<StackPanel
-							Spacing="10"
+					<StackPanel Spacing="10">
+						<StackPanel Spacing="10" MinWidth="250"
 							IsVisible="{
 								Binding Form.ConnectionType, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static enums:ConnectionType.Serial}}" >
+								ConverterParameter={x:Static domainEnums:ConnectionType.Serial}}" >
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Slave Id" />
+								<TextBlock Classes="Secondary" Text="Slave Id" />
 								<TextBox Watermark="Slave Id" Text="{Binding Form.SlaveId}" />
 							</StackPanel>
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Port Name" />
+								<TextBlock Classes="Secondary" Text="Data Read Interval" />
+								<Grid RowDefinitions="auto,auto" ColumnDefinitions="*,*,*">
+									<TextBlock Grid.Row="0" Grid.Column="0" 
+										Classes="Tertiary" Text="Hours" />
+									<NumericUpDown Grid.Row="1" Grid.Column="0" Margin="1"
+										Maximum="100" Minimum="0" ShowButtonSpinner="False"
+										Watermark="Hours" Value="{Binding Form.DataReadIntervalHours}" />
+									
+									<TextBlock Grid.Row="0" Grid.Column="1"
+										Classes="Tertiary" Text="Minutes" />
+									<NumericUpDown Grid.Row="1" Grid.Column="1" Margin="1"
+										Maximum="59" Minimum="0" ShowButtonSpinner="False"
+										Watermark="Minutes" Value="{Binding Form.DataReadIntervalMinutes}" />
+									
+									<TextBlock Grid.Row="0" Grid.Column="2"
+										Classes="Tertiary" Text="Seconds" />
+									<NumericUpDown Grid.Row="1" Grid.Column="2" Margin="1"
+										Maximum="59" Minimum="0" ShowButtonSpinner="False"
+										Watermark="Seconds" Value="{Binding Form.DataReadIntervalSeconds}" />
+								</Grid>
+							</StackPanel>
+							<StackPanel>
+								<TextBlock Classes="Secondary" Text="Port Name" />
 								<Grid ColumnDefinitions="*,auto">
 									<ComboBox Grid.Column="0" ItemsSource="{Binding PortNames}" SelectedItem="{Binding Form.PortName}" />
 									<Button Grid.Column="1" Command="{Binding RefreshPortNames}" Padding="8,6">
@@ -78,56 +101,70 @@
 								</Grid>
 							</StackPanel>
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Baud Rate" />
+								<TextBlock Classes="Secondary" Text="Baud Rate" />
 								<ComboBox ItemsSource="{Binding BaudRates}" SelectedItem="{Binding Form.BaudRate}" />
 							</StackPanel>
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Parity" />
+								<TextBlock Classes="Secondary" Text="Parity" />
 								<ComboBox ItemsSource="{Binding Parities}" SelectedItem="{Binding Form.Parity}" />
 							</StackPanel>
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Data Bits" />
+								<TextBlock Classes="Secondary" Text="Data Bits" />
 								<ComboBox ItemsSource="{Binding DataBits}" SelectedItem="{Binding Form.DataBits}" />
 							</StackPanel>
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Stop Bits" />
+								<TextBlock Classes="Secondary" Text="Stop Bits" />
 								<ComboBox ItemsSource="{Binding StopBits}" SelectedItem="{Binding Form.StopBits}" />
 							</StackPanel>
 						</StackPanel>
 
-						<StackPanel
-							Spacing="10"
+						<StackPanel Spacing="10" MinWidth="250"
 							IsVisible="{
 								Binding Form.ConnectionType, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static enums:ConnectionType.Network}}" >
+								ConverterParameter={x:Static domainEnums:ConnectionType.Network}}" >
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Slave Id" />
+								<TextBlock Classes="Secondary" Text="Slave Id" />
 								<TextBox Watermark="Slave Id" Text="{Binding Form.SlaveId}" />
 							</StackPanel>
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Ip Address" />
+								<TextBlock Classes="Secondary" Text="Data Read Interval" />
+								<Grid RowDefinitions="auto,auto" ColumnDefinitions="*,*,*">
+									<TextBlock Grid.Row="0" Grid.Column="0"
+										Classes="Tertiary" Text="Hours" />
+									<NumericUpDown Grid.Row="1" Grid.Column="0" Margin="1"
+										Maximum="100" Minimum="0" ShowButtonSpinner="False"
+										Watermark="Hours" Value="{Binding Form.DataReadIntervalHours}" />
+
+									<TextBlock Grid.Row="0" Grid.Column="1"
+										Classes="Tertiary" Text="Minutes" />
+									<NumericUpDown Grid.Row="1" Grid.Column="1" Margin="1"
+										Maximum="59" Minimum="0" ShowButtonSpinner="False"
+										Watermark="Minutes" Value="{Binding Form.DataReadIntervalMinutes}" />
+
+									<TextBlock Grid.Row="0" Grid.Column="2"
+										Classes="Tertiary" Text="Seconds" />
+									<NumericUpDown Grid.Row="1" Grid.Column="2" Margin="1"
+										Maximum="59" Minimum="0" ShowButtonSpinner="False"
+										Watermark="Seconds" Value="{Binding Form.DataReadIntervalSeconds}" />
+								</Grid>
+							</StackPanel>
+							<StackPanel>
+								<TextBlock Classes="Secondary" Text="Ip Address" />
 								<TextBox Watermark="Ip Address" Text="{Binding Form.IpAddress}" />
 							</StackPanel>
 							<StackPanel>
-								<TextBlock Classes="Tertiary" Text="Port" />
+								<TextBlock Classes="Secondary" Text="Port" />
 								<TextBox Watermark="Port" Text="{Binding Form.Port}" />
 							</StackPanel>
 						</StackPanel>
-
-						<TextBlock
-							Classes="Danger"
-							Text="{Binding ErrorMessage}"
-							IsVisible="{
-								Binding ErrorMessage, 
-								Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 					</StackPanel>
 
 				</StackPanel>
 			</ScrollViewer>
 
 			<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-				<Button Classes="Danger" Command="{Binding Close}">Cancel</Button>
+				<Button Classes="Danger" Command="{Binding RequestClose}">Cancel</Button>
 				<Button Classes="Primary" IsVisible="{Binding !Form.Id}" Command="{Binding CreateDevice}">Save</Button>
 				<Button Classes="Primary" IsVisible="{Binding Form.Id}" Command="{Binding UpdateDevice}">Save</Button>
 			</StackPanel>

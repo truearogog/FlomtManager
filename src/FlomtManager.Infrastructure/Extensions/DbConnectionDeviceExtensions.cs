@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 using Dapper;
-using FlomtManager.Core.Models;
+using FlomtManager.Domain.Models;
 
 namespace FlomtManager.Infrastructure.Extensions;
 
@@ -31,9 +31,47 @@ internal static class DbConnectionDeviceExtensions
     {
         return await connection.QuerySingleAsync<int>("""
             INSERT INTO Devices (
-                Created, Updated, Name, Address, ConnectionType, SlaveId, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port
+                Created, 
+                Updated, 
+
+                Name, 
+                Address, 
+
+                ConnectionType, 
+                SlaveId, 
+                DataReadIntervalHours, 
+                DataReadIntervalMinutes, 
+                DataReadIntervalSeconds, 
+
+                PortName, 
+                BaudRate, 
+                Parity, 
+                DataBits,
+                StopBits, 
+
+                IpAddress, 
+                Port
             ) VALUES (
-                @Created, @Updated, @Name, @Address, @ConnectionType, @SlaveId, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port
+                @Created, 
+                @Updated, 
+
+                @Name, 
+                @Address, 
+
+                @ConnectionType, 
+                @SlaveId, 
+                @DataReadIntervalHours, 
+                @DataReadIntervalMinutes, 
+                @DataReadIntervalSeconds, 
+                
+                @PortName, 
+                @BaudRate, 
+                @Parity, 
+                @DataBits, 
+                @StopBits, 
+                
+                @IpAddress, 
+                @Port
             );
             SELECT last_insert_rowid();
             """, device);
@@ -44,16 +82,23 @@ internal static class DbConnectionDeviceExtensions
         await connection.ExecuteAsync("""
             UPDATE Devices
             SET 
-                Name = @Name,
                 Updated = @Updated,
+
+                Name = @Name,
                 Address = @Address,
+
                 ConnectionType = @ConnectionType,
                 SlaveId = @SlaveId,
+                DataReadIntervalHours = @DataReadIntervalHours, 
+                DataReadIntervalMinutes = @DataReadIntervalMinutes, 
+                DataReadIntervalSeconds = @DataReadIntervalSeconds, 
+
                 PortName = @PortName,
                 BaudRate = @BaudRate,
                 Parity = @Parity,
                 DataBits = @DataBits,
                 StopBits = @StopBits,
+
                 IpAddress = @IpAddress,
                 Port = @Port
             WHERE Id = @Id;
@@ -81,23 +126,69 @@ internal static class DbConnectionDeviceExtensions
     {
         return await connection.QuerySingleAsync<int>("""
             INSERT INTO DeviceDefinitions (
-                Created, Updated, DeviceId,
-                ParameterDefinitionStart, ParameterDefinitionNumber, 
-                DescriptionStart, ProgramVersionStart, 
-                CurrentParameterLineDefinitionStart, CurrentParameterLineDefinition, CurrentParameterLineLength, CurrentParameterLineNumber, CurrentParameterLineStart,
-                IntegralParameterLineDefinitionStart, IntegralParameterLineDefinition, IntegralParameterLineLength, IntegralParameterLineNumber, IntegralParameterLineStart, 
-                AverageParameterArchiveLineDefinitionStart, AverageParameterArchiveLineDefinition, AverageParameterArchiveLineLength, AverageParameterArchiveLineNumber, 
-                AveragePerHourBlockStart, AveragePerHourBlockLineCount, 
-                CRC, LastArchiveRead
+                Created, 
+                Updated, 
+                DeviceId,
+
+                ParameterDefinitionStart, 
+                ParameterDefinitionNumber, 
+                DescriptionStart, 
+                ProgramVersionStart, 
+
+                CurrentParameterLineDefinitionStart, 
+                CurrentParameterLineDefinition, 
+                CurrentParameterLineLength, 
+                CurrentParameterLineNumber, 
+                CurrentParameterLineStart,
+
+                IntegralParameterLineDefinitionStart, 
+                IntegralParameterLineDefinition, 
+                IntegralParameterLineLength, 
+                IntegralParameterLineNumber, 
+                IntegralParameterLineStart, 
+
+                AverageParameterArchiveLineDefinitionStart, 
+                AverageParameterArchiveLineDefinition, 
+                AverageParameterArchiveLineLength, 
+                AverageParameterArchiveLineNumber, 
+
+                AveragePerHourBlockStart, 
+                AveragePerHourBlockLineCount, 
+
+                CRC, 
+                LastArchiveRead
             ) VALUES (
-                @Created, @Updated, @DeviceId,
-                @ParameterDefinitionStart, @ParameterDefinitionNumber, 
-                @DescriptionStart, @ProgramVersionStart, 
-                @CurrentParameterLineDefinitionStart, @CurrentParameterLineDefinition, @CurrentParameterLineLength, @CurrentParameterLineNumber, @CurrentParameterLineStart,
-                @IntegralParameterLineDefinitionStart, @IntegralParameterLineDefinition, @IntegralParameterLineLength, @IntegralParameterLineNumber, @IntegralParameterLineStart, 
-                @AverageParameterArchiveLineDefinitionStart, @AverageParameterArchiveLineDefinition, @AverageParameterArchiveLineLength, @AverageParameterArchiveLineNumber, 
-                @AveragePerHourBlockStart, @AveragePerHourBlockLineCount, 
-                @CRC, @LastArchiveRead
+                @Created, 
+                @Updated, 
+                @DeviceId,
+
+                @ParameterDefinitionStart, 
+                @ParameterDefinitionNumber, 
+                @DescriptionStart, 
+                @ProgramVersionStart, 
+
+                @CurrentParameterLineDefinitionStart, 
+                @CurrentParameterLineDefinition, 
+                @CurrentParameterLineLength, 
+                @CurrentParameterLineNumber, 
+                @CurrentParameterLineStart,
+
+                @IntegralParameterLineDefinitionStart, 
+                @IntegralParameterLineDefinition, 
+                @IntegralParameterLineLength, 
+                @IntegralParameterLineNumber, 
+                @IntegralParameterLineStart, 
+
+                @AverageParameterArchiveLineDefinitionStart, 
+                @AverageParameterArchiveLineDefinition, 
+                @AverageParameterArchiveLineLength, 
+                @AverageParameterArchiveLineNumber, 
+
+                @AveragePerHourBlockStart, 
+                @AveragePerHourBlockLineCount, 
+
+                @CRC, 
+                @LastArchiveRead
             );
             SELECT last_insert_rowid();
             """, deviceDefinition);

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Frozen;
 using System.Data.Common;
 using Dapper;
-using FlomtManager.Core.Extensions;
-using FlomtManager.Core.Models;
+using FlomtManager.Domain.Extensions;
+using FlomtManager.Domain.Models;
 
 namespace FlomtManager.Infrastructure.Extensions;
 
@@ -29,6 +29,17 @@ internal static class DbConnectionParameterExtensions
                 @Created, @Updated, @Number, @Type, @Comma, @ErrorMask, @IntegrationNumber, @Name, @Unit, @Color, @ChartYScalingType, @ChartYZoom, @DeviceId
             );
             """, parameters);
+    }
+
+    public static async Task UpdateShowYAxis(this DbConnection connection, int id, bool showYAxis, DateTime now)
+    {
+        await connection.ExecuteAsync("""
+            UPDATE Parameters 
+            SET 
+                ShowYAxis = @ShowYAxis,
+                Updated = @Now
+            WHERE Id = @Id;
+            """, new { Id = id, ShowYAxis = showYAxis, Now = now });
     }
 
     public static async Task<IEnumerable<Parameter>> GetAllParametersByDeviceId(this DbConnection connection, int deviceId)

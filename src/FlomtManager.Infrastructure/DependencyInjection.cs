@@ -1,7 +1,7 @@
-﻿using FlomtManager.Core.Data;
-using FlomtManager.Core.Providers;
-using FlomtManager.Core.Repositories;
-using FlomtManager.Core.Stores;
+﻿using FlomtManager.Domain.Abstractions.Data;
+using FlomtManager.Domain.Abstractions.Providers;
+using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Abstractions.Stores;
 using FlomtManager.Infrastructure.Data;
 using FlomtManager.Infrastructure.Providers;
 using FlomtManager.Infrastructure.Repositories;

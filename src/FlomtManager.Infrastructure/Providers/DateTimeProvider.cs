@@ -1,4 +1,4 @@
-﻿using FlomtManager.Core.Providers;
+﻿using FlomtManager.Domain.Abstractions.Providers;
 
 namespace FlomtManager.Infrastructure.Providers;
 
