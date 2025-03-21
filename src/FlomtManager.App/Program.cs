@@ -2,8 +2,6 @@
 using Avalonia;
 using Avalonia.Dialogs;
 using Avalonia.ReactiveUI;
-using Projektanker.Icons.Avalonia;
-using Projektanker.Icons.Avalonia.FontAwesome;
 using Serilog;
 using Serilog.Events;
 
@@ -49,9 +47,6 @@ namespace FlomtManager.App
         // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()
         {
-            IconProvider.Current
-                .Register<FontAwesomeIconProvider>();
-
             return AppBuilder.Configure<App>()
                 .UseManagedSystemDialogs()
                 .UsePlatformDetect()

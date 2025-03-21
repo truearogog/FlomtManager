@@ -56,7 +56,7 @@ internal sealed class DataIntegrationViewModel(
         var integrationParameters = await parameterRepository.GetIntegralParametersByDeviceId(Device.Id);
         foreach (var integrationParameter in integrationParameters.Where(x => currentParameters.Any(p => p.IntegrationNumber == x.Number)))
         {
-            var parameterViewModel = parameterViewModelFactory.Create(integrationParameter);
+            var parameterViewModel = parameterViewModelFactory.Create(integrationParameter, false);
             Parameters.Add(parameterViewModel);
         }
     }

@@ -1,0 +1,25 @@
+<Window 
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
+    x:DataType="vm:IDeviceDeleteViewModel"
+    mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="200"
+    x:Class="FlomtManager.App.Views.DeviceDeleteWindow"
+	Icon="/Assets/avalonia-logo.ico"
+    Title="{Binding Device.Name, StringFormat='Delete {0}'}"
+	SizeToContent="WidthAndHeight"
+	CanResize="False">
+	<StackPanel Margin="10" Spacing="10">
+		<Label Classes="H4, Danger" Theme="{DynamicResource TitleLabel}" Content="{Binding Device.Name, StringFormat='Delete {0}'}" />
+		<TextBlock Classes="Secondary" Text="Are you sure you want to delete this device?" />
+		<TextBlock Classes="Danger" Text="{Binding ErrorMessage}"
+			IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+		<StackPanel Orientation="Horizontal" Spacing="10">
+			<Button Classes="Danger" IsVisible="{Binding !CanDelete}" IsEnabled="False" Content="{Binding CanDeleteCount, StringFormat='Delete ({0})'}" />
+			<Button Classes="Danger" IsVisible="{Binding CanDelete}" Content="Delete" Command="{Binding DeleteDevice}" />
+			<Button Content="Cancel" Command="{Binding RequestClose}" />
+		</StackPanel>
+	</StackPanel>
+</Window>

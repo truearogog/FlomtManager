@@ -6,7 +6,8 @@ namespace FlomtManager.Domain.Abstractions.Repositories
     {
         Task<int> Create(Parameter parameter);
         Task Create(IEnumerable<Parameter> parameters);
-        Task UpdateShowYAxis(int id, bool showYAxis);
+        Task UpdateYAxisIsVisible(int id, bool yAxisIsVisible);
+        Task UpdateColor(int id, string color);
         Task<IEnumerable<Parameter>> GetAllByDeviceId(int deviceId);
         Task<IEnumerable<Parameter>> GetCurrentParametersByDeviceId(int deviceId, bool all = false);
         Task<IEnumerable<Parameter>> GetIntegralParametersByDeviceId(int deviceId, bool all = false);

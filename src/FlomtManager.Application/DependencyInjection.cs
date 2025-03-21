@@ -43,6 +43,7 @@ public static class DependencyInjection
         services.AddTransient<IAboutViewModel, AboutViewModel>();
         services.AddTransient<IDevicesViewModel, DevicesViewModel>();
         services.AddTransient<IDeviceCreateUpdateViewModel, DeviceCreateUpdateViewModel>();
+        services.AddTransient<IDeviceDeleteViewModel, DeviceDeleteViewModel>();
         services.AddTransient<IDeviceViewModel, DeviceViewModel>();
         services.AddTransient<IDataChartViewModel, DataChartViewModel>();
         services.AddTransient<IDataTableViewModel, DataTableViewModel>();

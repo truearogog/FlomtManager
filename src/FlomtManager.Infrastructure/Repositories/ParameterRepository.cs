@@ -24,11 +24,18 @@ internal sealed class ParameterRepository(IDbConnectionFactory connectionFactory
         await connection.CreateParameters(parameters);
     }
 
-    public async Task UpdateShowYAxis(int id, bool showYAxis)
+    public async Task UpdateYAxisIsVisible(int id, bool yAxisIsVisible)
     {
         var now = dateTimeProvider.Now;
         await using var connection = connectionFactory.CreateConnection();
-        await connection.UpdateShowYAxis(id, showYAxis, now);
+        await connection.UpdateYAxisIsVisible(id, yAxisIsVisible, now);
+    }
+
+    public async Task UpdateColor(int id, string color)
+    {
+        var now = dateTimeProvider.Now;
+        await using var connection = connectionFactory.CreateConnection();
+        await connection.UpdateColor(id, color, now);
     }
 
     public async Task<IEnumerable<Parameter>> GetAllByDeviceId(int deviceId)

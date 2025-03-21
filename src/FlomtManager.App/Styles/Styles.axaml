@@ -7,6 +7,12 @@
         </Border>
     </Design.PreviewWith>
 
+	<Style Selector="Button">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+	</Style>
+	<Style Selector="ToggleButton">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+	</Style>
 	<Style Selector="ListBox.RadioButtonListBox">
 		<Setter Property="BorderBrush" Value="Transparent"/>
 		<Setter Property="ItemsPanel">
@@ -41,7 +47,7 @@
 		<Setter Property="Margin" Value="0" />
 	</Style>
 
-	<Style Selector="TextBlock, SelectableTextBlock, i|Icon">
+	<Style Selector="TextBlock, SelectableTextBlock">
 		<Setter Property="VerticalAlignment" Value="Center" />
 	</Style>
 	
@@ -56,5 +62,13 @@
 		<Setter Property="Margin" Value="0" />
 		<Setter Property="Padding" Value="12,6" />
 		<Setter Property="Theme" Value="{DynamicResource CardBorder}" />
+	</Style>
+
+	<Style Selector="TextBox /template/ DataValidationErrors">
+		<Setter Property="Theme" Value="{DynamicResource TooltipDataValidationErrors}" />
+	</Style>
+
+	<Style Selector="ComboBox">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
 	</Style>
 </Styles>

@@ -3,4 +3,4 @@ using FlomtManager.Domain.Models;
 
 namespace FlomtManager.Infrastructure.Stores;
 
-internal sealed class DeviceStore : Store<Device>, IDeviceStore;
+internal sealed class ParameterStore : Store<Parameter>, IParameterStore;

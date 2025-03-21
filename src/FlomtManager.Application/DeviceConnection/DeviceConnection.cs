@@ -95,11 +95,7 @@ internal sealed class DeviceConnection(
 
             await ReadData();
 
-            var dataReadSpan = 
-                TimeSpan.FromHours(device.DataReadIntervalHours) + 
-                TimeSpan.FromMinutes(device.DataReadIntervalMinutes) + 
-                TimeSpan.FromSeconds(device.DataReadIntervalSeconds);
-            _dataReadTimer = new Timer(dataReadSpan);
+            _dataReadTimer = new Timer(TimeSpan.FromTicks(device.DataReadIntervalTicks));
             _dataReadTimer.Elapsed += _dataReadTimer_Elapsed;
             _dataReadTimer.Start();
 
@@ -111,10 +107,10 @@ internal sealed class DeviceConnection(
 
             RaiseConnectionStateChanged(ConnectionState.Connected);
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
             RaiseConnectionStateChanged(ConnectionState.Disconnected);
-            RaiseConnectionError(exception);
+            RaiseConnectionError(ex);
         }
     }
 

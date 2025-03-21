@@ -76,7 +76,7 @@ namespace FlomtManager.App.Views
                         {
                             0 => DataGridLength.Auto,
                             _ => new DataGridLength(1, DataGridLengthUnitType.Star)
-                        }
+                        },
                     });
                 }
 

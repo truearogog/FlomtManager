@@ -55,9 +55,9 @@ internal sealed class DataTableViewModel(
             Unit = string.Empty,
             Color = "#FF6B7075",
             Type = ParameterType.Time,
-            ShowYAxis = false,
-            ChartYScalingType = ChartScalingType.Auto,
-            ChartYZoom = 1
+            YAxisIsVisible = false,
+            YAxisScalingType = ChartScalingType.Auto,
+            YAxisZoom = 1
         });
 
         var parameters = await parameterRepository.GetHourArchiveParametersByDeviceId(Device.Id);

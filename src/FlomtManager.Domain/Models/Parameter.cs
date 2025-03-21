@@ -18,6 +18,6 @@ public readonly record struct Parameter(
     string Unit,
     string Color,
 
-    bool ShowYAxis,
-    ChartScalingType ChartYScalingType,
-    double ChartYZoom);
+    bool YAxisIsVisible,
+    ChartScalingType YAxisScalingType,
+    double YAxisZoom);

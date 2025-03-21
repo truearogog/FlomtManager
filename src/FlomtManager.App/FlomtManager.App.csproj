@@ -16,8 +16,6 @@
 	    <PackageReference Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)" />
 	    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
 	    <PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" Condition="'$(Configuration)' == 'Debug'" />
-	    <PackageReference Include="Projektanker.Icons.Avalonia" Version="$(ProjektankerIconsAvaloniaVersion)" />
-	    <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="$(ProjektankerIconsAvaloniaVersion)" />
 	    <PackageReference Include="ScottPlot.Avalonia" Version="$(ScottPlotAvaloniaVersion)" />
 
 	    <PackageReference Include="Semi.Avalonia" Version="$(SemiAvaloniaVersion)" />
@@ -45,10 +43,6 @@
         <None Update="appsettings.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Enums\" />
     </ItemGroup>
 
     <ItemGroup>

@@ -13,9 +13,7 @@ public interface IDeviceFormViewModel : IViewModel
 
     ConnectionType ConnectionType { get; set; }
     byte SlaveId { get; set; }
-    byte? DataReadIntervalHours { get; set; }
-    byte? DataReadIntervalMinutes { get; set; }
-    byte? DataReadIntervalSeconds { get; set; }
+    TimeSpan DataReadInterval { get; set; }
 
     string PortName { get; set; }
     int BaudRate { get; set; }

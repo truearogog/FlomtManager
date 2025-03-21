@@ -3,11 +3,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:i="https://github.com/projektanker/icons.avalonia"
 	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
 	xmlns:local="using:FlomtManager.App.Views"
 	xmlns:enums="using:FlomtManager.App.Enums"
 	xmlns:domainEnums="using:FlomtManager.Domain.Enums"
+    xmlns:colorPicker="clr-namespace:Semi.Avalonia.ColorPicker;assembly=Semi.Avalonia.ColorPicker"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
     x:Class="FlomtManager.App.Views.DeviceWindow"
     x:DataType="vm:IDeviceViewModel"
@@ -55,17 +55,17 @@
 						Converter={StaticResource EqualsConverter}, 
 						ConverterParameter={x:Static domainEnums:ConnectionState.Disconnected}}">
 					<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-						<i:Icon Value="fa-solid fa-pen-to-square" />
+						<PathIcon
+							Theme="{DynamicResource InnerPathIcon}"
+							HorizontalAlignment="Center"
+							Data="{DynamicResource SemiIconEdit}" />
 						<TextBlock Text="Edit" />
 					</StackPanel>
 				</Button>
 
 				<Border Classes="Shadow" Theme="{StaticResource CardBorder}" Padding="4">
 					<StackPanel Orientation="Horizontal" Spacing="4">
-						<RadioButton
-							Width="150"
-							Padding="8,4"
-							Content="Avalonia"
+						<RadioButton Width="150" Padding="8,4"
 							IsChecked="{
 								Binding ArchiveDisplayMode, 
 								Converter={StaticResource EqualsConverter}, 
@@ -74,13 +74,14 @@
 							CommandParameter="{x:Static domainEnums:ArchiveDisplayMode.Chart}"
 							Theme="{DynamicResource PureCardRadioButton}">
 							<StackPanel Orientation="Horizontal" Spacing="4">
-								<i:Icon Value="fa-solid fa-chart-line" />
+								<PathIcon
+									Theme="{DynamicResource InnerPathIcon}"
+									HorizontalAlignment="Center"
+									Data="{DynamicResource SemiIconHistogram}" />
 								<TextBlock Text="Chart" />
 							</StackPanel>
 						</RadioButton>
-						<RadioButton
-							Width="150"
-							Padding="8,4"
+						<RadioButton Width="150" Padding="8,4"
 							IsChecked="{
 								Binding ArchiveDisplayMode, 
 								Converter={StaticResource EqualsConverter}, 
@@ -89,7 +90,10 @@
 							Command="{Binding SetDataDisplayMode}"
 							CommandParameter="{x:Static domainEnums:ArchiveDisplayMode.Table}">
 							<StackPanel Orientation="Horizontal" Spacing="4">
-								<i:Icon Value="fa-solid fa-table" />
+								<PathIcon
+									Theme="{DynamicResource InnerPathIcon}"
+									HorizontalAlignment="Center"
+									Data="{DynamicResource SemiIconGridSquare}" />
 								<TextBlock Text="Table" />
 							</StackPanel>
 						</RadioButton>
@@ -117,10 +121,20 @@
 						HorizontalAlignment="Left"
 						Theme="{DynamicResource ButtonToggleSwitch}">
 						<ToggleSwitch.OnContent>
-							<i:Icon Value="fa-solid fa-angle-left" />
+							<PathIcon
+								Theme="{DynamicResource InnerPathIcon}"
+								HorizontalAlignment="Center"
+								Data="{DynamicResource SemiIconChevronRight}">
+								<PathIcon.RenderTransform>
+									<RotateTransform Angle="180" />
+								</PathIcon.RenderTransform>
+							</PathIcon>
 						</ToggleSwitch.OnContent>
 						<ToggleSwitch.OffContent>
-							<i:Icon Value="fa-solid fa-angle-right" />
+							<PathIcon
+								Theme="{DynamicResource InnerPathIcon}"
+								HorizontalAlignment="Center"
+								Data="{DynamicResource SemiIconChevronRight}" />
 						</ToggleSwitch.OffContent>
 					</ToggleSwitch>
 					<ScrollViewer
@@ -163,7 +177,7 @@
 												Converter={StaticResource EqualsConverter}, 
 												ConverterParameter={x:Static domainEnums:ConnectionState.Connected}}" />
 									</Panel>
-									
+
 									<Panel
 										IsVisible="{
 											Binding Device.ConnectionType, 

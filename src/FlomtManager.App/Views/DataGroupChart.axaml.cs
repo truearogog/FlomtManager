@@ -9,6 +9,7 @@ using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
 using FlomtManager.Domain.Models.Collections;
 using ScottPlot;
+using ScottPlot.AxisPanels;
 using ScottPlot.Control;
 using ScottPlot.Plottables;
 using SkiaSharp;
@@ -53,6 +54,7 @@ namespace FlomtManager.App.Views
 
             if (DataContext is IDataChartViewModel viewModel)
             {
+                viewModel.OnParameterUpdated += _OnParameterUpdated;
                 viewModel.OnDataUpdated += _OnDataUpdated;
                 viewModel.OnParameterToggled += _OnParameterToggled;
 
@@ -71,6 +73,21 @@ namespace FlomtManager.App.Views
                 viewModel.OnParameterToggled -= _OnParameterToggled;
 
                 _viewModel = null;
+            }
+        }
+
+        private void _OnParameterUpdated(object sender, Parameter e)
+        {
+            if (_chartInfos.TryGetValue(e.Number, out var chartInfo))
+            {
+                var color = Color.FromSKColor(SKColor.Parse(e.Color));
+                var chart = chartInfo.Chart;
+                chart.Color = color;
+                (chart.Axes.YAxis as LeftAxis)?.Color(color);
+                chart.Axes.YAxis.Label.Text = $"{e.Name}, {e.Unit}";
+                chart.Axes.YAxis.IsVisible = e.YAxisIsVisible && chartInfo.Chart.IsVisible;
+                chartInfo.Parameter = e;
+                Chart.Refresh();
             }
         }
 
@@ -109,6 +126,7 @@ namespace FlomtManager.App.Views
                 var yAxis = Chart.Plot.Axes.AddLeftAxis();
                 yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
                 yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
+                yAxis.IsVisible = parameter.YAxisIsVisible;
                 signal.Axes.YAxis = yAxis;
 
                 var info = new ChartInfo
@@ -134,7 +152,7 @@ namespace FlomtManager.App.Views
             {
                 var chart = chartInfo.Chart;
                 chart.IsVisible = !chart.IsVisible;
-                chart.Axes.YAxis!.IsVisible = chart.IsVisible;
+                chart.Axes.YAxis!.IsVisible = chartInfo.Parameter.YAxisIsVisible && chart.IsVisible;
                 Chart.Refresh();
             }
         }
@@ -341,7 +359,7 @@ namespace FlomtManager.App.Views
             {
                 _yAxisZoom *= frac;
 
-                foreach (var chartInfo in _chartInfos.Values.Where(x => x.Parameter.ChartYScalingType == ChartScalingType.Auto))
+                foreach (var chartInfo in _chartInfos.Values.Where(x => x.Parameter.YAxisScalingType == ChartScalingType.Auto))
                 {
                     var chart = chartInfo.Chart;
                     chart.Axes.YAxis.Range.ZoomFrac(frac, (chartInfo.MinY + chartInfo.MaxY) / 2);
@@ -405,7 +423,7 @@ namespace FlomtManager.App.Views
         private sealed class ChartInfo
         {
             public SignalXY Chart { get; init; }
-            public Parameter Parameter { get; init; }
+            public Parameter Parameter { get; set; }
             public double MinY { get; init; }
             public double MaxY { get; init; }
         }

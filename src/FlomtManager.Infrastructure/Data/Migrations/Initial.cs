@@ -21,9 +21,7 @@ internal sealed class Initial : Migration
 
                 ConnectionType {SqlTypes.Int},
                 SlaveId {SqlTypes.Int},
-                DataReadIntervalHours {SqlTypes.Int},
-                DataReadIntervalMinutes {SqlTypes.Int},
-                DataReadIntervalSeconds {SqlTypes.Int},
+                DataReadIntervalTicks {SqlTypes.Int},
 
                 IpAddress NVARCHAR(30),
                 PortName CHAR(10),
@@ -37,8 +35,8 @@ internal sealed class Initial : Migration
             """, transaction);
 
         await connection.ExecuteAsync($"""
-            INSERT INTO Devices (Created, Updated, Name, Address, ConnectionType, SlaveId, DataReadIntervalSeconds, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port)
-            VALUES (@Now, @Now, @Name, @Address, @ConnectionType, @SlaveId, @DataReadIntervalSeconds, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port);
+            INSERT INTO Devices (Created, Updated, Name, Address, ConnectionType, SlaveId, DataReadIntervalTicks, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port)
+            VALUES (@Now, @Now, @Name, @Address, @ConnectionType, @SlaveId, @DataReadIntervalTicks, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port);
             """, new
         {
             Now = DateTime.UtcNow,
@@ -48,7 +46,7 @@ internal sealed class Initial : Migration
 
             ConnectionType = ConnectionType.Network,
             SlaveId = 1,
-            DataReadIntervalSeconds = 5,
+            DataReadIntervalTicks = TimeSpan.FromSeconds(5).Ticks,
 
             PortName = "COM1",
             BaudRate = 9600,
@@ -118,9 +116,9 @@ internal sealed class Initial : Migration
                 Unit CHAR(6),
                 Color TEXT,
 
-                ShowYAxis {SqlTypes.Int},
-                ChartYScalingType {SqlTypes.Int},
-                ChartYZoom {SqlTypes.Real},
+                YAxisIsVisible {SqlTypes.Int},
+                YAxisScalingType {SqlTypes.Int},
+                YAxisZoom {SqlTypes.Real},
 
                 FOREIGN KEY (DeviceId) REFERENCES Devices(Id) ON DELETE CASCADE
             );

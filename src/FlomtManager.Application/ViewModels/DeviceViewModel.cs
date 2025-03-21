@@ -109,8 +109,8 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         _parameterViewModelFactory = parameterViewModelFactory;
         _parameterRepository = parameterRepository;
 
-        _deviceStore.DeviceUpdated += _deviceStore_DeviceUpdated;
-        _deviceStore.DeviceRemoved += _deviceStore_DeviceRemoved;
+        _deviceStore.Updated += _deviceStore_Updated;
+        _deviceStore.Removed += _deviceStore_Removed;
 
         DataChart = dataChart;
         DataChart.OnIntegrationChanged += DataChart_OnIntegrationChanged;
@@ -140,7 +140,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         var currentParameters = await _parameterRepository.GetCurrentParametersByDeviceId(Device.Id);
         foreach (var currentParameter in currentParameters)
         {
-            var parameterViewModel = _parameterViewModelFactory.Create(currentParameter);
+            var parameterViewModel = _parameterViewModelFactory.Create(currentParameter, false);
             CurrentParameters.Add(parameterViewModel);
         }
 
@@ -148,7 +148,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         var integralParameters = await _parameterRepository.GetIntegralParametersByDeviceId(Device.Id);
         foreach (var integralParameter in integralParameters)
         {
-            var parameterViewModel = _parameterViewModelFactory.Create(integralParameter);
+            var parameterViewModel = _parameterViewModelFactory.Create(integralParameter, false);
             IntegralParameters.Add(parameterViewModel);
         }
     }
@@ -306,7 +306,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         }
     }
 
-    private async void _deviceStore_DeviceUpdated(object sender, Device device)
+    private async void _deviceStore_Updated(object sender, Device device)
     {
         if (Device.Id == device.Id)
         {
@@ -314,10 +314,11 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         }
     }
 
-    private void _deviceStore_DeviceRemoved(object sender, Device device)
+    private async void _deviceStore_Removed(object sender, Device device)
     {
         if (Device.Id == device.Id)
         {
+            await TryDisconnect();
             CloseRequested?.Invoke(this, EventArgs.Empty);
         }
     }

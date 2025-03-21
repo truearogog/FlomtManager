@@ -22,9 +22,7 @@ internal sealed class DeviceFormViewModelFactory : IDeviceFormViewModelFactory
 
             ConnectionType = device.ConnectionType,
             SlaveId = device.SlaveId,
-            DataReadIntervalHours = device.DataReadIntervalHours,
-            DataReadIntervalMinutes = device.DataReadIntervalMinutes,
-            DataReadIntervalSeconds = device.DataReadIntervalSeconds,
+            DataReadInterval = TimeSpan.FromTicks(device.DataReadIntervalTicks),
 
             PortName = device.PortName,
             BaudRate = device.BaudRate,

@@ -5,5 +5,5 @@ namespace FlomtManager.Domain.Abstractions.ViewModelFactories;
 
 public interface IParameterViewModelFactory
 {
-    IParameterViewModel Create(Parameter parameter);
+    IParameterViewModel Create(Parameter parameter, bool editable);
 }

@@ -7,6 +7,7 @@ namespace FlomtManager.Domain.Abstractions.ViewModels;
 
 public interface IDataChartViewModel : IViewModel
 {
+    event EventHandler<Parameter> OnParameterUpdated;
     event EventHandler OnDataUpdated;
     event EventHandler<byte> OnParameterToggled;
     event EventHandler<IntegrationChangedArgs> OnIntegrationChanged;

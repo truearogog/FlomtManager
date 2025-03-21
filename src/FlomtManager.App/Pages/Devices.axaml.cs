@@ -24,6 +24,7 @@ namespace FlomtManager.App.Pages
             {
                 viewModel.DeviceCreateRequested += viewModel_DeviceCreateRequested;
                 viewModel.DeviceUpdateRequested += viewModel_DeviceUpdateRequested;
+                viewModel.DeviceDeleteRequested += viewModel_DeviceDeleteRequested;
                 viewModel.DeviceViewRequested += viewModel_DeviceViewRequested;
 
                 viewModel.LoadDevices();
@@ -38,6 +39,7 @@ namespace FlomtManager.App.Pages
             {
                 viewModel.DeviceCreateRequested -= viewModel_DeviceCreateRequested;
                 viewModel.DeviceUpdateRequested -= viewModel_DeviceUpdateRequested;
+                viewModel.DeviceDeleteRequested -= viewModel_DeviceDeleteRequested;
                 viewModel.DeviceViewRequested -= viewModel_DeviceViewRequested;
             }
         }
@@ -60,6 +62,19 @@ namespace FlomtManager.App.Pages
             viewModel.SetDevice(device);
 
             var window = new DeviceCreateUpdateWindow
+            {
+                DataContext = viewModel
+            };
+            var parentWindow = this.GetWindow();
+            window.ShowDialog(parentWindow);
+        }
+
+        private void viewModel_DeviceDeleteRequested(object sender, Device device)
+        {
+            var viewModel = App.Services.GetRequiredService<IDeviceDeleteViewModel>();
+            viewModel.SetDevice(device);
+
+            var window = new DeviceDeleteWindow
             {
                 DataContext = viewModel
             };

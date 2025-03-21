@@ -8,38 +8,79 @@ namespace FlomtManager.Infrastructure.Extensions;
 
 internal static class DbConnectionParameterExtensions
 {
+    private const string InsertSql = """
+        INSERT INTO Parameters (
+            Created, 
+            Updated, 
+            DeviceId,
+
+            Number, 
+            Type, 
+            Comma, 
+            ErrorMask, 
+            IntegrationNumber, 
+
+            Name, 
+            Unit, 
+            Color, 
+
+            YAxisIsVisible,
+            YAxisScalingType, 
+            YAxisZoom
+        ) VALUES (
+            @Created, 
+            @Updated, 
+            @DeviceId,
+
+            @Number, 
+            @Type, 
+            @Comma, 
+            @ErrorMask, 
+            @IntegrationNumber, 
+            
+            @Name, 
+            @Unit, 
+            @Color, 
+            
+            @YAxisIsVisible,
+            @YAxisScalingType, 
+            @YAxisZoom
+        );
+        """;
+
     public static async Task<int> CreateParameter(this DbConnection connection, Parameter parameter)
     {
-        return await connection.QuerySingleAsync<int>("""
-            INSERT INTO Parameters (
-                Created, Updated, Number, Type, Comma, ErrorMask, IntegrationNumber, Name, Unit, Color, ChartYScalingType, ChartYZoom, DeviceId
-            ) VALUES (
-                @Created, @Updated, @Number, @Type, @Comma, @ErrorMask, @IntegrationNumber, @Name, @Unit, @Color, @ChartYScalingType, @ChartYZoom, @DeviceId
-            );
+        return await connection.QuerySingleAsync<int>($"""
+            ${InsertSql}
             SELECT last_insert_rowid();
             """, parameter);
     }
 
     public static async Task CreateParameters(this DbConnection connection, IEnumerable<Parameter> parameters)
     {
-        await connection.ExecuteAsync("""
-            INSERT INTO Parameters (
-                Created, Updated, Number, Type, Comma, ErrorMask, IntegrationNumber, Name, Unit, Color, ChartYScalingType, ChartYZoom, DeviceId
-            ) VALUES (
-                @Created, @Updated, @Number, @Type, @Comma, @ErrorMask, @IntegrationNumber, @Name, @Unit, @Color, @ChartYScalingType, @ChartYZoom, @DeviceId
-            );
-            """, parameters);
+        await connection.ExecuteAsync(InsertSql, parameters);
     }
 
-    public static async Task UpdateShowYAxis(this DbConnection connection, int id, bool showYAxis, DateTime now)
+    public static async Task UpdateYAxisIsVisible(this DbConnection connection, int id, bool yAxisIsVisible, DateTime now)
     {
         await connection.ExecuteAsync("""
             UPDATE Parameters 
             SET 
-                ShowYAxis = @ShowYAxis,
+                YAxisIsVisible = @YAxisIsVisible,
                 Updated = @Now
             WHERE Id = @Id;
-            """, new { Id = id, ShowYAxis = showYAxis, Now = now });
+            """, new { Id = id, YAxisIsVisible = yAxisIsVisible, Now = now });
+    }
+
+    public static async Task UpdateColor(this DbConnection connection, int id, string color, DateTime now)
+    {
+        await connection.ExecuteAsync("""
+            UPDATE Parameters 
+            SET 
+                Color = @Color,
+                Updated = @Now
+            WHERE Id = @Id;
+            """, new { Id = id, Color = color, Now = now });
     }
 
     public static async Task<IEnumerable<Parameter>> GetAllParametersByDeviceId(this DbConnection connection, int deviceId)

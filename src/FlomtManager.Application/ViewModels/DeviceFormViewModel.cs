@@ -45,28 +45,14 @@ internal sealed class DeviceFormViewModel : ViewModel, IDeviceFormViewModel
         set => this.RaiseAndSetIfChanged(ref _slaveId, value);
     }
 
-    private byte? _dataReadIntervalHours = 0;
-    public byte? DataReadIntervalHours
+    private TimeSpan _dataReadInterval = TimeSpan.FromSeconds(5);
+    public TimeSpan DataReadInterval
     {
-        get => _dataReadIntervalHours;
-        set => this.RaiseAndSetIfChanged(ref _dataReadIntervalHours, value);
+        get => _dataReadInterval;
+        set => this.RaiseAndSetIfChanged(ref _dataReadInterval, value);
     }
 
-    private byte? _dataReadIntervalMinutes = 0;
-    public byte? DataReadIntervalMinutes
-    {
-        get => _dataReadIntervalMinutes;
-        set => this.RaiseAndSetIfChanged(ref _dataReadIntervalMinutes, value);
-    }
-
-    private byte? _dataReadIntervalSeconds = 5;
-    public byte? DataReadIntervalSeconds
-    {
-        get => _dataReadIntervalSeconds;
-        set => this.RaiseAndSetIfChanged(ref _dataReadIntervalSeconds, value);
-    }
-
-    private string _portName = "COM";
+    private string _portName = "COM1";
     public string PortName
     {
         get => _portName;
@@ -126,14 +112,9 @@ internal sealed class DeviceFormViewModel : ViewModel, IDeviceFormViewModel
 
             ConnectionType = ConnectionType,
             SlaveId = SlaveId,
-            DataReadIntervalHours = DataReadIntervalHours ?? 0,
-            DataReadIntervalMinutes = DataReadIntervalMinutes ?? 0,
-            DataReadIntervalSeconds =
-                    DataReadIntervalHours is null &&
-                    DataReadIntervalMinutes is null &&
-                    DataReadIntervalSeconds is null
-                        ? (byte)5
-                        : DataReadIntervalSeconds.Value,
+            DataReadIntervalTicks = DataReadInterval == TimeSpan.Zero 
+                ? TimeSpan.FromSeconds(5).Ticks 
+                : DataReadInterval.Ticks,
 
             PortName = PortName,
             BaudRate = BaudRate,

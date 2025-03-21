@@ -13,6 +13,7 @@ internal sealed class DevicesViewModel : ViewModel, IDevicesViewModel
 
     public event EventHandler DeviceCreateRequested;
     public event EventHandler<Device> DeviceUpdateRequested;
+    public event EventHandler<Device> DeviceDeleteRequested;
     public event EventHandler<Device> DeviceViewRequested;
 
     public ObservableCollection<Device> Devices { get; set; } = [];
@@ -22,9 +23,9 @@ internal sealed class DevicesViewModel : ViewModel, IDevicesViewModel
         _deviceRepository = deviceRepository;
         _deviceStore = deviceStore;
 
-        _deviceStore.DeviceAdded += _deviceStore_DeviceAdded;
-        _deviceStore.DeviceUpdated += _deviceStore_DeviceUpdated;
-        _deviceStore.DeviceRemoved += _deviceStore_DeviceRemoved;
+        _deviceStore.Added += _deviceStore_DeviceAdded;
+        _deviceStore.Updated += _deviceStore_DeviceUpdated;
+        _deviceStore.Removed += _deviceStore_DeviceRemoved;
     }
 
     public void CreateDevice()
@@ -35,6 +36,11 @@ internal sealed class DevicesViewModel : ViewModel, IDevicesViewModel
     public void UpdateDevice(Device device)
     {
         DeviceUpdateRequested?.Invoke(this, device);
+    }
+
+    public void DeleteDevice(Device device)
+    {
+        DeviceDeleteRequested?.Invoke(this, device);
     }
 
     public void ViewDevice(Device device)

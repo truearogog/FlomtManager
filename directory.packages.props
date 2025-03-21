@@ -4,8 +4,8 @@
 	</PropertyGroup>
 	
 	<PropertyGroup>
-		<AvaloniaVersion>11.0.5</AvaloniaVersion>
-		<SemiAvaloniaVersion>11.0.1</SemiAvaloniaVersion>
+		<AvaloniaVersion>11.2.1</AvaloniaVersion>
+		<SemiAvaloniaVersion>11.2.1.5</SemiAvaloniaVersion>
 		<ProjektankerIconsAvaloniaVersion>9.0.1</ProjektankerIconsAvaloniaVersion>
 		<ScottPlotAvaloniaVersion>5.0.21</ScottPlotAvaloniaVersion>
 	</PropertyGroup>

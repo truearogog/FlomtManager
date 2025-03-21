@@ -1,5 +1,6 @@
 ﻿using System.Reactive.Linq;
 using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Abstractions.Stores;
 using FlomtManager.Domain.Abstractions.ViewModels;
 using FlomtManager.Domain.Models;
 using ReactiveUI;
@@ -8,9 +9,29 @@ namespace FlomtManager.Application.ViewModels;
 
 internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
 {
+    private readonly IParameterStore _parameterStore;
     private readonly IParameterRepository _parameterRepository;
 
-    public Parameter Parameter { get; init; }
+    private Parameter _parameter = default;
+    public Parameter Parameter
+    {
+        get => _parameter;
+        private set => this.RaiseAndSetIfChanged(ref _parameter, value);
+    }
+
+    private bool _yAxisIsVisible;
+    public bool YAxisIsVisible
+    {
+        get => _yAxisIsVisible;
+        set => this.RaiseAndSetIfChanged(ref _yAxisIsVisible, value);
+    }
+
+    private string _color = string.Empty;
+    public string Color
+    {
+        get => _color;
+        set => this.RaiseAndSetIfChanged(ref _color, value);
+    }
 
     private string _value = string.Empty;
     public string Value
@@ -26,28 +47,62 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
         set => this.RaiseAndSetIfChanged(ref _error, value);
     }
 
-    private bool _showYAxis;
-    public bool ShowYAxis
+    private bool _editable = false;
+    public bool Editable
     {
-        get => _showYAxis;
-        set => this.RaiseAndSetIfChanged(ref _showYAxis, value);
+        get => _editable;
+        set => this.RaiseAndSetIfChanged(ref _editable, value);
     }
 
-    public ParameterViewModel(Parameter parameter, IParameterRepository parameterRepository)
+    public ParameterViewModel(Parameter parameter, bool editable, IParameterStore parameterStore, IParameterRepository parameterRepository)
     {
+        SetParameter(parameter);
+        Editable = editable;
+
+        _parameterStore = parameterStore;
+        _parameterStore.Updated += _parameterStore_Updated;
         _parameterRepository = parameterRepository;
-        Parameter = parameter;
-        ShowYAxis = parameter.ShowYAxis;
 
-        this.WhenAnyValue(x => x.ShowYAxis)
-            .Throttle(TimeSpan.FromMilliseconds(100), RxApp.TaskpoolScheduler)
-            .DistinctUntilChanged()
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(async x => await UpdateShowYAxis(x));
+        if (editable)
+        {
+            this.WhenAnyValue(x => x.YAxisIsVisible)
+                .Throttle(TimeSpan.FromMilliseconds(50), RxApp.TaskpoolScheduler)
+                .DistinctUntilChanged()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(async x => await UpdateYAxisIsVisible(x));
+
+            this.WhenAnyValue(x => x.Color)
+                .Throttle(TimeSpan.FromMilliseconds(50), RxApp.TaskpoolScheduler)
+                .DistinctUntilChanged()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(async x => await UpdateColor(x));
+        }
     }
 
-    private async Task UpdateShowYAxis(bool show)
+    private void SetParameter(Parameter parameter)
     {
-        await _parameterRepository.UpdateShowYAxis(Parameter.Id, show);
+        Parameter = parameter;
+        YAxisIsVisible = parameter.YAxisIsVisible;
+        Color = parameter.Color;
+    }
+
+    private void _parameterStore_Updated(object sender, Parameter e)
+    {
+        if (e.Id == Parameter.Id)
+        {
+            SetParameter(e);
+        }
+    }
+
+    private async Task UpdateYAxisIsVisible(bool yAxisIsVisible)
+    {
+        await _parameterRepository.UpdateYAxisIsVisible(Parameter.Id, yAxisIsVisible);
+        _parameterStore.Update(Parameter with { YAxisIsVisible = yAxisIsVisible });
+    }
+
+    private async Task UpdateColor(string color)
+    {
+        await _parameterRepository.UpdateColor(Parameter.Id, color);
+        _parameterStore.Update(Parameter with { Color = color });
     }
 }

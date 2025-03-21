@@ -2,6 +2,7 @@
 using System.Reactive.Linq;
 using FlomtManager.Domain.Abstractions.Parsers;
 using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Abstractions.Stores;
 using FlomtManager.Domain.Abstractions.ViewModelFactories;
 using FlomtManager.Domain.Abstractions.ViewModels;
 using FlomtManager.Domain.Abstractions.ViewModels.Events;
@@ -20,12 +21,14 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
     private readonly IDataRepository _dataRepository;
     private readonly IParameterViewModelFactory _parameterViewModelFactory;
     private readonly IParameterRepository _parameterRepository;
+    private readonly IParameterStore _parameterStore;
 
     private IReadOnlyDictionary<Parameter, Parameter> _integralParameters;
     private float[] _workingTimeCollectionFloat;
     private uint[] _workingTimeCollectionUint;
     private ushort[] _workingTimeCollectionUshort;
 
+    public event EventHandler<Parameter> OnParameterUpdated;
     public event EventHandler OnDataUpdated;
     public event EventHandler<byte> OnParameterToggled;
     public event EventHandler<IntegrationChangedArgs> OnIntegrationChanged;
@@ -68,12 +71,16 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
         IDataFormatter dataFormatter,
         IDataRepository dataRepository,
         IParameterViewModelFactory parameterViewModelFactory,
-        IParameterRepository parameterRepository)
+        IParameterRepository parameterRepository,
+        IParameterStore parameterStore)
     {
         _dataFormatter = dataFormatter;
         _dataRepository = dataRepository;
         _parameterViewModelFactory = parameterViewModelFactory;
         _parameterRepository = parameterRepository;
+        _parameterStore = parameterStore;
+
+        _parameterStore.Updated += _parameterStore_Updated;
 
         this.WhenAnyValue(x => x.IntegrationSpanMaxDate, x => x.IntegrationSpanMinDate)
             .Throttle(TimeSpan.FromMilliseconds(100), RxApp.TaskpoolScheduler)
@@ -86,6 +93,16 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
             .DistinctUntilChanged()
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(x => ChangeSelectedDataPoint());
+    }
+
+    private void _parameterStore_Updated(object sender, Parameter e)
+    {
+        if (Device == default || e.DeviceId != Device.Id)
+        {
+            return;
+        }
+
+        OnParameterUpdated?.Invoke(this, e);
     }
 
     public async Task SetDevice(Device device)
@@ -113,16 +130,16 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
             Unit = string.Empty,
             Color = "#FF6B7075",
             Type = ParameterType.Time,
-            ShowYAxis = false,
-            ChartYScalingType = ChartScalingType.Auto,
-            ChartYZoom = 1
-        });
+            YAxisIsVisible = false,
+            YAxisScalingType = ChartScalingType.Auto,
+            YAxisZoom = 1
+        }, false);
         Parameters.Add(dateTimeParameterViewModel);
 
         var parameters = await _parameterRepository.GetHourArchiveParametersByDeviceId(Device.Id);
         foreach (var parameter in parameters)
         {
-            var parameterViewModel = _parameterViewModelFactory.Create(parameter);
+            var parameterViewModel = _parameterViewModelFactory.Create(parameter, true);
             Parameters.Add(parameterViewModel);
         }
 

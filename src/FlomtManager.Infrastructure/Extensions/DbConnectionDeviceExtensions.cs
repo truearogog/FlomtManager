@@ -39,9 +39,7 @@ internal static class DbConnectionDeviceExtensions
 
                 ConnectionType, 
                 SlaveId, 
-                DataReadIntervalHours, 
-                DataReadIntervalMinutes, 
-                DataReadIntervalSeconds, 
+                DataReadIntervalTicks, 
 
                 PortName, 
                 BaudRate, 
@@ -60,9 +58,7 @@ internal static class DbConnectionDeviceExtensions
 
                 @ConnectionType, 
                 @SlaveId, 
-                @DataReadIntervalHours, 
-                @DataReadIntervalMinutes, 
-                @DataReadIntervalSeconds, 
+                @DataReadIntervalTicks, 
                 
                 @PortName, 
                 @BaudRate, 
@@ -89,9 +85,7 @@ internal static class DbConnectionDeviceExtensions
 
                 ConnectionType = @ConnectionType,
                 SlaveId = @SlaveId,
-                DataReadIntervalHours = @DataReadIntervalHours, 
-                DataReadIntervalMinutes = @DataReadIntervalMinutes, 
-                DataReadIntervalSeconds = @DataReadIntervalSeconds, 
+                DataReadIntervalTicks = @DataReadIntervalTicks, 
 
                 PortName = @PortName,
                 BaudRate = @BaudRate,
@@ -107,11 +101,11 @@ internal static class DbConnectionDeviceExtensions
 
     public static async Task DeleteDevice(this DbConnection connection, int id)
     {
-        await connection.ExecuteAsync("""
+        await connection.ExecuteAsync($"""
             DELETE FROM Parameters WHERE DeviceId = @Id;
             DELETE FROM DeviceDefinitions WHERE DeviceId = @Id;
             DELETE FROM Devices WHERE Id = @Id;
-            DELETE TABLE IF EXISTS Data_@Id;
+            DROP TABLE IF EXISTS Data_{id};
             """, new { Id = id });
     }
 
@@ -198,9 +192,9 @@ internal static class DbConnectionDeviceExtensions
     {
         await connection.ExecuteAsync("""
             UPDATE DeviceDefinitions
-                SET 
-                    Updated = @Time,
-                    LastArchiveRead = @Time
+            SET 
+                Updated = @Time,
+                LastArchiveRead = @Time
             WHERE DeviceId = @DeviceId
             """, new { DeviceId = deviceId, Time = time });
     }

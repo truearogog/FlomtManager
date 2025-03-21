@@ -10,7 +10,7 @@ public interface IDeviceCreateUpdateViewModel : IViewModel
     event EventHandler CloseRequested;
 
     IDeviceFormViewModel Form { get; set; }
-    string ErrorMessage { get; set; }
+    string ErrorMessage { get; }
 
     ObservableCollection<ConnectionType> ConnectionTypes { get; set; }
     ObservableCollection<string> PortNames { get; set; }

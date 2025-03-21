@@ -1,6 +1,4 @@
-﻿using Dapper;
-using FlomtManager.Domain.Abstractions.Data;
-using FlomtManager.Infrastructure.Data.TypeHandlers;
+﻿using FlomtManager.Domain.Abstractions.Data;
 
 namespace FlomtManager.Infrastructure.Data;
 
@@ -12,8 +10,6 @@ public sealed class DbInitializer(IDbConnectionFactory connectionFactory) : IDbI
 
     public async Task Init(CancellationToken cancellationToken = default)
     {
-        SqlMapper.AddTypeHandler(new TimeSpanHandler());
-
         using var connection = connectionFactory.CreateConnection();
         await connection.OpenAsync(cancellationToken);
 

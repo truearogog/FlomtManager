@@ -4,8 +4,11 @@ namespace FlomtManager.Domain.Abstractions.ViewModels;
 
 public interface IParameterViewModel : IViewModel
 {
-    Parameter Parameter { get; init; }
+    Parameter Parameter { get; }
+    bool YAxisIsVisible { get; set; }
+    string Color { get; set; }
+
     string Value { get; set; }
     bool Error { get; set; }
-    bool ShowYAxis { get; set; }
+    bool Editable { get; set; }
 }

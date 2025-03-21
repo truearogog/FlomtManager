@@ -3,7 +3,6 @@
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-	xmlns:i="https://github.com/projektanker/icons.avalonia"
 	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
 	xmlns:models="using:FlomtManager.Core.Models"
 	x:DataType="vm:IDevicesViewModel"
@@ -16,7 +15,10 @@
 				Theme="{DynamicResource BorderlessButton}" 
 				Command="{Binding CreateDevice}">
 				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-					<i:Icon Value="fa-solid fa-plus" />
+					<PathIcon
+						Theme="{DynamicResource InnerPathIcon}"
+						HorizontalAlignment="Center"
+						Data="{DynamicResource SemiIconPlus}" />
 					<TextBlock Text="Add" />
 				</StackPanel>
 			</Button>
@@ -51,7 +53,10 @@
 											RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
 										CommandParameter="{Binding}">
 										<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-											<i:Icon Value="fa-solid fa-eye" />
+											<PathIcon
+												Theme="{DynamicResource InnerPathIcon}"
+												HorizontalAlignment="Center"
+												Data="{DynamicResource SemiIconEyeOpened}" />
 											<TextBlock Text="View" />
 										</StackPanel>
 									</Button>
@@ -63,9 +68,24 @@
 											RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
 										CommandParameter="{Binding}">
 										<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-											<i:Icon Value="fa-solid fa-pen-to-square" />
+											<PathIcon
+												Theme="{DynamicResource InnerPathIcon}"
+												HorizontalAlignment="Center"
+												Data="{DynamicResource SemiIconEdit}" />
 											<TextBlock Text="Edit" />
 										</StackPanel>
+									</Button>
+									<Button 
+										Classes="Danger"
+										Theme="{DynamicResource BorderlessButton}" 
+										Command="{
+											Binding ((vm:IDevicesViewModel)DataContext).DeleteDevice, 
+											RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+										CommandParameter="{Binding}">
+										<PathIcon
+											Theme="{DynamicResource InnerPathIcon}"
+											HorizontalAlignment="Center"
+											Data="{DynamicResource SemiIconDelete}" />
 									</Button>
 								</StackPanel>
 							</Grid>

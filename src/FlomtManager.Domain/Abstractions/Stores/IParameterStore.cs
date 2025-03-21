@@ -2,4 +2,4 @@
 
 namespace FlomtManager.Domain.Abstractions.Stores;
 
-public interface IDeviceStore : IStore<Device>;
+public interface IParameterStore : IStore<Parameter>;
