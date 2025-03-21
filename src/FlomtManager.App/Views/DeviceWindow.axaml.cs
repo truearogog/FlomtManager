@@ -68,7 +68,7 @@ namespace FlomtManager.App.Views
             Close();
         }
 
-        private void viewModel_DeviceUpdateRequested(object sender, Device device)
+        private async void viewModel_DeviceUpdateRequested(object sender, Device device)
         {
             var viewModel = App.Services.GetRequiredService<IDeviceCreateUpdateViewModel>();
             viewModel.SetDevice(device);
@@ -78,12 +78,7 @@ namespace FlomtManager.App.Views
                 DataContext = viewModel
             };
             var parentWindow = this.GetWindow();
-            window.ShowDialog(parentWindow);
-        }
-
-        private void _NotificationRequested(object sender, (NotificationType type, string message) notification)
-        {
-            _windowNotificationManager?.Show(new Notification(notification.type.ToString(), notification.message, notification.type));
+            await window.ShowDialog(parentWindow);
         }
 
         private async void viewModel_ReadFromFileRequested(object sender, EventArgs e)
@@ -98,7 +93,7 @@ namespace FlomtManager.App.Views
                 var result = await sp.OpenFilePickerAsync(new FilePickerOpenOptions()
                 {
                     Title = "Select File",
-                    FileTypeFilter = new[] { FlomtFilePickerFileTypes.Hex },
+                    FileTypeFilter = [FlomtFilePickerFileTypes.Hex],
                     AllowMultiple = false,
                 });
                 if (result.Count == 0)

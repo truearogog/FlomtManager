@@ -8,6 +8,7 @@ using FlomtManager.Domain.Abstractions.ViewModels;
 using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
 using FlomtManager.Domain.Models.Collections;
+using FlomtManager.Framework.Helpers;
 using ScottPlot;
 using ScottPlot.AxisPanels;
 using ScottPlot.Control;
@@ -106,17 +107,21 @@ namespace FlomtManager.App.Views
             {
                 SignalXY signal;
                 var data = _viewModel.DataCollections[parameter.Number];
+                double min, max;
                 if (data is DataCollection<float> floatDataCollection)
                 {
                     signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, floatDataCollection.Values);
+                    (min, max) = MathHelper.GetMinMax<float>(floatDataCollection.Values);
                 }
                 else if (data is DataCollection<uint> uintDataCollection)
                 {
                     signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, uintDataCollection.Values);
+                    (min, max) = MathHelper.GetMinMax<uint>(uintDataCollection.Values);
                 }
                 else if (data is DataCollection<ushort> ushortDataCollection)
                 {
                     signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, ushortDataCollection.Values);
+                    (min, max) = MathHelper.GetMinMax<ushort>(ushortDataCollection.Values);
                 }
                 else continue;
 
@@ -133,6 +138,8 @@ namespace FlomtManager.App.Views
                 {
                     Chart = signal,
                     Parameter = parameter,
+                    MinY = min,
+                    MaxY = max,
                 };
 
                 _chartInfos[parameter.Number] = info;

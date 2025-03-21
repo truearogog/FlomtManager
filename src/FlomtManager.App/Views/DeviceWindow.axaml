@@ -137,114 +137,106 @@
 								Data="{DynamicResource SemiIconChevronRight}" />
 						</ToggleSwitch.OffContent>
 					</ToggleSwitch>
-					<ScrollViewer
-						Grid.Row="1"
-						IsVisible="{Binding #toggle.IsChecked, Mode=TwoWay}"
-						Theme="{DynamicResource StaticScrollViewer}">
-						<StackPanel Spacing="4" Width="250">
-							
-							<Border Classes="PaneBorder" Padding="0">
-								<StackPanel>
-									<StackPanel.Styles>
-										<Style Selector="StackPanel.StatusStackPanel">
-											<Setter Property="HorizontalAlignment" Value="Center" />
-											<Setter Property="Margin" Value="0,4" />
-											<Setter Property="Spacing" Value="4" />
-											<Setter Property="Orientation" Value="Horizontal" />
-										</Style>
-									</StackPanel.Styles>
 
-									<Panel IsVisible="{
+					<Panel Grid.Row="1" Width="250" IsVisible="{Binding #toggle.IsChecked, Mode=TwoWay}" >
+						<Grid RowDefinitions="auto,*">
+							<Panel Grid.Row="0" Margin="0,0,0,4">
+								<Panel IsVisible="{
 											Binding Device.ConnectionType, 
 											Converter={StaticResource NotEqualsConverter},
 											ConverterParameter={x:Static domainEnums:ConnectionType.File}}">
-										
-										<Button Content="Connect" Command="{Binding TryConnect}"
-											IsVisible="{
+
+									<Button Content="Connect" Command="{Binding TryConnect}"
+										IsVisible="{
 												Binding ConnectionState, 
 												Converter={StaticResource EqualsConverter}, 
 												ConverterParameter={x:Static domainEnums:ConnectionState.Disconnected}}" />
-										
-										<Button Content="Connecting" IsEnabled="False"
-											IsVisible="{
+
+									<Button Content="Connecting" IsEnabled="False"
+										IsVisible="{
 												Binding ConnectionState, 
 												Converter={StaticResource EqualsConverter}, 
 												ConverterParameter={x:Static domainEnums:ConnectionState.Connecting}}" />
-										
-										<Button Content="Disconnect" Command="{Binding TryDisconnect}"
-											IsVisible="{
+
+									<Button Content="Disconnect" Command="{Binding TryDisconnect}"
+										IsVisible="{
 												Binding ConnectionState, 
 												Converter={StaticResource EqualsConverter}, 
 												ConverterParameter={x:Static domainEnums:ConnectionState.Connected}}" />
-									</Panel>
+								</Panel>
 
-									<Panel
+								<Panel
 										IsVisible="{
 											Binding Device.ConnectionType, 
 											Converter={StaticResource EqualsConverter}, 
 											ConverterParameter={x:Static domainEnums:ConnectionType.File}}">
-										
-										<Button Content="Read File" Command="{Binding RequestReadFile}"
-											IsVisible="{
+
+									<Button Content="Read File" Command="{Binding RequestReadFile}"
+										IsVisible="{
 												Binding ConnectionState, 
 												Converter={StaticResource NotEqualsConverter}, 
 												ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}" />
-										
-										<Button Content="Reading File" IsEnabled="False"
-											IsVisible="{
+
+									<Button Content="Reading File" IsEnabled="False"
+										IsVisible="{
 												Binding ConnectionState, 
 												Converter={StaticResource EqualsConverter}, 
 												ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}" />
-									</Panel>
-								</StackPanel>
-							</Border>
 
-							<Border Classes="PaneBorder">
-								<StackPanel Spacing="10">
-									<StackPanel>
-										<TextBlock Classes="Tertiary" Text="Name" />
-										<SelectableTextBlock Text="{Binding Device.Name, TargetNullValue='-'}" />
-									</StackPanel>
-									<StackPanel>
-										<TextBlock Classes="Tertiary" Text="Address" />
-										<SelectableTextBlock Text="{Binding Device.Address, TargetNullValue='-'}" />
-									</StackPanel>
-									<StackPanel>
-										<TextBlock Classes="Tertiary" Text="Slave Id" />
-										<SelectableTextBlock Text="{Binding Device.SlaveId}" />
-									</StackPanel>
-								</StackPanel>
-							</Border>
+								</Panel>
+							</Panel>
 
-							<Border Classes="PaneBorder">
-								<StackPanel Spacing="5">
-									<TextBlock Text="Integral" Classes="H6" Theme="{DynamicResource TitleTextBlock}" />
-									<ItemsControl ItemsSource="{Binding IntegralParameters}" Grid.IsSharedSizeScope="True">
-										<ItemsControl.ItemsPanel>
-											<ItemsPanelTemplate>
-												<StackPanel Spacing="2" />
-											</ItemsPanelTemplate>
-										</ItemsControl.ItemsPanel>
-									</ItemsControl>
-								</StackPanel>
-							</Border>
+							<ScrollViewer Grid.Row="1" Theme="{DynamicResource StaticScrollViewer}">
+								<StackPanel Spacing="4">
 
-							<Border Classes="PaneBorder">
-								<StackPanel Spacing="5">
-									<TextBlock Text="Current" Classes="H6" Theme="{StaticResource TitleTextBlock}" />
-									<ItemsControl ItemsSource="{Binding CurrentParameters}" Grid.IsSharedSizeScope="True">
-										<ItemsControl.ItemsPanel>
-											<ItemsPanelTemplate>
-												<StackPanel Spacing="2" />
-											</ItemsPanelTemplate>
-										</ItemsControl.ItemsPanel>
-									</ItemsControl>
-								</StackPanel>
-							</Border>
+									<Border Classes="PaneBorder">
+										<StackPanel Spacing="10">
+											<StackPanel>
+												<TextBlock Classes="Tertiary" Text="Name" />
+												<SelectableTextBlock Text="{Binding Device.Name, TargetNullValue='-'}" />
+											</StackPanel>
+											<StackPanel>
+												<TextBlock Classes="Tertiary" Text="Address" />
+												<SelectableTextBlock Text="{Binding Device.Address, TargetNullValue='-'}" />
+											</StackPanel>
+											<StackPanel>
+												<TextBlock Classes="Tertiary" Text="Slave Id" />
+												<SelectableTextBlock Text="{Binding Device.SlaveId}" />
+											</StackPanel>
+										</StackPanel>
+									</Border>
 
-							<local:DataGroupIntegration DataContext="{Binding DataIntegration}" />
-						</StackPanel>
-					</ScrollViewer>
+									<Border Classes="PaneBorder">
+										<StackPanel Spacing="5">
+											<TextBlock Text="Integral" Classes="H6" Theme="{DynamicResource TitleTextBlock}" />
+											<ItemsControl ItemsSource="{Binding IntegralParameters}" Grid.IsSharedSizeScope="True">
+												<ItemsControl.ItemsPanel>
+													<ItemsPanelTemplate>
+														<StackPanel Spacing="2" />
+													</ItemsPanelTemplate>
+												</ItemsControl.ItemsPanel>
+											</ItemsControl>
+										</StackPanel>
+									</Border>
+
+									<Border Classes="PaneBorder">
+										<StackPanel Spacing="5">
+											<TextBlock Text="Current" Classes="H6" Theme="{StaticResource TitleTextBlock}" />
+											<ItemsControl ItemsSource="{Binding CurrentParameters}" Grid.IsSharedSizeScope="True">
+												<ItemsControl.ItemsPanel>
+													<ItemsPanelTemplate>
+														<StackPanel Spacing="2" />
+													</ItemsPanelTemplate>
+												</ItemsControl.ItemsPanel>
+											</ItemsControl>
+										</StackPanel>
+									</Border>
+
+									<local:DataGroupIntegration DataContext="{Binding DataIntegration}" />
+								</StackPanel>
+							</ScrollViewer>
+						</Grid>
+					</Panel>
 				</Grid>
 			</Border>
 

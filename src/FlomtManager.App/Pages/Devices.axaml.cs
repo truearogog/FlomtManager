@@ -44,7 +44,7 @@ namespace FlomtManager.App.Pages
             }
         }
 
-        private void viewModel_DeviceCreateRequested(object sender, EventArgs e)
+        private async void viewModel_DeviceCreateRequested(object sender, EventArgs e)
         {
             var viewModel = App.Services.GetRequiredService<IDeviceCreateUpdateViewModel>();
 
@@ -53,10 +53,10 @@ namespace FlomtManager.App.Pages
                 DataContext = viewModel
             };
             var parentWindow = this.GetWindow();
-            window.ShowDialog(parentWindow);
+            await window.ShowDialog(parentWindow);
         }
 
-        private void viewModel_DeviceUpdateRequested(object sender, Device device)
+        private async void viewModel_DeviceUpdateRequested(object sender, Device device)
         {
             var viewModel = App.Services.GetRequiredService<IDeviceCreateUpdateViewModel>();
             viewModel.SetDevice(device);
@@ -66,10 +66,10 @@ namespace FlomtManager.App.Pages
                 DataContext = viewModel
             };
             var parentWindow = this.GetWindow();
-            window.ShowDialog(parentWindow);
+            await window.ShowDialog(parentWindow);
         }
 
-        private void viewModel_DeviceDeleteRequested(object sender, Device device)
+        private async void viewModel_DeviceDeleteRequested(object sender, Device device)
         {
             var viewModel = App.Services.GetRequiredService<IDeviceDeleteViewModel>();
             viewModel.SetDevice(device);
@@ -79,7 +79,7 @@ namespace FlomtManager.App.Pages
                 DataContext = viewModel
             };
             var parentWindow = this.GetWindow();
-            window.ShowDialog(parentWindow);
+            await window.ShowDialog(parentWindow);
         }
 
         private async void viewModel_DeviceViewRequested(object sender, Device device)
