@@ -85,5 +85,5 @@ internal sealed class DataFormatter : IDataFormatter
 
     private static string GetUInt16Format() => "{0}";
 
-    private static string GetDateTimeFormat() => "yy.MM.dd HH:mm:ss";
+    private static string GetDateTimeFormat() => "dd.MM.yy HH:mm:ss";
 }

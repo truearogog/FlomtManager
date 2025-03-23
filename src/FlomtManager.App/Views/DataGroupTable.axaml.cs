@@ -56,7 +56,7 @@ namespace FlomtManager.App.Views
 
                 foreach (var parameter in _viewModel.Parameters)
                 {
-                    var header = $"{parameter.Name}" + (string.IsNullOrEmpty(parameter.Unit) ? "" : $", {parameter.Unit}");
+                    var header = parameter.Name + (string.IsNullOrEmpty(parameter.Unit) ? "" : $", {parameter.Unit}");
                     var index = _viewModel.ParameterPositions[parameter.Number];
                     var format = dataFormatter.GetParameterFormat(parameter);
                     var path = string.Format(bindingFormat, index);

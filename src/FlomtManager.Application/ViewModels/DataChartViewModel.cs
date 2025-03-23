@@ -130,9 +130,9 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
             Unit = string.Empty,
             Color = "#FF6B7075",
             Type = ParameterType.Time,
-            YAxisIsVisible = false,
-            YAxisScalingType = ChartScalingType.Auto,
-            YAxisZoom = 1
+            IsAxisVisibleOnChart = false,
+            IsAutoScaledOnChart = true,
+            ZoomLevelOnChart = 0,
         }, false);
         Parameters.Add(dateTimeParameterViewModel);
 

@@ -33,7 +33,7 @@
 				</ToggleButton.Styles>
 				
 				<Grid ColumnDefinitions="auto,*,auto">
-					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
+					<TextBlock Grid.Column="0" Text="{Binding Parameter.Name}" />
 					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, TargetNullValue='-'}" />
 					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
 				</Grid>
@@ -42,16 +42,35 @@
 					<Flyout Placement="BottomEdgeAlignedLeft">
 						<StackPanel Spacing="4" IsEnabled="{Binding Editable}">
 
+							<TextBlock Margin="4,2" Classes="H6" Theme="{StaticResource TitleTextBlock}" Text="{Binding Header}" />
+							
 							<CheckBox
 								Padding="8,6"
 								Content="Axis Visible"
-								IsChecked="{Binding YAxisIsVisible}"
+								IsChecked="{Binding IsAxisVisibleOnChart}"
 								Theme="{DynamicResource CardCheckBox}" />
 							
 							<ColorPicker
 								Theme="{StaticResource HexSimpleColorPicker}"
 								Color="{Binding Color, Converter={StaticResource ColorToStringConverter}}"/>
-							
+
+							<CheckBox
+								Padding="8,6"
+								Content="Auto Scaling"
+								IsChecked="{Binding IsAutoScaledOnChart}"
+								Theme="{DynamicResource CardCheckBox}" />
+
+							<StackPanel IsVisible="{Binding !IsAutoScaledOnChart}">
+								<TextBlock Classes="Secondary" Text="{Binding ZoomLevelOnChart, StringFormat='Scale {0:0.0} (-5 to 5)'}" />
+								<Slider
+									HorizontalAlignment="Stretch"
+									Classes="ToolTip"
+									IsSnapToTickEnabled="True"
+									Minimum="-5"
+									Maximum="5"
+									TickFrequency="0.1"
+									Value="{Binding ZoomLevelOnChart}" />
+							</StackPanel>
 						</StackPanel>
 					</Flyout>
 				</ToggleButton.ContextFlyout>

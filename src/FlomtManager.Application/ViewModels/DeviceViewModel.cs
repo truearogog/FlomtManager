@@ -36,8 +36,8 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         }
     }
 
-    private ArchiveDisplayMode _archiveDisplayMode = ArchiveDisplayMode.Chart;
-    public ArchiveDisplayMode ArchiveDisplayMode
+    private DeviceViewMode _archiveDisplayMode = DeviceViewMode.Chart;
+    public DeviceViewMode DeviceViewMode
     {
         get => _archiveDisplayMode;
         set => this.RaiseAndSetIfChanged(ref _archiveDisplayMode, value);
@@ -158,9 +158,9 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         DeviceUpdateRequested?.Invoke(this, device);
     }
 
-    public void SetDataDisplayMode(ArchiveDisplayMode mode)
+    public void SetDataDisplayMode(DeviceViewMode mode)
     {
-        ArchiveDisplayMode = mode;
+        DeviceViewMode = mode;
     }
 
     public async Task TryConnect()
@@ -173,6 +173,9 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
             {
                 // todo: log error
                 await TryDisconnect();
+                ConnectionState = ConnectionState.Disconnected;
+                ArchiveReadingProgress = 0;
+                ArchiveReadingState = ArchiveReadingState.None;
             };
 
             _deviceConnection.OnConnectionStateChanged += (sender, e) => ConnectionState = e.State;

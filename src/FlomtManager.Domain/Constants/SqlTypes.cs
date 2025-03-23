@@ -1,4 +1,4 @@
-﻿namespace FlomtManager.Core;
+﻿namespace FlomtManager.Domain.Constants;
 
 public static class SqlTypes
 {

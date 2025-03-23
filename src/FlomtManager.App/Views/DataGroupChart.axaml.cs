@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -5,7 +6,6 @@ using Avalonia.Skia;
 using DynamicData;
 using FlomtManager.App.Extensions;
 using FlomtManager.Domain.Abstractions.ViewModels;
-using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
 using FlomtManager.Domain.Models.Collections;
 using FlomtManager.Framework.Helpers;
@@ -19,6 +19,10 @@ namespace FlomtManager.App.Views
 {
     public partial class DataGroupChart : UserControl
     {
+        private const double ChartMarginMultiplier = .05;
+        private const double ZoomInFactor = 1.2;
+        private const double ZoomOutFactor = 1 / ZoomInFactor;
+
         private HorizontalSpan _selectionSpan;
         private AxisSpanUnderMouse _spanBeingDragged;
         private double _spanLeftOffset, _spanRightOffset;
@@ -79,15 +83,28 @@ namespace FlomtManager.App.Views
 
         private void _OnParameterUpdated(object sender, Parameter e)
         {
-            if (_chartInfos.TryGetValue(e.Number, out var chartInfo))
+            if (_chartInfos.TryGetValue(e.Number, out var info))
             {
                 var color = Color.FromSKColor(SKColor.Parse(e.Color));
-                var chart = chartInfo.Chart;
+                var chart = info.Chart;
                 chart.Color = color;
                 (chart.Axes.YAxis as LeftAxis)?.Color(color);
                 chart.Axes.YAxis.Label.Text = $"{e.Name}, {e.Unit}";
-                chart.Axes.YAxis.IsVisible = e.YAxisIsVisible && chartInfo.Chart.IsVisible;
-                chartInfo.Parameter = e;
+                chart.Axes.YAxis.IsVisible = e.IsAxisVisibleOnChart && info.Chart.IsVisible;
+
+                if (e.IsAutoScaledOnChart)
+                {
+                    // apply auto scaling
+                    info.SetYZoom(_yAxisZoom);
+                }
+                else
+                {
+                    // apply manual scaling
+                    var zoom = Math.Pow(ZoomInFactor, e.ZoomLevelOnChart);
+                    info.SetYZoom(zoom);
+                }
+
+                info.Parameter = e;
                 Chart.Refresh();
             }
         }
@@ -100,8 +117,6 @@ namespace FlomtManager.App.Views
                 Chart.Plot.Remove(chartInfo.Chart);
                 _chartInfos.Remove(chartInfo.Parameter.Number);
             }
-
-            Chart.Plot.Axes.Remove(Edge.Left);
 
             foreach (var parameter in _viewModel.VisibleParameters)
             {
@@ -131,7 +146,7 @@ namespace FlomtManager.App.Views
                 var yAxis = Chart.Plot.Axes.AddLeftAxis();
                 yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
                 yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
-                yAxis.IsVisible = parameter.YAxisIsVisible;
+                yAxis.IsVisible = parameter.IsAxisVisibleOnChart;
                 signal.Axes.YAxis = yAxis;
 
                 var info = new ChartInfo
@@ -142,6 +157,8 @@ namespace FlomtManager.App.Views
                     MaxY = max,
                 };
 
+                info.SetYZoom(_yAxisZoom);
+
                 _chartInfos[parameter.Number] = info;
             }
 
@@ -149,7 +166,6 @@ namespace FlomtManager.App.Views
             _maxX = _viewModel.DateTimes.Last();
 
             Chart.Plot.Axes.SetLimitsX(_minX - 1, _maxX + 1);
-            Chart.Plot.Axes.AutoScaleY();
             Chart.Refresh();
         }
 
@@ -159,7 +175,7 @@ namespace FlomtManager.App.Views
             {
                 var chart = chartInfo.Chart;
                 chart.IsVisible = !chart.IsVisible;
-                chart.Axes.YAxis!.IsVisible = chartInfo.Parameter.YAxisIsVisible && chart.IsVisible;
+                chart.Axes.YAxis!.IsVisible = chartInfo.Parameter.IsAxisVisibleOnChart && chart.IsVisible;
                 Chart.Refresh();
             }
         }
@@ -302,7 +318,6 @@ namespace FlomtManager.App.Views
         private void ConfigureChart()
         {
             _crosshair = Chart.Plot.Add.Crosshair(0, 0);
-            _crosshair.HorizontalLineIsVisible = false;
 
             Chart.ContextMenu = null;
 
@@ -327,6 +342,7 @@ namespace FlomtManager.App.Views
             Chart.Plot.Axes.Remove(Edge.Top);
             Chart.Plot.Axes.Remove(Edge.Right);
             Chart.Plot.Axes.DateTimeTicksBottom();
+            Chart.Plot.Axes.Left.IsVisible = false;
             Chart.Plot.Axes.Bottom.MinimumSize = (float)(DateTime.Today.ToOADate() - DateTime.Today.Add(TimeSpan.FromHours(1)).ToOADate());
             Chart.Interaction = interaction;
             Chart.Refresh();
@@ -351,10 +367,8 @@ namespace FlomtManager.App.Views
             control.Refresh();
         }
 
-        private const double ZoomInFactor = 1.2;
         public void ZoomIn(IPlotControl control, Pixel pixel, LockedAxes locked) => Zoom(ZoomInFactor, control, pixel);
 
-        private const double ZoomOutFactor = 1 / ZoomInFactor;
         public void ZoomOut(IPlotControl control, Pixel pixel, LockedAxes locked) => Zoom(ZoomOutFactor, control, pixel);
 
         private void Zoom(double frac, IPlotControl control, Pixel pixel)
@@ -366,10 +380,9 @@ namespace FlomtManager.App.Views
             {
                 _yAxisZoom *= frac;
 
-                foreach (var chartInfo in _chartInfos.Values.Where(x => x.Parameter.YAxisScalingType == ChartScalingType.Auto))
+                foreach (var info in _chartInfos.Values.Where(x => x.Parameter.IsAutoScaledOnChart))
                 {
-                    var chart = chartInfo.Chart;
-                    chart.Axes.YAxis.Range.ZoomFrac(frac, (chartInfo.MinY + chartInfo.MaxY) / 2);
+                    info.SetYZoom(_yAxisZoom);
                 }
             }
 
@@ -413,11 +426,6 @@ namespace FlomtManager.App.Views
                 axis.TickLabelStyle.ForeColor = Color.FromSKColor(axesColor);
             }
 
-            var chartAxes = _chartInfos.Values.Select(x => x.Chart.Axes.YAxis.GetHashCode()).ToHashSet();
-            if (!chartAxes.Contains(Chart.Plot.Axes.Left.GetHashCode()))
-            {
-                SetAxisTheme(Chart.Plot.Axes.Left);
-            }
             SetAxisTheme(Chart.Plot.Axes.Bottom);
 
             var gridColor = App.Current!.GetBrushResource("SemiGrey1", themeVariant).Color.ToSKColor();
@@ -433,6 +441,15 @@ namespace FlomtManager.App.Views
             public Parameter Parameter { get; set; }
             public double MinY { get; init; }
             public double MaxY { get; init; }
+            public double Range => MaxY - MinY;
+
+            public void SetYZoom(double zoom)
+            {
+                var margin = Range * ChartMarginMultiplier / zoom;
+
+                Chart.Axes.YAxis.Min = MinY - margin;
+                Chart.Axes.YAxis.Max = MaxY / zoom + margin;
+            }
         }
     }
 }

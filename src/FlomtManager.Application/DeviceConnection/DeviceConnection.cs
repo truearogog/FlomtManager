@@ -81,7 +81,7 @@ internal sealed class DeviceConnection(
             {
                 if (existingDeviceDefinition.CRC != _deviceDefinition.CRC)
                 {
-                    throw new ModbusException("Device definitions have changed.");
+                    throw new Exception("Device definitions have changed.");
                 }
                 _deviceDefinition = existingDeviceDefinition;
             }
@@ -294,8 +294,6 @@ internal sealed class DeviceConnection(
         {
             _hourArchiveReadSemaphore.Release();
             RaiseConnectionError(ex);
-            RaiseConnectionArchiveReadingStateChanged(ArchiveReadingState.None, 0);
-            RaiseConnectionArchiveReadingProgressChangedArgs(0, 100);
         }
         finally
         {

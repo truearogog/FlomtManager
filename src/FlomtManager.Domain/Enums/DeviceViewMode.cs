@@ -1,6 +1,6 @@
 ﻿namespace FlomtManager.Domain.Enums;
 
-public enum ArchiveDisplayMode
+public enum DeviceViewMode
 {
     Chart,
     Table

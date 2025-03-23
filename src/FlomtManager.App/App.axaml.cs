@@ -45,7 +45,7 @@ namespace FlomtManager.App
             if (!Design.IsDesignMode)
             {
                 var dbInitializer = Services.GetRequiredService<IDbInitializer>();
-                dbInitializer.Drop().Wait(); // todo: remove
+                //dbInitializer.Drop().Wait(); // todo: remove
                 dbInitializer.Init().Wait();
             }
 

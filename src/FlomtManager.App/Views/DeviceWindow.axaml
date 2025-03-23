@@ -67,11 +67,11 @@
 					<StackPanel Orientation="Horizontal" Spacing="4">
 						<RadioButton Width="150" Padding="8,4"
 							IsChecked="{
-								Binding ArchiveDisplayMode, 
+								Binding DeviceViewMode, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static domainEnums:ArchiveDisplayMode.Chart}}"
+								ConverterParameter={x:Static domainEnums:DeviceViewMode.Chart}}"
 							Command="{Binding SetDataDisplayMode}"
-							CommandParameter="{x:Static domainEnums:ArchiveDisplayMode.Chart}"
+							CommandParameter="{x:Static domainEnums:DeviceViewMode.Chart}"
 							Theme="{DynamicResource PureCardRadioButton}">
 							<StackPanel Orientation="Horizontal" Spacing="4">
 								<PathIcon
@@ -83,12 +83,12 @@
 						</RadioButton>
 						<RadioButton Width="150" Padding="8,4"
 							IsChecked="{
-								Binding ArchiveDisplayMode, 
+								Binding DeviceViewMode, 
 								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static domainEnums:ArchiveDisplayMode.Table}}"
+								ConverterParameter={x:Static domainEnums:DeviceViewMode.Table}}"
 							Theme="{DynamicResource PureCardRadioButton}"
 							Command="{Binding SetDataDisplayMode}"
-							CommandParameter="{x:Static domainEnums:ArchiveDisplayMode.Table}">
+							CommandParameter="{x:Static domainEnums:DeviceViewMode.Table}">
 							<StackPanel Orientation="Horizontal" Spacing="4">
 								<PathIcon
 									Theme="{DynamicResource InnerPathIcon}"
@@ -243,16 +243,16 @@
 			<Panel Grid.Column="1">
 
 				<Panel IsVisible="{
-					Binding ArchiveDisplayMode,
+					Binding DeviceViewMode,
 					Converter={StaticResource EqualsConverter},
-					ConverterParameter={x:Static domainEnums:ArchiveDisplayMode.Chart}}">
+					ConverterParameter={x:Static domainEnums:DeviceViewMode.Chart}}">
 					<local:DataGroupChart DataContext="{Binding DataChart}" />
 				</Panel>
 
 				<Panel IsVisible="{
-					Binding ArchiveDisplayMode, 
+					Binding DeviceViewMode, 
 					Converter={StaticResource EqualsConverter}, 
-					ConverterParameter={x:Static domainEnums:ArchiveDisplayMode.Table}}">
+					ConverterParameter={x:Static domainEnums:DeviceViewMode.Table}}">
 					<local:DataGroupTable DataContext="{Binding DataTable}" />
 				</Panel>
 

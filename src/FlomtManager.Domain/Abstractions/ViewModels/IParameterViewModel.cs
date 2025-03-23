@@ -5,7 +5,10 @@ namespace FlomtManager.Domain.Abstractions.ViewModels;
 public interface IParameterViewModel : IViewModel
 {
     Parameter Parameter { get; }
-    bool YAxisIsVisible { get; set; }
+    string Header { get; }
+    bool IsAxisVisibleOnChart { get; set; }
+    bool IsAutoScaledOnChart { get; set; }
+    double ZoomLevelOnChart { get; set; }
     string Color { get; set; }
 
     string Value { get; set; }

@@ -12,7 +12,7 @@ public interface IDeviceViewModel : IViewModel
 
     Device Device { get; set; }
 
-    ArchiveDisplayMode ArchiveDisplayMode { get; set; }
+    DeviceViewMode DeviceViewMode { get; set; }
 
     ObservableCollection<IParameterViewModel> CurrentParameters { get; set; }
     ObservableCollection<IParameterViewModel> IntegralParameters { get; set; }
@@ -33,7 +33,7 @@ public interface IDeviceViewModel : IViewModel
 
     Task SetDevice(Device device);
     void RequestDeviceUpdate(Device device);
-    void SetDataDisplayMode(ArchiveDisplayMode mode);
+    void SetDataDisplayMode(DeviceViewMode mode);
     Task TryConnect();
     Task TryDisconnect();
     void RequestReadFile();

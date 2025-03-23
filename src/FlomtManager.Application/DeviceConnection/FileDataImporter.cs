@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using System.Threading;
 using FlomtManager.Domain.Abstractions.DeviceConnection;
 using FlomtManager.Domain.Abstractions.DeviceConnection.Events;
 using FlomtManager.Domain.Abstractions.Parsers;
@@ -12,6 +13,7 @@ using FlomtManager.Domain.Models.Collections;
 using FlomtManager.Framework.Extensions;
 using FlomtManager.Modbus;
 using HexIO;
+using ParameterDictionary = System.Collections.Generic.IReadOnlyDictionary<byte, FlomtManager.Domain.Models.Parameter>;
 
 namespace FlomtManager.Application.DeviceConnection;
 
@@ -23,6 +25,9 @@ internal sealed class FileDataImporter(
     IDeviceRepository deviceRepository,
     IParameterRepository parameterRepository) : IFileDataImporter
 {
+    private ParameterDictionary _currentParameters;
+    private ParameterDictionary _integralParameters;
+
     public event EventHandler<DeviceConnectionStateChangedArgs> OnConnectionStateChanged;
     public event EventHandler<DeviceConnectionErrorArgs> OnConnectionError;
     public event EventHandler<DeviceConnectionDataChangedArgs> OnConnectionDataChanged;
@@ -112,7 +117,7 @@ internal sealed class FileDataImporter(
             {
                 if (existingDeviceDefinition.CRC != deviceDefinition.CRC)
                 {
-                    throw new ModbusException("Device definitions have changed.");
+                    throw new Exception("Device definitions have changed.");
                 }
                 deviceDefinition = existingDeviceDefinition;
             }
@@ -121,12 +126,73 @@ internal sealed class FileDataImporter(
 
             cancellationToken.ThrowIfCancellationRequested();
 
+            _currentParameters = (await parameterRepository.GetCurrentParametersByDeviceId(device.Id, true)).ToFrozenDictionary(x => x.Number);
+            _integralParameters = (await parameterRepository.GetIntegralParametersByDeviceId(device.Id, true)).ToFrozenDictionary(x => x.Number);
+
+            ReadData(bytes, deviceDefinition);
+
             await ReadHourArchive(bytes, deviceDefinition);
-        }
-        catch (Exception exception)
-        {
+
             RaiseConnectionStateChanged(ConnectionState.Disconnected);
-            RaiseConnectionError(exception);
+        }
+        catch (Exception ex)
+        {
+            RaiseConnectionError(ex);
+        }
+    }
+
+    private void ReadData(ReadOnlyMemory<byte> bytes, DeviceDefinition deviceDefinition)
+    {
+        IReadOnlyDictionary<byte, ParameterValue> ReadParameterValues(ushort lineStart, ushort lineSize, byte[] parameterDefinition, ParameterDictionary parameters)
+        {
+            var parameterLine = bytes.Slice(lineStart, lineSize * 2);
+            var current = 0;
+            Dictionary<byte, ParameterValue> result = [];
+            ushort error = 0;
+            foreach (var parameterByte in parameterDefinition)
+            {
+                if ((parameterByte & 0x80) == 0)
+                {
+                    var parameter = parameters[parameterByte];
+                    var parameterBytes = parameterLine.Slice(current, parameter.Type.GetSize()).Span;
+                    var value = dataParser.ParseBytesToString(parameterBytes, parameter);
+                    if (parameter.Type == ParameterType.Error)
+                    {
+                        error = dataParser.ParseUInt16(parameterBytes);
+                    }
+                    result[parameter.Number] = new ParameterValue
+                    {
+                        Value = value,
+                        Error = false,
+                    };
+                    current += parameter.Type.GetSize();
+                }
+                else
+                {
+                    current += parameterByte & 0b111;
+                }
+            }
+
+            foreach (var (parameterNumber, parameterValue) in result)
+            {
+                parameterValue.Error = (error & parameters[parameterNumber].ErrorMask) != 0;
+            }
+
+            return result.AsReadOnly();
+        }
+
+        try
+        {
+            var currentParameterValues = ReadParameterValues(
+                deviceDefinition.CurrentParameterLineStart, deviceDefinition.CurrentParameterLineNumber, deviceDefinition.CurrentParameterLineDefinition, _currentParameters);
+            var integralParameterValues = ReadParameterValues(
+                deviceDefinition.IntegralParameterLineStart, deviceDefinition.IntegralParameterLineLength, deviceDefinition.IntegralParameterLineDefinition, _integralParameters);
+
+            RaiseConnectionDataChanged(currentParameterValues, integralParameterValues);
+        }
+        catch (Exception ex)
+        {
+            RaiseConnectionError(ex);
         }
     }
 
@@ -254,11 +320,11 @@ internal sealed class FileDataImporter(
             await CompleteRead(actualLineCount);
             RaiseConnectionStateChanged(ConnectionState.Disconnected);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            RaiseConnectionError(ex);
             RaiseConnectionArchiveReadingStateChanged(ArchiveReadingState.None, 0);
             RaiseConnectionArchiveReadingProgressChangedArgs(0, 100);
+            throw;
         }
     }
 
@@ -267,6 +333,15 @@ internal sealed class FileDataImporter(
         OnConnectionStateChanged?.Invoke(this, new DeviceConnectionStateChangedArgs
         {
             State = state
+        });
+    }
+
+    private void RaiseConnectionDataChanged(IReadOnlyDictionary<byte, ParameterValue> currentParameterValues, IReadOnlyDictionary<byte, ParameterValue> integralParameterValues)
+    {
+        OnConnectionDataChanged?.Invoke(this, new DeviceConnectionDataChangedArgs
+        {
+            CurrentParameterValues = currentParameterValues,
+            IntegralParameterValues = integralParameterValues
         });
     }
 

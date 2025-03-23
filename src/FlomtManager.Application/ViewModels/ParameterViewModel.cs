@@ -19,11 +19,27 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
         private set => this.RaiseAndSetIfChanged(ref _parameter, value);
     }
 
-    private bool _yAxisIsVisible;
-    public bool YAxisIsVisible
+    public string Header => Parameter.Name + (string.IsNullOrEmpty(Parameter.Unit) ? "" : $", {Parameter.Unit}");
+
+    private bool _isAxisVisibleOnChart;
+    public bool IsAxisVisibleOnChart
     {
-        get => _yAxisIsVisible;
-        set => this.RaiseAndSetIfChanged(ref _yAxisIsVisible, value);
+        get => _isAxisVisibleOnChart;
+        set => this.RaiseAndSetIfChanged(ref _isAxisVisibleOnChart, value);
+    }
+
+    private bool _isAutoScaledOnChart;
+    public bool IsAutoScaledOnChart
+    {
+        get => _isAutoScaledOnChart;
+        set => this.RaiseAndSetIfChanged(ref _isAutoScaledOnChart, value);
+    }
+
+    private double _zoomLevelOnChart;
+    public double ZoomLevelOnChart
+    {
+        get => _zoomLevelOnChart;
+        set => this.RaiseAndSetIfChanged(ref _zoomLevelOnChart, value);
     }
 
     private string _color = string.Empty;
@@ -65,11 +81,23 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
 
         if (editable)
         {
-            this.WhenAnyValue(x => x.YAxisIsVisible)
+            this.WhenAnyValue(x => x.IsAxisVisibleOnChart)
                 .Throttle(TimeSpan.FromMilliseconds(50), RxApp.TaskpoolScheduler)
                 .DistinctUntilChanged()
                 .ObserveOn(RxApp.MainThreadScheduler)
-                .Subscribe(async x => await UpdateYAxisIsVisible(x));
+                .Subscribe(async x => await UpdateIsAxisVisibleOnChart(x));
+
+            this.WhenAnyValue(x => x.IsAutoScaledOnChart)
+                .Throttle(TimeSpan.FromMilliseconds(100), RxApp.TaskpoolScheduler)
+                .DistinctUntilChanged()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(async x => await UpdateIsAutoScaledOnChart(x));
+
+            this.WhenAnyValue(x => x.ZoomLevelOnChart)
+                .Throttle(TimeSpan.FromMilliseconds(50), RxApp.TaskpoolScheduler)
+                .DistinctUntilChanged()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(async x => await UpdateZoomLevelOnChart(x));
 
             this.WhenAnyValue(x => x.Color)
                 .Throttle(TimeSpan.FromMilliseconds(50), RxApp.TaskpoolScheduler)
@@ -82,7 +110,9 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
     private void SetParameter(Parameter parameter)
     {
         Parameter = parameter;
-        YAxisIsVisible = parameter.YAxisIsVisible;
+        IsAxisVisibleOnChart = parameter.IsAxisVisibleOnChart;
+        IsAutoScaledOnChart = parameter.IsAutoScaledOnChart;
+        ZoomLevelOnChart = parameter.ZoomLevelOnChart;
         Color = parameter.Color;
     }
 
@@ -94,10 +124,22 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
         }
     }
 
-    private async Task UpdateYAxisIsVisible(bool yAxisIsVisible)
+    private async Task UpdateIsAxisVisibleOnChart(bool isAxisVisibleOnChart)
     {
-        await _parameterRepository.UpdateYAxisIsVisible(Parameter.Id, yAxisIsVisible);
-        _parameterStore.Update(Parameter with { YAxisIsVisible = yAxisIsVisible });
+        await _parameterRepository.UpdateIsAxisVisibleOnChart(Parameter.Id, isAxisVisibleOnChart);
+        _parameterStore.Update(Parameter with { IsAxisVisibleOnChart = isAxisVisibleOnChart });
+    }
+
+    private async Task UpdateIsAutoScaledOnChart(bool isAutoScaledOnChart)
+    {
+        await _parameterRepository.UpdateIsAutoScaledOnChart(Parameter.Id, isAutoScaledOnChart);
+        _parameterStore.Update(Parameter with { IsAutoScaledOnChart = isAutoScaledOnChart });
+    }
+
+    private async Task UpdateZoomLevelOnChart(double zoomLevelOnChart)
+    {
+        await _parameterRepository.UpdateZoomLevelOnChart(Parameter.Id, zoomLevelOnChart);
+        _parameterStore.Update(Parameter with { ZoomLevelOnChart = zoomLevelOnChart });
     }
 
     private async Task UpdateColor(string color)

@@ -24,9 +24,9 @@ internal static class DbConnectionParameterExtensions
             Unit, 
             Color, 
 
-            YAxisIsVisible,
-            YAxisScalingType, 
-            YAxisZoom
+            IsAxisVisibleOnChart,
+            IsAutoScaledOnChart, 
+            ZoomLevelOnChart
         ) VALUES (
             @Created, 
             @Updated, 
@@ -42,9 +42,9 @@ internal static class DbConnectionParameterExtensions
             @Unit, 
             @Color, 
             
-            @YAxisIsVisible,
-            @YAxisScalingType, 
-            @YAxisZoom
+            @IsAxisVisibleOnChart,
+            @IsAutoScaledOnChart, 
+            @ZoomLevelOnChart
         );
         """;
 
@@ -61,15 +61,37 @@ internal static class DbConnectionParameterExtensions
         await connection.ExecuteAsync(InsertSql, parameters);
     }
 
-    public static async Task UpdateYAxisIsVisible(this DbConnection connection, int id, bool yAxisIsVisible, DateTime now)
+    public static async Task UpdateIsAxisVisibleOnChart(this DbConnection connection, int id, bool isAxisVisibleOnChart, DateTime now)
     {
         await connection.ExecuteAsync("""
             UPDATE Parameters 
             SET 
-                YAxisIsVisible = @YAxisIsVisible,
+                IsAxisVisibleOnChart = @IsAxisVisibleOnChart,
                 Updated = @Now
             WHERE Id = @Id;
-            """, new { Id = id, YAxisIsVisible = yAxisIsVisible, Now = now });
+            """, new { Id = id, IsAxisVisibleOnChart = isAxisVisibleOnChart, Now = now });
+    }
+
+    public static async Task UpdateIsAutoScaledOnChart(this DbConnection connection, int id, bool isAutoScaledOnChart, DateTime now)
+    {
+        await connection.ExecuteAsync("""
+            UPDATE Parameters 
+            SET 
+                IsAutoScaledOnChart = @IsAutoScaledOnChart,
+                Updated = @Now
+            WHERE Id = @Id;
+            """, new { Id = id, IsAutoScaledOnChart = isAutoScaledOnChart, Now = now });
+    }
+
+    public static async Task UpdateZoomLevelOnChart(this DbConnection connection, int id, double zoomLevelOnChart, DateTime now)
+    {
+        await connection.ExecuteAsync("""
+            UPDATE Parameters 
+            SET 
+                ZoomLevelOnChart = @ZoomLevelOnChart,
+                Updated = @Now
+            WHERE Id = @Id;
+            """, new { Id = id, ZoomLevelOnChart = zoomLevelOnChart, Now = now });
     }
 
     public static async Task UpdateColor(this DbConnection connection, int id, string color, DateTime now)

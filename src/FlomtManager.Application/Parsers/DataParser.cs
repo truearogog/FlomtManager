@@ -49,8 +49,9 @@ internal sealed class DataParser(IDataFormatter dataFormatter) : IDataParser
                     Name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray()),
                     Unit = Encoding.ASCII.GetString(parameterBytes.Skip(10).TakeWhile(x => x != '\0').ToArray()),
                     Color = color.ToString(),
-                    YAxisScalingType = ChartScalingType.Auto,
-                    YAxisZoom = 1,
+                    IsAxisVisibleOnChart = false,
+                    IsAutoScaledOnChart = true,
+                    ZoomLevelOnChart = 0,
                 };
 
                 parameters.Add(parameter);

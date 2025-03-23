@@ -24,11 +24,25 @@ internal sealed class ParameterRepository(IDbConnectionFactory connectionFactory
         await connection.CreateParameters(parameters);
     }
 
-    public async Task UpdateYAxisIsVisible(int id, bool yAxisIsVisible)
+    public async Task UpdateIsAxisVisibleOnChart(int id, bool isAxisVisibleOnChart)
     {
         var now = dateTimeProvider.Now;
         await using var connection = connectionFactory.CreateConnection();
-        await connection.UpdateYAxisIsVisible(id, yAxisIsVisible, now);
+        await connection.UpdateIsAxisVisibleOnChart(id, isAxisVisibleOnChart, now);
+    }
+
+    public async Task UpdateIsAutoScaledOnChart(int id, bool isAutoScaledOnChart)
+    {
+        var now = dateTimeProvider.Now;
+        await using var connection = connectionFactory.CreateConnection();
+        await connection.UpdateIsAutoScaledOnChart(id, isAutoScaledOnChart, now);
+    }
+
+    public async Task UpdateZoomLevelOnChart(int id, double zoomLevelOnChart)
+    {
+        var now = dateTimeProvider.Now;
+        await using var connection = connectionFactory.CreateConnection();
+        await connection.UpdateZoomLevelOnChart(id, zoomLevelOnChart, now);
     }
 
     public async Task UpdateColor(int id, string color)

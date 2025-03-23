@@ -1,4 +1,4 @@
-﻿using FlomtManager.Core;
+﻿using FlomtManager.Domain.Constants;
 using FlomtManager.Domain.Enums;
 
 namespace FlomtManager.Domain.Extensions;
