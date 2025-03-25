@@ -41,6 +41,7 @@ public static class DependencyInjection
 
     public static IServiceCollection AddStores(this IServiceCollection services)
     {
+        services.AddSingleton<IDeviceIsEditableStore, DeviceIsEditableStore>();
         services.AddSingleton<IDeviceStore, DeviceStore>();
         services.AddSingleton<IParameterStore, ParameterStore>();
 

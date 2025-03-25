@@ -11,6 +11,7 @@ public interface IDeviceViewModel : IViewModel
     event EventHandler ReadFromFileRequested;
 
     Device Device { get; set; }
+    bool IsEditable { get; set; }
 
     DeviceViewMode DeviceViewMode { get; set; }
 

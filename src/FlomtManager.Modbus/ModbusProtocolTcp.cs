@@ -26,10 +26,9 @@ namespace FlomtManager.Modbus
         public override ValueTask CloseAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ArgumentNullException.ThrowIfNull(_socket);
-            _socket!.Shutdown(SocketShutdown.Both);
-            _socket!.Close();
-            _socket!.Dispose();
+            _socket?.Shutdown(SocketShutdown.Both);
+            _socket?.Close();
+            _socket?.Dispose();
             _socket = null;
             return ValueTask.CompletedTask;
         }

@@ -50,10 +50,7 @@
 					Theme="{DynamicResource BorderlessButton}"
 					Command="{Binding RequestDeviceUpdate}"
 					CommandParameter="{Binding Device}"
-					IsEnabled="{
-						Binding ConnectionState, 
-						Converter={StaticResource EqualsConverter}, 
-						ConverterParameter={x:Static domainEnums:ConnectionState.Disconnected}}">
+					IsEnabled="{Binding IsEditable}">
 					<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
 						<PathIcon
 							Theme="{DynamicResource InnerPathIcon}"
@@ -65,14 +62,17 @@
 
 				<Border Classes="Shadow" Theme="{StaticResource CardBorder}" Padding="4">
 					<StackPanel Orientation="Horizontal" Spacing="4">
-						<RadioButton Width="150" Padding="8,4"
-							IsChecked="{
-								Binding DeviceViewMode, 
-								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static domainEnums:DeviceViewMode.Chart}}"
+						<StackPanel.Styles>
+							<Style Selector="RadioButton">
+								<Setter Property="MinWidth" Value="180" />
+								<Setter Property="Padding" Value="8,4" />
+								<Setter Property="Theme" Value="{DynamicResource PureCardRadioButton}" />
+							</Style>
+						</StackPanel.Styles>
+						<RadioButton 
+							IsChecked="{Binding DeviceViewMode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static domainEnums:DeviceViewMode.Chart}}"
 							Command="{Binding SetDataDisplayMode}"
-							CommandParameter="{x:Static domainEnums:DeviceViewMode.Chart}"
-							Theme="{DynamicResource PureCardRadioButton}">
+							CommandParameter="{x:Static domainEnums:DeviceViewMode.Chart}">
 							<StackPanel Orientation="Horizontal" Spacing="4">
 								<PathIcon
 									Theme="{DynamicResource InnerPathIcon}"
@@ -81,11 +81,8 @@
 								<TextBlock Text="Chart" />
 							</StackPanel>
 						</RadioButton>
-						<RadioButton Width="150" Padding="8,4"
-							IsChecked="{
-								Binding DeviceViewMode, 
-								Converter={StaticResource EqualsConverter}, 
-								ConverterParameter={x:Static domainEnums:DeviceViewMode.Table}}"
+						<RadioButton
+							IsChecked="{Binding DeviceViewMode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static domainEnums:DeviceViewMode.Table}}"
 							Theme="{DynamicResource PureCardRadioButton}"
 							Command="{Binding SetDataDisplayMode}"
 							CommandParameter="{x:Static domainEnums:DeviceViewMode.Table}">
@@ -97,6 +94,18 @@
 								<TextBlock Text="Table" />
 							</StackPanel>
 						</RadioButton>
+						<!--<RadioButton
+							IsChecked="{Binding DeviceViewMode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static domainEnums:DeviceViewMode.CurrentParameters}}"
+							Command="{Binding SetDataDisplayMode}"
+							CommandParameter="{x:Static domainEnums:DeviceViewMode.CurrentParameters}">
+							<StackPanel Orientation="Horizontal" Spacing="4">
+								<PathIcon
+									Theme="{DynamicResource InnerPathIcon}"
+									HorizontalAlignment="Center"
+									Data="{DynamicResource SemiIconActivity}" />
+								<TextBlock Text="Current Parameters" />
+							</StackPanel>
+						</RadioButton>-->
 					</StackPanel>
 				</Border>
 			</StackPanel>

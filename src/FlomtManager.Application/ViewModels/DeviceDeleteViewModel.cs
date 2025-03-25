@@ -3,11 +3,14 @@ using FlomtManager.Domain.Abstractions.Stores;
 using FlomtManager.Domain.Abstractions.ViewModels;
 using FlomtManager.Domain.Models;
 using ReactiveUI;
+using Serilog;
 
 namespace FlomtManager.Application.ViewModels;
 
 internal sealed class DeviceDeleteViewModel(IDeviceRepository deviceRepository, IDeviceStore deviceStore) : ViewModel, IDeviceDeleteViewModel
 {
+    private readonly ILogger _logger = Log.ForContext<DeviceDeleteViewModel>();
+
     public event EventHandler CloseRequested;
 
     private Device _device;
@@ -73,9 +76,9 @@ internal sealed class DeviceDeleteViewModel(IDeviceRepository deviceRepository, 
 
             RequestClose();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // todo: log error
+            _logger.Error(ex, "Couldn't delete device.");
             ErrorMessage = "Couldn't delete device.";
         }
     }

@@ -38,7 +38,7 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
     private double _zoomLevelOnChart;
     public double ZoomLevelOnChart
     {
-        get => _zoomLevelOnChart;
+        get => _zoomLevelOnChart; 
         set => this.RaiseAndSetIfChanged(ref _zoomLevelOnChart, value);
     }
 

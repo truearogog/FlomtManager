@@ -34,9 +34,8 @@ namespace FlomtManager.Modbus
         public override ValueTask CloseAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ArgumentNullException.ThrowIfNull(_serialPort);
-            _serialPort.Close();
-            _serialPort.Dispose();
+            _serialPort?.Close();
+            _serialPort?.Dispose();
             _serialPort = null;
             return ValueTask.CompletedTask;
         }

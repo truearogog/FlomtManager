@@ -10,7 +10,7 @@ public interface IDevicesViewModel : IViewModel
     event EventHandler<Device> DeviceDeleteRequested;
     event EventHandler<Device> DeviceViewRequested;
 
-    ObservableCollection<Device> Devices { get; set; }
+    ObservableCollection<IDeviceListItemViewModel> Devices { get; }
 
     void CreateDevice();
     void UpdateDevice(Device device);

@@ -8,6 +8,7 @@ using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
 using FlomtManager.Framework.Helpers;
 using ReactiveUI;
+using Serilog;
 
 namespace FlomtManager.Application.ViewModels;
 
@@ -16,6 +17,8 @@ internal sealed class DeviceCreateUpdateViewModel(
     IDeviceStore deviceStore,
     IDeviceFormViewModelFactory formViewModelFactory) : ViewModel, IDeviceCreateUpdateViewModel
 {
+    private readonly ILogger _logger = Log.ForContext<DeviceCreateUpdateViewModel>();
+
     public event EventHandler CloseRequested;
 
     public IDeviceFormViewModel Form { get; set; } = formViewModelFactory.Create();
@@ -73,9 +76,9 @@ internal sealed class DeviceCreateUpdateViewModel(
 
             RequestClose();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // todo: log error
+            _logger.Error(ex, "Couldn't add new device.");
             ErrorMessage = "Couldn't add new device.";
         }
     }
@@ -96,9 +99,9 @@ internal sealed class DeviceCreateUpdateViewModel(
 
             RequestClose();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // todo: log error
+            _logger.Error(ex, "Couldn't edit device.");
             ErrorMessage = "Couldn't edit device.";
         }
     }

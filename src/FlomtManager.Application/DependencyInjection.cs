@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddTransient<IDataIntegrationViewModel, DataIntegrationViewModel>();
 
         services.AddTransient<IDeviceFormViewModelFactory, DeviceFormViewModelFactory>();
+        services.AddSingleton<IDeviceListItemViewModelFactory, DeviceListItemViewModelFactory>();
         services.AddTransient<IParameterViewModelFactory, ParameterViewModelFactory>();
 
         return services;

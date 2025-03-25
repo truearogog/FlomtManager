@@ -3,5 +3,6 @@
 public enum DeviceViewMode
 {
     Chart,
-    Table
+    Table,
+    CurrentParameters,
 }

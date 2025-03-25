@@ -10,6 +10,7 @@ using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
 using FlomtManager.Modbus;
 using ReactiveUI;
+using Serilog;
 
 namespace FlomtManager.Application.ViewModels;
 
@@ -17,10 +18,12 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
 {
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IDeviceStore _deviceStore;
+    private readonly IDeviceIsEditableStore _deviceIsEditableStore;
     private readonly IDeviceConnectionFactory _deviceConnectionFactory;
     private readonly IFileDataImporterFactory _fileDataImporterFactory;
     private readonly IParameterViewModelFactory _parameterViewModelFactory;
     private readonly IParameterRepository _parameterRepository;
+    private readonly ILogger _logger = Log.ForContext<DeviceViewModel>();
 
     public event EventHandler CloseRequested;
     public event EventHandler<Device> DeviceUpdateRequested;
@@ -34,6 +37,13 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         {
             this.RaiseAndSetIfChanged(ref _device, value);
         }
+    }
+
+    private bool _isEditable = true;
+    public bool IsEditable
+    {
+        get => _isEditable;
+        set => this.RaiseAndSetIfChanged(ref _isEditable, value);
     }
 
     private DeviceViewMode _archiveDisplayMode = DeviceViewMode.Chart;
@@ -94,6 +104,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
     public DeviceViewModel(
             IDateTimeProvider dateTimeProvider,
             IDeviceStore deviceStore,
+            IDeviceIsEditableStore deviceIsEditableStore,
             IDeviceConnectionFactory deviceConnectionFactory,
             IFileDataImporterFactory fileDataImporterFactory,
             IParameterViewModelFactory parameterViewModelFactory,
@@ -104,6 +115,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
     {
         _dateTimeProvider = dateTimeProvider;
         _deviceStore = deviceStore;
+        _deviceIsEditableStore = deviceIsEditableStore;
         _deviceConnectionFactory = deviceConnectionFactory;
         _fileDataImporterFactory = fileDataImporterFactory;
         _parameterViewModelFactory = parameterViewModelFactory;
@@ -111,6 +123,8 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
 
         _deviceStore.Updated += _deviceStore_Updated;
         _deviceStore.Removed += _deviceStore_Removed;
+
+        _deviceIsEditableStore.DeviceIsEditableUpdated += _deviceIsEditableStore_DeviceIsEditableUpdated;
 
         DataChart = dataChart;
         DataChart.OnIntegrationChanged += DataChart_OnIntegrationChanged;
@@ -123,6 +137,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
     public async Task SetDevice(Device device)
     {
         Device = device;
+        IsEditable = !_deviceIsEditableStore.TryGetDeviceIsEditable(Device.Id, out var isEditable) || isEditable;
         await DataChart.SetDevice(device);
         await DataTable.SetDevice(device);
         await DataIntegration.SetDevice(device);
@@ -171,14 +186,18 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
 
             _deviceConnection.OnConnectionError += async (sender, e) =>
             {
-                // todo: log error
+                _logger.Error(e.Exception, "Error while reading data from device");
                 await TryDisconnect();
                 ConnectionState = ConnectionState.Disconnected;
                 ArchiveReadingProgress = 0;
                 ArchiveReadingState = ArchiveReadingState.None;
             };
 
-            _deviceConnection.OnConnectionStateChanged += (sender, e) => ConnectionState = e.State;
+            _deviceConnection.OnConnectionStateChanged += (sender, e) =>
+            {
+                ConnectionState = e.State;
+                _deviceIsEditableStore.UpdateDeviceIsEditable(Device.Id, e.State == ConnectionState.Disconnected);
+            };
 
             _deviceConnection.OnConnectionDataChanged += (sender, e) =>
             {
@@ -207,6 +226,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
             _deviceConnection.OnConnectionArchiveReadingStateChanged += async (sender, e) =>
             {
                 ArchiveReadingState = e.State;
+
                 if (e.State == ArchiveReadingState.Complete)
                 {
                     LastTimeArchiveRead = _dateTimeProvider.Now;
@@ -225,9 +245,9 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
 
             await _deviceConnection.Connect();
         }
-        catch (ModbusException)
+        catch (Exception ex)
         {
-            // todo: log error
+            _logger.Error(ex, "Error while connecting to device");
             await (_deviceConnection?.DisposeAsync() ?? ValueTask.CompletedTask);
             _deviceConnection = null;
         }
@@ -253,10 +273,14 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
 
             fileDataImporter.OnConnectionError += (sender, e) =>
             {
-                // todo: log error
+                _logger.Error(e.Exception, "Error while reading data from file");
             };
 
-            fileDataImporter.OnConnectionStateChanged += (sender, e) => ConnectionState = e.State;
+            fileDataImporter.OnConnectionStateChanged += (sender, e) =>
+            {
+                ConnectionState = e.State;
+                _deviceIsEditableStore.UpdateDeviceIsEditable(Device.Id, e.State == ConnectionState.Disconnected);
+            };
 
             fileDataImporter.OnConnectionDataChanged += (sender, e) =>
             {
@@ -303,9 +327,9 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
 
             await fileDataImporter.Import(stream);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // todo: log error
+            _logger.Error(ex, "Error while reading data from file");
         }
     }
 
@@ -323,6 +347,14 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         {
             await TryDisconnect();
             CloseRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void _deviceIsEditableStore_DeviceIsEditableUpdated(object sender, Domain.Abstractions.Stores.Events.DeviceIsEditableArgs e)
+    {
+        if (Device.Id == e.DeviceId)
+        {
+            IsEditable = e.IsEditable;
         }
     }
 

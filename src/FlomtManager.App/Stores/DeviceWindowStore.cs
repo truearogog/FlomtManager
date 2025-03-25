@@ -8,9 +8,7 @@ namespace FlomtManager.App.Stores
 
         public bool TryGetWindow(int deviceId, out Window window)
         {
-            var result = _deviceWindows.TryGetValue(deviceId, out var _window);
-            window = _window;
-            return result;
+            return _deviceWindows.TryGetValue(deviceId, out window);
         }
 
         public void AddWindow(int deviceId, Window window)
