@@ -1,5 +1,4 @@
 ﻿using System.Collections.Frozen;
-using System.Threading;
 using FlomtManager.Domain.Abstractions.DeviceConnection;
 using FlomtManager.Domain.Abstractions.DeviceConnection.Events;
 using FlomtManager.Domain.Abstractions.Parsers;
@@ -277,7 +276,7 @@ internal sealed class FileDataImporter(
                 var current = 0;
                 foreach (var parameterByte in deviceDefinition.AverageParameterArchiveLineDefinition)
                 {
-                    if ((parameterByte & 0b1000000) == 0)
+                    if ((parameterByte & 0b10000000) == 0)
                     {
                         var size = parameters[parameterByte].Type.GetSize();
                         var valueBytes = blockBytes.Slice(current, size);

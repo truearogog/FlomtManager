@@ -39,4 +39,5 @@ public interface IDeviceViewModel : IViewModel
     Task TryDisconnect();
     void RequestReadFile();
     Task ReadFile(Stream stream);
+    Task SaveRealtimeParameters();
 }

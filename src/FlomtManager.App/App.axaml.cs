@@ -26,7 +26,6 @@ namespace FlomtManager.App
                     if (!Design.IsDesignMode)
                     {
                         services
-                            .AddSerilog()
                             .AppDatabase(context.Configuration)
                             .AddRepositories()
                             .AddServices()

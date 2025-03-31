@@ -198,4 +198,23 @@ internal static class DbConnectionDeviceExtensions
             WHERE DeviceId = @DeviceId
             """, new { DeviceId = deviceId, Time = time });
     }
+
+    public static async Task SetRealTimeValues(this DbConnection connection, int deviceId, string values)
+    {
+        await connection.QueryFirstOrDefaultAsync<string>("""
+            INSERT OR REPLACE INTO DeviceRealTimeValues 
+                (DeviceId, RealTimeValues) 
+            VALUES
+                (@DeviceId, @Values);
+            """, new { DeviceId = deviceId, Values = values });
+    }
+
+    public static async Task<string> GetRealTimeValues(this DbConnection connection, int deviceId)
+    {
+        return await connection.QueryFirstOrDefaultAsync<string>("""
+            SELECT RealTimeValues 
+            FROM DeviceRealTimeValues 
+            WHERE DeviceId = @DeviceId;
+            """, new { DeviceId = deviceId });
+    }
 }

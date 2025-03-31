@@ -2,6 +2,7 @@
 using System.Data.Common;
 using Dapper;
 using FlomtManager.Domain.Constants;
+using FlomtManager.Domain.Enums;
 
 namespace FlomtManager.Infrastructure.Data.Migrations;
 
@@ -33,29 +34,12 @@ internal sealed class Initial : Migration
             );
             """, transaction);
 
-        //await connection.ExecuteAsync($"""
-        //    INSERT INTO Devices (Created, Updated, Name, Address, ConnectionType, SlaveId, DataReadIntervalTicks, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port)
-        //    VALUES (@Now, @Now, @Name, @Address, @ConnectionType, @SlaveId, @DataReadIntervalTicks, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port);
-        //    """, new
-        //{
-        //    Now = DateTime.UtcNow,
-
-        //    Name = "SF-38",
-        //    Address = "Kāvu 8",
-
-        //    ConnectionType = ConnectionType.Network,
-        //    SlaveId = 1,
-        //    DataReadIntervalTicks = TimeSpan.FromSeconds(5).Ticks,
-
-        //    PortName = "COM1",
-        //    BaudRate = 9600,
-        //    Parity = 0,
-        //    DataBits = 8,
-        //    StopBits = 1,
-
-        //    IpAddress = "185.147.58.54",
-        //    Port = 5000
-        //}, transaction);
+        await connection.ExecuteAsync($"""
+            CREATE TABLE IF NOT EXISTS DeviceRealTimeValues (
+                DeviceId {SqlTypes.Int} PRIMARY KEY,
+                RealTimeValues TEXT NOT NULL
+            );
+            """, transaction);
 
         await connection.ExecuteAsync($"""
             CREATE TABLE IF NOT EXISTS "DeviceDefinitions" (
@@ -96,7 +80,7 @@ internal sealed class Initial : Migration
                 FOREIGN KEY (DeviceId) REFERENCES Devices(Id) ON DELETE CASCADE
             )
             ;
-            """);
+            """, transaction);
 
         await connection.ExecuteAsync($"""
             CREATE TABLE IF NOT EXISTS Parameters (
@@ -121,7 +105,36 @@ internal sealed class Initial : Migration
 
                 FOREIGN KEY (DeviceId) REFERENCES Devices(Id) ON DELETE CASCADE
             );
-            """);
+            """, transaction);
+
+        static async Task InsertDevice(DbConnection connection, IDbTransaction transaction)
+        {
+            await connection.ExecuteAsync($"""
+                INSERT INTO Devices (Created, Updated, Name, Address, ConnectionType, SlaveId, DataReadIntervalTicks, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port)
+                VALUES (@Now, @Now, @Name, @Address, @ConnectionType, @SlaveId, @DataReadIntervalTicks, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port);
+                """, new
+            {
+                Now = DateTime.UtcNow,
+
+                Name = "SF-38",
+                Address = "Kāvu 8",
+
+                ConnectionType = ConnectionType.Network,
+                SlaveId = 1,
+                DataReadIntervalTicks = TimeSpan.FromSeconds(5).Ticks,
+
+                PortName = "COM1",
+                BaudRate = 9600,
+                Parity = 0,
+                DataBits = 8,
+                StopBits = 1,
+
+                IpAddress = "185.147.58.54",
+                Port = 5000
+            }, transaction);
+        }
+
+        //await InsertDevice(connection, transaction);
     }
 
     protected override async Task Down(DbConnection connection, IDbTransaction transaction)

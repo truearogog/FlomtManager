@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Text.Json;
 using FlomtManager.Domain.Abstractions.DeviceConnection;
 using FlomtManager.Domain.Abstractions.Providers;
 using FlomtManager.Domain.Abstractions.Repositories;
@@ -8,7 +9,6 @@ using FlomtManager.Domain.Abstractions.ViewModels;
 using FlomtManager.Domain.Abstractions.ViewModels.Events;
 using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
-using FlomtManager.Modbus;
 using ReactiveUI;
 using Serilog;
 
@@ -22,6 +22,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
     private readonly IDeviceConnectionFactory _deviceConnectionFactory;
     private readonly IFileDataImporterFactory _fileDataImporterFactory;
     private readonly IParameterViewModelFactory _parameterViewModelFactory;
+    private readonly IDeviceRepository _deviceRepository;
     private readonly IParameterRepository _parameterRepository;
     private readonly ILogger _logger = Log.ForContext<DeviceViewModel>();
 
@@ -108,6 +109,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
             IDeviceConnectionFactory deviceConnectionFactory,
             IFileDataImporterFactory fileDataImporterFactory,
             IParameterViewModelFactory parameterViewModelFactory,
+            IDeviceRepository deviceRepository,
             IParameterRepository parameterRepository,
             IDataChartViewModel dataChart,
             IDataTableViewModel dataTable,
@@ -119,6 +121,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         _deviceConnectionFactory = deviceConnectionFactory;
         _fileDataImporterFactory = fileDataImporterFactory;
         _parameterViewModelFactory = parameterViewModelFactory;
+        _deviceRepository = deviceRepository;
         _parameterRepository = parameterRepository;
 
         _deviceStore.Updated += _deviceStore_Updated;
@@ -151,11 +154,19 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
             return;
         }
 
+        var realTimeValuesJson = await _deviceRepository.GetRealTimeValues(Device.Id);
+        var integralValues = string.IsNullOrEmpty(realTimeValuesJson) ? [] : JsonSerializer.Deserialize<Dictionary<byte, string>>(realTimeValuesJson.Split('|')[0]);
+        var currentValues = string.IsNullOrEmpty(realTimeValuesJson) ? [] : JsonSerializer.Deserialize<Dictionary<byte, string>>(realTimeValuesJson.Split('|')[1]);
+
         CurrentParameters.Clear();
         var currentParameters = await _parameterRepository.GetCurrentParametersByDeviceId(Device.Id);
         foreach (var currentParameter in currentParameters)
         {
             var parameterViewModel = _parameterViewModelFactory.Create(currentParameter, false);
+            if (currentValues.TryGetValue(currentParameter.Number, out var currentValue))
+            {
+                parameterViewModel.Value = currentValue;
+            }
             CurrentParameters.Add(parameterViewModel);
         }
 
@@ -164,6 +175,10 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         foreach (var integralParameter in integralParameters)
         {
             var parameterViewModel = _parameterViewModelFactory.Create(integralParameter, false);
+            if (integralValues.TryGetValue(integralParameter.Number, out var integralValue))
+            {
+                parameterViewModel.Value = integralValue;
+            }
             IntegralParameters.Add(parameterViewModel);
         }
     }
@@ -332,6 +347,22 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
             _logger.Error(ex, "Error while reading data from file");
         }
     }
+
+    public async Task SaveRealtimeParameters()
+    {
+        if (Device == default)
+        {
+            return;
+        }
+
+        var json = 
+            JsonSerializer.Serialize(IntegralParameters.ToDictionary(x => x.Parameter.Number, x => x.Value)) +
+            "|" +
+            JsonSerializer.Serialize(CurrentParameters.ToDictionary(x => x.Parameter.Number, x => x.Value));
+
+        await _deviceRepository.SetRealTimeValues(Device.Id, json);
+    }
+
 
     private async void _deviceStore_Updated(object sender, Device device)
     {

@@ -41,6 +41,11 @@ internal sealed class DeviceCreateUpdateViewModel(
     {
         Form = formViewModelFactory.Create(device);
         PortNames = [Form.PortName];
+        RefreshPortNames();
+        if (string.IsNullOrEmpty(Form.PortName))
+        {
+            Form.PortName = PortNames.FirstOrDefault() ?? string.Empty;
+        }
     }
 
     public void RefreshPortNames()

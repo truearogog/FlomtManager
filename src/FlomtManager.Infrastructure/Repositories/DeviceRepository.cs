@@ -66,4 +66,16 @@ public sealed class DeviceRepository(IDbConnectionFactory connectionFactory, IDa
         await using var connection = connectionFactory.CreateConnection();
         await connection.UpdateDefinitionLastArchiveRead(deviceId, dateTime ?? dateTimeProvider.Now);
     }
+
+    public async Task SetRealTimeValues(int deviceId, string values)
+    {
+        await using var connection = connectionFactory.CreateConnection();
+        await connection.SetRealTimeValues(deviceId, values);
+    }
+
+    public async Task<string> GetRealTimeValues(int deviceId)
+    {
+        await using var connection = connectionFactory.CreateConnection();
+        return await connection.GetRealTimeValues(deviceId);
+    }
 }

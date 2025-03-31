@@ -13,5 +13,7 @@ namespace FlomtManager.Domain.Abstractions.Repositories
         Task UpdateDefinitionLastArchiveRead(int deviceId, DateTime? dateTime = null);
         Task Update(Device device);
         Task Delete(int id);
+        Task SetRealTimeValues(int deviceId, string values);
+        Task<string> GetRealTimeValues(int deviceId);
     }
 }

@@ -195,7 +195,7 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
 
         foreach (var (parameter, integrationParameter) in _integralParameters)
         {
-            if (minIndex > maxIndex)
+            if (minIndex > maxIndex || maxIndex > DataCollections[parameter.Number].Count - 1)
             {
                 integrationResults[integrationParameter.Number] = string.Empty;
                 continue;

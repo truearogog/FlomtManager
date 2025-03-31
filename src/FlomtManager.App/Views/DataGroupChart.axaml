@@ -7,79 +7,114 @@
 	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
 	xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
     xmlns:colorPicker="clr-namespace:Semi.Avalonia.ColorPicker;assembly=Semi.Avalonia.ColorPicker"
+	xmlns:controls="using:FlomtManager.App.Controls"
+	xmlns:colorPalettes="using:FlomtManager.App.ColorPalettes"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:DataType="vm:IDataChartViewModel"
     x:Class="FlomtManager.App.Views.DataGroupChart">
-
 	<UserControl.DataTemplates>
 		<DataTemplate DataType="vm:IParameterViewModel">
-			<ToggleButton
-				CornerRadius="0"
-				Padding="8,4"
-				HorizontalContentAlignment="Stretch"
-				IsChecked="true"
-				Command="{Binding ((vm:IDataChartViewModel)DataContext).ToggleParameter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
-				CommandParameter="{Binding Parameter.Number}">
-				<ToggleButton.Styles>
-					<Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+			<Grid ColumnDefinitions="*, auto">
+				<Grid.Styles>
+					<Style Selector="ToggleButton:checked">
 						<Setter Property="Background" Value="{Binding Parameter.Color}" />
+						<Style Selector="^ TextBlock">
+							<Setter Property="Foreground" Value="{DynamicResource SemiColorWhite}" />
+						</Style>
 					</Style>
-					<Style Selector="ToggleButton:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-						<Setter Property="Background" Value="{Binding Parameter.Color, Converter={StaticResource ColorAddLightnessConverter}, ConverterParameter='10'}" />
+					
+					<Style Selector="Button.editButton:pointerover">
+						<Setter Property="Foreground" Value="{DynamicResource SemiColorInformation}" />
 					</Style>
-					<Style Selector="FlyoutPresenter">
-						<Setter Property="Padding" Value="4" />
-					</Style>
-				</ToggleButton.Styles>
+				</Grid.Styles>
 				
-				<Grid ColumnDefinitions="auto,*,auto">
-					<TextBlock Grid.Column="0" Text="{Binding Parameter.Name}" />
-					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, TargetNullValue='-'}" />
-					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
-				</Grid>
+				<ToggleButton Grid.Column="0" CornerRadius="0" Padding="8,4"
+					HorizontalContentAlignment="Stretch" IsChecked="true"
+					Command="{Binding ((vm:IDataChartViewModel)DataContext).ToggleParameter, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=UserControl}}"
+					CommandParameter="{Binding Parameter.Number}">
+					<Grid ColumnDefinitions="auto,*,auto">
+						<TextBlock Grid.Column="0" Text="{Binding Parameter.Name}" />
+						<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, TargetNullValue='-'}" />
+						<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
+					</Grid>
+				</ToggleButton>
+				
+				<Button Grid.Column="1" Classes="editButton" 
+					CornerRadius="0" Padding="2" IsVisible="{Binding Editable}"
+					Background="{Binding Parameter.Color}" Foreground="{DynamicResource SemiColorWhite}">
+					<PathIcon
+						Theme="{DynamicResource InnerPathIcon}"
+						HorizontalAlignment="Center"
+						Data="{DynamicResource SemiIconEdit}" />
 
-				<ToggleButton.ContextFlyout>
-					<Flyout Placement="BottomEdgeAlignedLeft">
-						<StackPanel Spacing="4" IsEnabled="{Binding Editable}">
+					<Button.Flyout>
+						<Flyout Placement="Bottom">
+							<StackPanel Spacing="4">
 
-							<TextBlock Margin="4,2" Classes="H6" Theme="{StaticResource TitleTextBlock}" Text="{Binding Header}" />
-							
-							<CheckBox
-								Padding="8,6"
-								Content="Axis Visible"
-								IsChecked="{Binding IsAxisVisibleOnChart}"
-								Theme="{DynamicResource CardCheckBox}" />
-							
-							<ColorPicker
-								Theme="{StaticResource HexSimpleColorPicker}"
-								Color="{Binding Color, Converter={StaticResource ColorToStringConverter}}"/>
+								<TextBlock Margin="4,2" Classes="H6" Theme="{StaticResource TitleTextBlock}" Text="{Binding Header}" />
 
-							<CheckBox
-								Padding="8,6"
-								Content="Auto Scaling"
-								IsChecked="{Binding IsAutoScaledOnChart}"
-								Theme="{DynamicResource CardCheckBox}" />
+								<CheckBox
+									Padding="8,6"
+									Content="Axis Visible"
+									IsChecked="{Binding IsAxisVisibleOnChart}"
+									Theme="{DynamicResource CardCheckBox}" />
 
-							<StackPanel IsVisible="{Binding !IsAutoScaledOnChart}">
-								<TextBlock Classes="Secondary" Text="{Binding ZoomLevelOnChart, StringFormat='Scale {0:0.0} (-5 to 5)'}" />
-								<Slider
-									HorizontalAlignment="Stretch"
-									Classes="ToolTip"
-									IsSnapToTickEnabled="True"
-									Minimum="-5"
-									Maximum="5"
-									TickFrequency="0.1"
-									Value="{Binding ZoomLevelOnChart}" />
+								<controls:ColorPaletteButton
+									SelectedColor="{Binding Color, Converter={StaticResource ColorToStringConverter}}">
+									<controls:ColorPaletteButton.ButtonContent>
+										<Grid ColumnDefinitions="auto,*,auto">
+											<Border Grid.Column="0"
+													Background="{Binding Parameter.Color}" 
+													Width="30" Height="30"
+													CornerRadius="{DynamicResource SemiBorderRadiusExtraSmall}"/>
+
+											<TextBlock Grid.Column="1" 
+													   Text="Color" Foreground="{DynamicResource SemiColorText0}"
+													   FontWeight="{DynamicResource SemiFontWeightLight}" Margin="12,0"/>
+											
+											<PathIcon Grid.Column="2"
+												Theme="{DynamicResource InnerPathIcon}"
+												HorizontalAlignment="Center"
+												Data="{DynamicResource SemiIconChevronRight}"
+												Margin="12,0">
+												<PathIcon.RenderTransform>
+													<RotateTransform Angle="90" />
+												</PathIcon.RenderTransform>
+											</PathIcon>
+										</Grid>
+									</controls:ColorPaletteButton.ButtonContent>
+									<controls:ColorPaletteButton.ColorPalette>
+										<colorPalettes:VibrantColorPalette />
+									</controls:ColorPaletteButton.ColorPalette>
+								</controls:ColorPaletteButton>
+
+								<CheckBox
+									Padding="8,6"
+									Content="Auto Scaling"
+									IsChecked="{Binding IsAutoScaledOnChart}"
+									Theme="{DynamicResource CardCheckBox}" />
+
+								<StackPanel IsVisible="{Binding !IsAutoScaledOnChart}">
+									<TextBlock Classes="Secondary" Text="{Binding ZoomLevelOnChart, StringFormat='Scale {0:0.0} (-5 to 5)'}" />
+									<Slider
+										HorizontalAlignment="Stretch"
+										Classes="ToolTip"
+										IsSnapToTickEnabled="True"
+										Minimum="-5"
+										Maximum="5"
+										TickFrequency="0.1"
+										Value="{Binding ZoomLevelOnChart}" />
+								</StackPanel>
 							</StackPanel>
-						</StackPanel>
-					</Flyout>
-				</ToggleButton.ContextFlyout>
-			</ToggleButton>
+						</Flyout>
+					</Button.Flyout>
+				</Button>
+			</Grid>
 		</DataTemplate>
 	</UserControl.DataTemplates>
 
 	<Grid RowDefinitions="auto,*">
-		<ItemsControl Grid.Row="0" ItemsSource="{Binding Parameters}" Grid.IsSharedSizeScope="True" >
+		<ItemsControl Grid.Row="0" ItemsSource="{Binding Parameters}">
 			<ItemsControl.ItemsPanel>
 				<ItemsPanelTemplate>
 					<UniformGrid Rows="1" />

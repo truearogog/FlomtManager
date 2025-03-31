@@ -78,14 +78,19 @@ internal sealed class DataTableViewModel(
         var size = dataCollections.First().Value.Count;
 
         var parameterPositions = new Dictionary<byte, byte>();
-        var parameterPositionsInitialized = false;
+        byte index = 0;
+        foreach (var parameter in Parameters)
+        {
+            parameterPositions.Add(parameter.Number, index);
+            index++;
+        }
 
         var data = new ValueCollection[size];
 
         for (var i = 0; i < size; ++i)
         {
+            index = 0;
             var valueCollection = new ValueCollection(dataCollections.Count);
-            byte index = 0;
             foreach (var (parameterNumber, dataCollection) in dataCollections)
             {
                 if (dataCollection is DataCollection<float> floatDataCollection)
@@ -108,16 +113,9 @@ internal sealed class DataTableViewModel(
                 {
                     valueCollection.Values[index] = dateTimeDataCollection.Values[i];
                 }
-
-                if (!parameterPositionsInitialized)
-                {
-                    parameterPositions.Add(parameterNumber, index);
-                }
-
                 ++index;
             }
 
-            parameterPositionsInitialized = true;
             data[i] = valueCollection;
         }
 

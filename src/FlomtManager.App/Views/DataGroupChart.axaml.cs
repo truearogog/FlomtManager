@@ -118,6 +118,12 @@ namespace FlomtManager.App.Views
                 _chartInfos.Remove(chartInfo.Parameter.Number);
             }
 
+            if (_viewModel.DateTimes.Length == 0)
+            {
+                Chart.Refresh();
+                return;
+            }
+
             foreach (var parameter in _viewModel.VisibleParameters)
             {
                 SignalXY signal;

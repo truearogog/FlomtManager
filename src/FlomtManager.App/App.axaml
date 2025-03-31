@@ -26,6 +26,7 @@
 		<conv:NotEqualsConverter x:Key="NotEqualsConverter" />
 		<conv:ColorAddLightnessConverter x:Key="ColorAddLightnessConverter" />
 		<conv:ColorToStringConverter x:Key="ColorToStringConverter" />
+		<conv:ColorToBrushConverter x:Key="ColorToBrushConverter" />
 	</Application.Resources>
 	
 	<TrayIcon.Icons>

@@ -179,7 +179,14 @@ internal sealed class DeviceConnection(
             var lineCount = _deviceDefinition.AveragePerHourBlockLineCount;
             if (_deviceDefinition.LastArchiveRead is not null)
             {
-                lineCount = (ushort)int.Clamp((int)(readStartTime - _deviceDefinition.LastArchiveRead.Value).TotalHours, 0, _deviceDefinition.AveragePerHourBlockLineCount);
+                if (readStartTime.Hour == _deviceDefinition.LastArchiveRead.Value.Hour)
+                {
+                    lineCount = 0;
+                }
+                else
+                {
+                    lineCount = (ushort)int.Clamp((int)(readStartTime - _deviceDefinition.LastArchiveRead.Value).TotalHours, 0, _deviceDefinition.AveragePerHourBlockLineCount);
+                }
             }
 
             if (lineCount == 0)
@@ -248,7 +255,7 @@ internal sealed class DeviceConnection(
                 var current = 0;
                 foreach (var parameterByte in _deviceDefinition.AverageParameterArchiveLineDefinition)
                 {
-                    if ((parameterByte & 0b1000000) == 0)
+                    if ((parameterByte & 0b10000000) == 0)
                     {
                         var size = parameters[parameterByte].Type.GetSize();
                         var valueBytes = blockBytes.Slice(current, size);
