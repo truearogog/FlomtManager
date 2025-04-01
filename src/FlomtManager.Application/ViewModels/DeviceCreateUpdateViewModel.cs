@@ -12,16 +12,16 @@ using Serilog;
 
 namespace FlomtManager.Application.ViewModels;
 
-internal sealed class DeviceCreateUpdateViewModel(
-    IDeviceRepository deviceRepository, 
-    IDeviceStore deviceStore,
-    IDeviceFormViewModelFactory formViewModelFactory) : ViewModel, IDeviceCreateUpdateViewModel
+internal sealed class DeviceCreateUpdateViewModel : ViewModel, IDeviceCreateUpdateViewModel
 {
+    private readonly IDeviceRepository _deviceRepository;
+    private readonly IDeviceStore _deviceStore;
+    private readonly IDeviceFormViewModelFactory _formViewModelFactory;
     private readonly ILogger _logger = Log.ForContext<DeviceCreateUpdateViewModel>();
 
     public event EventHandler CloseRequested;
 
-    public IDeviceFormViewModel Form { get; set; } = formViewModelFactory.Create();
+    public IDeviceFormViewModel Form { get; set; }
 
     private string _errorMessage;
     public string ErrorMessage
@@ -37,26 +37,40 @@ internal sealed class DeviceCreateUpdateViewModel(
     public ObservableCollection<int> DataBits { get; set; } = [5, 6, 7, 8];
     public ObservableCollection<StopBits> StopBits { get; set; } = new(Enum.GetValues<StopBits>());
 
+    public DeviceCreateUpdateViewModel(
+        IDeviceRepository deviceRepository,
+        IDeviceStore deviceStore,
+        IDeviceFormViewModelFactory formViewModelFactory)
+    {
+        _deviceRepository = deviceRepository;
+        _deviceStore = deviceStore;
+        _formViewModelFactory = formViewModelFactory;
+
+        Form = _formViewModelFactory.Create();
+
+        RefreshPortNames();
+    }
+
     public void SetDevice(Device device)
     {
-        Form = formViewModelFactory.Create(device);
+        Form = _formViewModelFactory.Create(device);
         PortNames = [Form.PortName];
-        RefreshPortNames();
-        if (string.IsNullOrEmpty(Form.PortName))
-        {
-            Form.PortName = PortNames.FirstOrDefault() ?? string.Empty;
-        }
     }
 
     public void RefreshPortNames()
     {
         PortNames.Clear();
+
         var names = SerialPort.GetPortNames();
         foreach (var name in names)
         {
             PortNames.Add(name);
         }
-        Form.PortName = PortNames.FirstOrDefault() ?? string.Empty;
+
+        if (string.IsNullOrEmpty(Form.PortName))
+        {
+            Form.PortName = PortNames.FirstOrDefault() ?? string.Empty;
+        }
     }
 
     public void RequestClose()
@@ -75,9 +89,9 @@ internal sealed class DeviceCreateUpdateViewModel(
         try
         {
             var device = Form.GetDevice();
-            var id = await deviceRepository.Create(device);
+            var id = await _deviceRepository.Create(device);
             device = device with { Id = id };
-            deviceStore.Add(device);
+            _deviceStore.Add(device);
 
             RequestClose();
         }
@@ -99,8 +113,8 @@ internal sealed class DeviceCreateUpdateViewModel(
         try
         {
             var device = Form.GetDevice();
-            await deviceRepository.Update(device);
-            deviceStore.Update(device);
+            await _deviceRepository.Update(device);
+            _deviceStore.Update(device);
 
             RequestClose();
         }
