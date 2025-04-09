@@ -47,7 +47,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         set => this.RaiseAndSetIfChanged(ref _isEditable, value);
     }
 
-    private DeviceViewMode _archiveDisplayMode = DeviceViewMode.Chart;
+    private DeviceViewMode _archiveDisplayMode = DeviceViewMode.Table;
     public DeviceViewMode DeviceViewMode
     {
         get => _archiveDisplayMode;

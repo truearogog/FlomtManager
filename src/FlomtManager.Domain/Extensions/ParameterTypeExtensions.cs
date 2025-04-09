@@ -56,7 +56,7 @@ public static class ParameterTypeExtensions
     public static bool HideType(this ParameterType type) => type switch
     {
         ParameterType.Error => true,
-        ParameterType.WorkingTimeInSecondsInArchiveInterval => true,
+        ParameterType.WorkingTimeInSecondsInArchiveInterval => false,
         ParameterType.WorkingTimeInMinutesInArchiveInterval => true,
         ParameterType.WorkingTimeInHoursInArchiveInterval => true,
         ParameterType.Time => true,

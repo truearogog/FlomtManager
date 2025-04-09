@@ -6,7 +6,9 @@ using Avalonia.Data;
 using Avalonia.Threading;
 using FlomtManager.Domain.Abstractions.Parsers;
 using FlomtManager.Domain.Abstractions.ViewModels;
+using FlomtManager.Domain.Models.Collections;
 using Microsoft.Extensions.DependencyInjection;
+using ReactiveUI;
 
 namespace FlomtManager.App.Views
 {
@@ -27,8 +29,8 @@ namespace FlomtManager.App.Views
             {
                 viewModel.OnDataUpdated += _OnDataUpdated;
 
-                Task.Run(viewModel.UpdateData);
                 _viewModel = viewModel;
+                Task.Run(_viewModel.UpdateData);
             }
         }
 
@@ -50,41 +52,16 @@ namespace FlomtManager.App.Views
 
             Dispatcher.UIThread.Invoke(() =>
             {
-                Table.Columns.Clear();
-
-                var bindingFormat = $"{nameof(IDataTableViewModel.ValueCollection.Values)}[{{0}}]";
-
-                foreach (var parameter in _viewModel.Parameters)
+                if (this.FindControl<ItemsControl>("ParameterGrid") is { } parameterGrid)
                 {
-                    var header = parameter.Name + (string.IsNullOrEmpty(parameter.Unit) ? "" : $", {parameter.Unit}");
-                    var index = _viewModel.ParameterPositions[parameter.Number];
-                    var format = dataFormatter.GetParameterFormat(parameter);
-                    var path = string.Format(bindingFormat, index);
-
-                    Table.Columns.Add(new DataGridTextColumn
-                    {
-                        Header = header,
-                        CanUserSort = true,
-                        CanUserReorder = false,
-                        Binding = new Binding
-                        {
-                            Mode = BindingMode.OneWay,
-                            Path = path,
-                            StringFormat = format,
-                        },
-                        Width = parameter.Number switch
-                        {
-                            0 => DataGridLength.Auto,
-                            _ => new DataGridLength(1, DataGridLengthUnitType.Star)
-                        },
-                    });
+                    parameterGrid.ItemsSource = _viewModel.Parameters;
                 }
 
-                var sortDescription = DataGridSortDescription.FromPath(string.Format(bindingFormat, 0), ListSortDirection.Descending);
-                var collectionView = new DataGridCollectionView(_viewModel.Data);
-                collectionView.SortDescriptions.Add(sortDescription);
-
-                Table.ItemsSource = collectionView;
+                if (this.FindControl<ListBox>("DataGrid") is { } dataGrid)
+                {
+                    dataGrid.ItemsSource = _viewModel.Data;
+                    dataGrid.UpdateLayout();
+                }
             });
         }
     }

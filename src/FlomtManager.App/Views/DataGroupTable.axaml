@@ -4,17 +4,126 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	xmlns:vm="using:FlomtManager.Domain.Abstractions.ViewModels"
+	xmlns:models="using:FlomtManager.Domain.Models"
+	xmlns:collections="using:FlomtManager.Domain.Models.Collections"
     x:DataType="vm:IDataTableViewModel"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="FlomtManager.App.Views.DataGroupTable">
-	<DataGrid 
-		x:Name="Table"
-		AutoGenerateColumns="False"
-		IsReadOnly="True">
-		<DataGrid.Styles>
-			<Style Selector="DataGridRow:nth-child(even)">
-				<Setter Property="Background" Value="{DynamicResource SemiGrey0}" />
-			</Style>
-		</DataGrid.Styles>
-	</DataGrid>
+	<Panel>
+		<DataGrid
+			x:Name="Table"
+			IsVisible="False"
+			AutoGenerateColumns="False"
+			IsReadOnly="True">
+			<DataGrid.Styles>
+				<Style Selector="DataGridRow:nth-child(even)">
+					<Setter Property="Background" Value="{DynamicResource SemiGrey0}" />
+				</Style>
+			</DataGrid.Styles>
+		</DataGrid>
+
+		<Grid RowDefinitions="auto, *">
+			<!--header-->
+			<Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SemiColorBorder}">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="175" SharedSizeGroup="A" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<Grid.Styles>
+						<Style Selector="Border.BorderDateTime">
+							<Setter Property="Padding" Value="8,4" />
+						</Style>
+
+						<Style Selector="Border.BorderParameter">
+							<Setter Property="Padding" Value="8,4" />
+							<Setter Property="BorderThickness" Value="1,0,0,0" />
+							<Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+						</Style>
+					</Grid.Styles>
+
+					<Border Grid.Column="0" Classes="BorderDateTime">
+						<TextBlock Text="{Binding DateTimeParameter.Header}" />
+					</Border>
+
+					<ItemsControl Grid.Column="1" x:Name="ParameterGrid">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<UniformGrid Columns="{Binding Parameters.Count}" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="vm:IParameterViewModel">
+								<Border Classes="BorderParameter">
+									<TextBlock Text="{Binding Header}" />
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</Grid>
+			</Border>
+
+			<!--content-->
+			<ListBox Grid.Row="1" x:Name="DataGrid">
+				<ListBox.Styles>
+					<Style Selector="ListBoxItem">
+						<Setter Property="BorderThickness" Value="0,1,0,0" />
+						<Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+						<Setter Property="Padding" Value="0" />
+						
+						<Style Selector="^:nth-child(even)">
+							<Setter Property="Background" Value="{DynamicResource SemiColorBackground1}" />
+						</Style>
+						<Style Selector="^:pointerover">  
+							<Setter Property="Background" Value="{DynamicResource SemiColorPrimaryLightPointerover}" />
+						</Style>
+						<Style Selector="^:selected">
+							<Setter Property="Background" Value="{DynamicResource SemiColorPrimaryLightActive}" />
+						</Style>
+					</Style>
+
+					<Style Selector="Border.BorderDateTime">
+						<Setter Property="Padding" Value="8,4" />
+					</Style>
+
+					<Style Selector="Border.BorderParameter">
+						<Setter Property="Padding" Value="8,4" />
+						<Setter Property="BorderThickness" Value="1,0,0,0" />
+						<Setter Property="BorderBrush" Value="{DynamicResource SemiColorBorder}" />
+					</Style>
+				</ListBox.Styles> 
+
+				<ListBox.ItemTemplate>
+					<DataTemplate DataType="collections:StringValueCollection">
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="175" SharedSizeGroup="A" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+
+							<Border Grid.Column="0" Classes="BorderDateTime">
+								<TextBlock Text="{Binding DateTimeString}" />
+							</Border>
+
+							<ItemsControl Grid.Column="1" ItemsSource="{Binding Values}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<UniformGrid Columns="{Binding Count}" />
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+								<ItemsControl.ItemTemplate>
+									<DataTemplate>
+										<Border Classes="BorderParameter">
+											<TextBlock Text="{Binding}" />
+										</Border>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</Grid>
+					</DataTemplate>
+				</ListBox.ItemTemplate>
+			</ListBox>
+		</Grid>
+	</Panel>
 </UserControl>

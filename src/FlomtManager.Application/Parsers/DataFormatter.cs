@@ -81,9 +81,9 @@ internal sealed class DataFormatter : IDataFormatter
         return _commaFormats[commaPosition];
     }
 
-    private static string GetUInt32Format() => "{0}";
+    private static string GetUInt32Format() => "D";
 
-    private static string GetUInt16Format() => "{0}";
+    private static string GetUInt16Format() => "D";
 
     private static string GetDateTimeFormat() => "dd.MM.yy HH:mm:ss";
 }

@@ -2,33 +2,52 @@
 using System.Collections.ObjectModel;
 using FlomtManager.Domain.Abstractions.Parsers;
 using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Abstractions.ViewModelFactories;
 using FlomtManager.Domain.Abstractions.ViewModels;
 using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
 using FlomtManager.Domain.Models.Collections;
 using ReactiveUI;
-using static FlomtManager.Domain.Abstractions.ViewModels.IDataTableViewModel;
 
 namespace FlomtManager.Application.ViewModels;
 
 internal sealed class DataTableViewModel(
     IDataFormatter dataFormatter,
     IDataRepository dataRepository,
-    IParameterRepository parameterRepository) : ViewModel, IDataTableViewModel
+    IParameterRepository parameterRepository,
+    IParameterViewModelFactory parameterViewModelFactory) : ViewModel, IDataTableViewModel
 {
     public event EventHandler OnDataUpdated;
 
-    public ObservableCollection<ValueCollection> Data { get; private set; }
+    private ObservableCollection<StringValueCollection> _data;
+    public ObservableCollection<StringValueCollection> Data
+    {
+        get => _data;
+        private set => this.RaiseAndSetIfChanged(ref _data, value);
+    }
+
     public IReadOnlyDictionary<byte, byte> ParameterPositions { get; private set; }
 
     private Device _device;
     public Device Device
     {
         get => _device;
-        set => this.RaiseAndSetIfChanged(ref _device, value);
+        private set => this.RaiseAndSetIfChanged(ref _device, value);
     }
 
-    public List<Parameter> Parameters { get; } = [];
+    private IParameterViewModel _dateTimeParameter;
+    public IParameterViewModel DateTimeParameter
+    {
+        get => _dateTimeParameter;
+        private set => this.RaiseAndSetIfChanged(ref _dateTimeParameter, value);
+    }
+
+    private ObservableCollection<IParameterViewModel> _parameters = [];
+    public ObservableCollection<IParameterViewModel> Parameters
+    {
+        get => _parameters;
+        private set => this.RaiseAndSetIfChanged(ref _parameters, value);
+    }
 
     public async Task SetDevice(Device device)
     {
@@ -43,9 +62,7 @@ internal sealed class DataTableViewModel(
             return;
         }
 
-        Parameters.Clear();
-
-        Parameters.Add(new()
+        DateTimeParameter = parameterViewModelFactory.Create(new()
         {
             Number = 0,
             Comma = default,
@@ -58,12 +75,14 @@ internal sealed class DataTableViewModel(
             IsAxisVisibleOnChart = false,
             IsAutoScaledOnChart = true,
             ZoomLevelOnChart = 0,
-        });
+        }, false);
 
+        Parameters.Clear();
         var parameters = await parameterRepository.GetHourArchiveParametersByDeviceId(Device.Id);
         foreach (var parameter in parameters)
         {
-            Parameters.Add(parameter);
+            var viewModel = parameterViewModelFactory.Create(parameter, false);
+            Parameters.Add(viewModel);
         }
     }
 
@@ -74,52 +93,68 @@ internal sealed class DataTableViewModel(
             return;
         }
 
-        var dataCollections = (await dataRepository.GetHourData(Device.Id)).Where(x => Parameters.Any(p => p.Number == x.Key)).ToFrozenDictionary();
+        var parameters = (await parameterRepository.GetHourArchiveParametersByDeviceId(Device.Id)).ToFrozenDictionary(x => x.Number);
+        var dataCollections = (await dataRepository.GetHourData(Device.Id))
+            .Where(x => x.Key == 0 || parameters.ContainsKey(x.Key)).ToFrozenDictionary();
         var size = dataCollections.First().Value.Count;
 
         var parameterPositions = new Dictionary<byte, byte>();
         byte index = 0;
-        foreach (var parameter in Parameters)
+        foreach (var (number, parameter) in parameters.Where(x => x.Key != 0))
         {
             parameterPositions.Add(parameter.Number, index);
             index++;
         }
 
-        var data = new ValueCollection[size];
+        var data = new StringValueCollection[size];
 
         for (var i = 0; i < size; ++i)
         {
             index = 0;
-            var valueCollection = new ValueCollection(dataCollections.Count);
+            var collection = new StringValueCollection
+            {
+                Values = new string[dataCollections.Count - 1]
+            };
             foreach (var (parameterNumber, dataCollection) in dataCollections)
             {
-                if (dataCollection is DataCollection<float> floatDataCollection)
+                if (parameterNumber == 0)
                 {
-                    valueCollection.Values[index] = floatDataCollection.Values[i];
+                    if (dataCollection is DataCollection<DateTime> dateTimeDataCollection)
+                    {
+                        collection.DateTime = dateTimeDataCollection.Values[i];
+                        collection.DateTimeString = dataFormatter.FormatDateTime(dateTimeDataCollection.Values[i]);
+                    }
                 }
-                if (dataCollection is DataCollection<uint> uintDataCollection)
+                else
                 {
-                    valueCollection.Values[index] = uintDataCollection.Values[i];
+                    if (dataCollection is DataCollection<float> floatDataCollection)
+                    {
+                        var parameter = parameters[parameterNumber];
+                        collection.Values[index] = dataFormatter.FormatFloat(floatDataCollection.Values[i], parameter);
+                    }
+                    if (dataCollection is DataCollection<uint> uintDataCollection)
+                    {
+                        collection.Values[index] = dataFormatter.FormatUInt32(uintDataCollection.Values[i]);
+                    }
+                    if (dataCollection is DataCollection<ushort> ushortDataCollection)
+                    {
+                        collection.Values[index] = dataFormatter.FormatUInt16(ushortDataCollection.Values[i]);
+                    }
+                    if (dataCollection is DataCollection<TimeSpan> timeSpanDataCollection)
+                    {
+                        collection.Values[index] = dataFormatter.FormatTimeSpan(timeSpanDataCollection.Values[i]);
+                    }
+                    if (dataCollection is DataCollection<DateTime> dateTimeDataCollection)
+                    {
+                        collection.Values[index] = dataFormatter.FormatDateTime(dateTimeDataCollection.Values[i]);
+                    }
+                    ++index;
                 }
-                if (dataCollection is DataCollection<ushort> ushortDataCollection)
-                {
-                    valueCollection.Values[index] = ushortDataCollection.Values[i];
-                }
-                if (dataCollection is DataCollection<TimeSpan> timeSpanDataCollection)
-                {
-                    valueCollection.Values[index] = dataFormatter.FormatTimeSpan(timeSpanDataCollection.Values[i]);
-                }
-                if (dataCollection is DataCollection<DateTime> dateTimeDataCollection)
-                {
-                    valueCollection.Values[index] = dateTimeDataCollection.Values[i];
-                }
-                ++index;
             }
-
-            data[i] = valueCollection;
+            data[i] = collection;
         }
 
-        Data = new(data);
+        Data = new(data.OrderByDescending(x => x.DateTime));
         ParameterPositions = parameterPositions;
         OnDataUpdated?.Invoke(this, EventArgs.Empty);
     }

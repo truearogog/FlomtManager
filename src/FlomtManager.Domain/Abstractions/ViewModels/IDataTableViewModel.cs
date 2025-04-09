@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using FlomtManager.Domain.Models;
+using FlomtManager.Domain.Models.Collections;
 
 namespace FlomtManager.Domain.Abstractions.ViewModels;
 
@@ -7,17 +8,13 @@ public interface IDataTableViewModel : IViewModel
 {
     event EventHandler OnDataUpdated;
 
-    ObservableCollection<ValueCollection> Data { get; }
+    ObservableCollection<StringValueCollection> Data { get; }
     IReadOnlyDictionary<byte, byte> ParameterPositions { get; }
 
-    Device Device { get; set; }
-    List<Parameter> Parameters { get; }
+    Device Device { get; }
+    IParameterViewModel DateTimeParameter { get; }
+    ObservableCollection<IParameterViewModel> Parameters { get; }
 
     Task SetDevice(Device device);
     Task UpdateData();
-
-    public readonly struct ValueCollection(int size)
-    {
-        public object[] Values { get; } = new object[size];
-    }
 }

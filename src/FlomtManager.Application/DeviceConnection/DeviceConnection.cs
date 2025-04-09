@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using System.Diagnostics;
 using System.Text;
 using System.Timers;
 using FlomtManager.Domain.Abstractions.DeviceConnection;
@@ -237,7 +238,6 @@ internal sealed class DeviceConnection(
                 .Where(x => x.DataCollection is not null)
                 .ToFrozenDictionary(x => x.Number, x => x.DataCollection);
 
-            var emptyBlock = Enumerable.Repeat<byte>(0, _deviceDefinition.AverageParameterArchiveLineLength).ToArray();
             var dateHours = readEndTime.Date.AddHours(readEndTime.Hour);
             var actualLineCount = 0;
             for (var i = 0; i < lineCount; ++i)
@@ -247,11 +247,6 @@ internal sealed class DeviceConnection(
                 (data[0] as DataCollection<DateTime>).Values[index] = date;
 
                 var blockBytes = archiveBytes.Slice(i * _deviceDefinition.AverageParameterArchiveLineLength, _deviceDefinition.AverageParameterArchiveLineLength);
-                if (blockBytes.Span.SequenceEqual(emptyBlock))
-                {
-                    continue;
-                }
-
                 var current = 0;
                 foreach (var parameterByte in _deviceDefinition.AverageParameterArchiveLineDefinition)
                 {
@@ -393,7 +388,7 @@ internal sealed class DeviceConnection(
         foreach (var parameterByte in parameterDefinition)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if ((parameterByte & 0x80) == 0)
+            if ((parameterByte & 0b10000000) == 0)
             {
                 var parameter = parameters[parameterByte];
                 var bytes = parameterLine.AsSpan(current, parameter.Type.GetSize());

@@ -206,11 +206,19 @@ internal sealed class DataParser(IDataFormatter dataFormatter) : IDataParser
     private static float ParseFS16C(ReadOnlySpan<byte> bytes, byte comma)
     {
         var value = BinaryPrimitives.ReadUInt16LittleEndian(bytes);
-        var mantissa = value & 0x3FFF;
-        var sign = ((value >> 14) & 1) == 0 ? 1 : -1;
         var exponent = value >> 15;
+        var sign = ((value >> 14) & 1) == 1;
         var multiplier = MathF.Pow(10, exponent);
-        return Round(mantissa * sign * multiplier, comma);
+        if (sign)
+        {
+            var negValue = (short)(value | 1 << 15);
+            return Round(negValue * multiplier, comma);
+        }
+        else
+        {
+            var mantissa = value & 0x3FFF;
+            return Round(mantissa * multiplier, comma);
+        }
     }
 
     #endregion
