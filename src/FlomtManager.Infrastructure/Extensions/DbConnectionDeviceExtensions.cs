@@ -19,12 +19,26 @@ internal static class DbConnectionDeviceExtensions
             SELECT * FROM Devices;
             """);
     }
-
+    
     public static async Task<Device> GetDeviceById(this DbConnection connection, int id)
     {
         return await connection.QueryFirstOrDefaultAsync<Device>("""
-            SELECT * FROM Devices WHERE Id = @Id;
+            SELECT * FROM Devices WHERE Id = @Id LIMIT 1;
             """, new { Id = id });
+    }
+
+    public static async Task<Device> GetLastCreatedDevice(this DbConnection connection)
+    {
+        return await connection.QueryFirstOrDefaultAsync<Device>("""
+            SELECT * FROM Devices ORDER BY Created DESC LIMIT 1;
+            """);
+    }
+
+    public static async Task<Device> GetLastCreatedDeviceExcept(this DbConnection connection, int id)
+    {
+        return await connection.QueryFirstOrDefaultAsync<Device>("""
+            SELECT * FROM Devices WHERE Id <> @Id ORDER BY Created DESC LIMIT 1;
+            """, new { Id = id});
     }
 
     public static async Task<int> CreateDevice(this DbConnection connection, Device device)
@@ -39,6 +53,7 @@ internal static class DbConnectionDeviceExtensions
 
                 ConnectionType, 
                 SlaveId, 
+                DataReadEnabled,
                 DataReadIntervalTicks, 
 
                 PortName, 
@@ -58,6 +73,7 @@ internal static class DbConnectionDeviceExtensions
 
                 @ConnectionType, 
                 @SlaveId, 
+                @DataReadEnabled,
                 @DataReadIntervalTicks, 
                 
                 @PortName, 
@@ -85,6 +101,7 @@ internal static class DbConnectionDeviceExtensions
 
                 ConnectionType = @ConnectionType,
                 SlaveId = @SlaveId,
+                DataReadEnabled = @DataReadEnabled,
                 DataReadIntervalTicks = @DataReadIntervalTicks, 
 
                 PortName = @PortName,

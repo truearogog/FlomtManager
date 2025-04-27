@@ -121,79 +121,85 @@
 				Background="{DynamicResource SemiColorBackground0}"
 				CornerRadius="0" Padding="0" Margin="0">
 				<Grid RowDefinitions="auto,*">
-					<ToggleSwitch
-						Grid.Row="0"
-						Name="toggle"
-						Padding="4"
-						Margin="4,0,4,4"
-						IsChecked="True"
-						HorizontalAlignment="Left"
-						Theme="{DynamicResource ButtonToggleSwitch}">
-						<ToggleSwitch.OnContent>
-							<PathIcon
-								Theme="{DynamicResource InnerPathIcon}"
-								HorizontalAlignment="Center"
-								Data="{DynamicResource SemiIconChevronRight}">
-								<PathIcon.RenderTransform>
-									<RotateTransform Angle="180" />
-								</PathIcon.RenderTransform>
-							</PathIcon>
-						</ToggleSwitch.OnContent>
-						<ToggleSwitch.OffContent>
-							<PathIcon
-								Theme="{DynamicResource InnerPathIcon}"
-								HorizontalAlignment="Center"
-								Data="{DynamicResource SemiIconChevronRight}" />
-						</ToggleSwitch.OffContent>
-					</ToggleSwitch>
+
+					<Grid Grid.Row="0" ColumnDefinitions="auto,*" Margin="4,0,4,4">
+						<ToggleSwitch
+							Grid.Column="0"
+							Name="toggle"
+							Padding="4"
+							IsChecked="True"
+							HorizontalAlignment="Left"
+							Theme="{DynamicResource ButtonToggleSwitch}">
+							<ToggleSwitch.OnContent>
+								<PathIcon
+									Theme="{DynamicResource InnerPathIcon}"
+									HorizontalAlignment="Center"
+									Data="{DynamicResource SemiIconChevronRight}">
+									<PathIcon.RenderTransform>
+										<RotateTransform Angle="180" />
+									</PathIcon.RenderTransform>
+								</PathIcon>
+							</ToggleSwitch.OnContent>
+							<ToggleSwitch.OffContent>
+								<PathIcon
+									Theme="{DynamicResource InnerPathIcon}"
+									HorizontalAlignment="Center"
+									Data="{DynamicResource SemiIconChevronRight}" />
+							</ToggleSwitch.OffContent>
+						</ToggleSwitch>
+
+						<Panel 
+							Grid.Column="1"
+							Margin="4,0,0,0"
+							IsVisible="{Binding #toggle.IsChecked, Mode=TwoWay}">
+							<Panel IsVisible="{
+								Binding Device.ConnectionType, 
+								Converter={StaticResource NotEqualsConverter},
+								ConverterParameter={x:Static domainEnums:ConnectionType.File}}">
+
+								<Button Content="Connect" Command="{Binding TryConnect}"
+									IsVisible="{
+										Binding ConnectionState, 
+										Converter={StaticResource EqualsConverter}, 
+										ConverterParameter={x:Static domainEnums:ConnectionState.Disconnected}}" />
+
+								<Button Content="Connecting" IsEnabled="False"
+									IsVisible="{
+										Binding ConnectionState, 
+										Converter={StaticResource EqualsConverter}, 
+										ConverterParameter={x:Static domainEnums:ConnectionState.Connecting}}" />
+
+								<Button Content="Disconnect" Command="{Binding TryDisconnect}"
+									IsVisible="{
+										Binding ConnectionState, 
+										Converter={StaticResource EqualsConverter}, 
+										ConverterParameter={x:Static domainEnums:ConnectionState.Connected}}" />
+							</Panel>
+
+							<Panel
+								IsVisible="{
+									Binding Device.ConnectionType, 
+									Converter={StaticResource EqualsConverter}, 
+									ConverterParameter={x:Static domainEnums:ConnectionType.File}}">
+
+								<Button Content="Read File" Command="{Binding RequestReadFile}"
+									IsVisible="{
+										Binding ConnectionState, 
+										Converter={StaticResource NotEqualsConverter}, 
+										ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}" />
+
+								<Button Content="Reading File" IsEnabled="False"
+									IsVisible="{
+										Binding ConnectionState, 
+										Converter={StaticResource EqualsConverter}, 
+										ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}" />
+
+							</Panel>
+						</Panel>
+					</Grid>
 
 					<Panel Grid.Row="1" Width="250" IsVisible="{Binding #toggle.IsChecked, Mode=TwoWay}" >
 						<Grid RowDefinitions="auto,*">
-							<Panel Grid.Row="0" Margin="0,0,0,4">
-								<Panel IsVisible="{
-											Binding Device.ConnectionType, 
-											Converter={StaticResource NotEqualsConverter},
-											ConverterParameter={x:Static domainEnums:ConnectionType.File}}">
-
-									<Button Content="Connect" Command="{Binding TryConnect}"
-										IsVisible="{
-												Binding ConnectionState, 
-												Converter={StaticResource EqualsConverter}, 
-												ConverterParameter={x:Static domainEnums:ConnectionState.Disconnected}}" />
-
-									<Button Content="Connecting" IsEnabled="False"
-										IsVisible="{
-												Binding ConnectionState, 
-												Converter={StaticResource EqualsConverter}, 
-												ConverterParameter={x:Static domainEnums:ConnectionState.Connecting}}" />
-
-									<Button Content="Disconnect" Command="{Binding TryDisconnect}"
-										IsVisible="{
-												Binding ConnectionState, 
-												Converter={StaticResource EqualsConverter}, 
-												ConverterParameter={x:Static domainEnums:ConnectionState.Connected}}" />
-								</Panel>
-
-								<Panel
-										IsVisible="{
-											Binding Device.ConnectionType, 
-											Converter={StaticResource EqualsConverter}, 
-											ConverterParameter={x:Static domainEnums:ConnectionType.File}}">
-
-									<Button Content="Read File" Command="{Binding RequestReadFile}"
-										IsVisible="{
-												Binding ConnectionState, 
-												Converter={StaticResource NotEqualsConverter}, 
-												ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}" />
-
-									<Button Content="Reading File" IsEnabled="False"
-										IsVisible="{
-												Binding ConnectionState, 
-												Converter={StaticResource EqualsConverter}, 
-												ConverterParameter={x:Static domainEnums:ConnectionState.ReadingFile}}" />
-
-								</Panel>
-							</Panel>
 
 							<ScrollViewer Grid.Row="1" Theme="{DynamicResource StaticScrollViewer}">
 								<StackPanel Spacing="4">

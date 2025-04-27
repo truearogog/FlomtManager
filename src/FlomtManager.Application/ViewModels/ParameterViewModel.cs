@@ -49,6 +49,13 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
         set => this.RaiseAndSetIfChanged(ref _color, value);
     }
 
+    private bool _isEnabled = true;
+    public bool IsEnabled
+    {
+        get => _isEnabled;
+        set => this.RaiseAndSetIfChanged(ref _isEnabled, value);
+    }
+
     private string _value = string.Empty;
     public string Value
     {
@@ -70,10 +77,23 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
         set => this.RaiseAndSetIfChanged(ref _editable, value);
     }
 
-    public ParameterViewModel(Parameter parameter, bool editable, IParameterStore parameterStore, IParameterRepository parameterRepository)
+    private bool _toggleable = false;
+    public bool Toggleable
+    {
+        get => _toggleable;
+        set => this.RaiseAndSetIfChanged(ref _toggleable, value);
+    }
+
+    public ParameterViewModel(
+        IParameterStore parameterStore,
+        IParameterRepository parameterRepository,
+        Parameter parameter,
+        bool editable = false,
+        bool toggleable = false)
     {
         SetParameter(parameter);
         Editable = editable;
+        Toggleable = toggleable;
 
         _parameterStore = parameterStore;
         _parameterStore.Updated += _parameterStore_Updated;
@@ -81,6 +101,12 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
 
         if (editable)
         {
+            this.WhenAnyValue(x => x.IsEnabled)
+                .Throttle(TimeSpan.FromMilliseconds(50), RxApp.TaskpoolScheduler)
+                .DistinctUntilChanged()
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe(async x => await UpdateIsEnabled(x));
+
             this.WhenAnyValue(x => x.IsAxisVisibleOnChart)
                 .Throttle(TimeSpan.FromMilliseconds(50), RxApp.TaskpoolScheduler)
                 .DistinctUntilChanged()
@@ -107,9 +133,18 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
         }
     }
 
+    public async Task Toggle()
+    {
+        if (Toggleable)
+        {
+            await UpdateIsEnabled(!IsEnabled);
+        }
+    }
+
     private void SetParameter(Parameter parameter)
     {
         Parameter = parameter;
+        IsEnabled = parameter.IsEnabled;
         IsAxisVisibleOnChart = parameter.IsAxisVisibleOnChart;
         IsAutoScaledOnChart = parameter.IsAutoScaledOnChart;
         ZoomLevelOnChart = parameter.ZoomLevelOnChart;
@@ -122,6 +157,12 @@ internal sealed class ParameterViewModel : ViewModel, IParameterViewModel
         {
             SetParameter(e);
         }
+    }
+
+    private async Task UpdateIsEnabled(bool isEnabled)
+    {
+        await _parameterRepository.UpdateIsEnabled(Parameter.Id, isEnabled);
+        _parameterStore.Update(Parameter with { IsEnabled = isEnabled });
     }
 
     private async Task UpdateIsAxisVisibleOnChart(bool isAxisVisibleOnChart)

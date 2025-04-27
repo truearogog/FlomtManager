@@ -53,7 +53,12 @@
 							<TextBlock Classes="Secondary" Text="Slave Id" />
 							<TextBox Watermark="Slave Id" Text="{Binding Form.SlaveId}" />
 						</StackPanel>
-						<StackPanel>
+						<CheckBox
+							Padding="8,6"
+							Content="Continuous Data Read"
+							IsChecked="{Binding Form.DataReadEnabled}"
+							Theme="{DynamicResource CardCheckBox}" />
+						<StackPanel IsVisible="{Binding Form.DataReadEnabled}">
 							<TextBlock Classes="Secondary" Text="Data Read Interval" />
 							<TimePicker UseSeconds="True" SelectedTime="{Binding Form.DataReadInterval}" />
 						</StackPanel>
@@ -96,7 +101,12 @@
 							<TextBlock Classes="Secondary" Text="Slave Id" />
 							<TextBox Watermark="Slave Id" Text="{Binding Form.SlaveId}" />
 						</StackPanel>
-						<StackPanel>
+						<CheckBox
+							Padding="8,6"
+							Content="Continuous Data Read"
+							IsChecked="{Binding Form.DataReadEnabled}"
+							Theme="{DynamicResource CardCheckBox}" />
+						<StackPanel IsVisible="{Binding Form.DataReadEnabled}">
 							<TextBlock Classes="Secondary" Text="Data Read Interval" />
 							<TimePicker UseSeconds="True" SelectedTime="{Binding Form.DataReadInterval}" />
 						</StackPanel>

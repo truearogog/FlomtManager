@@ -7,6 +7,7 @@ namespace FlomtManager.Domain.Abstractions.ViewModels;
 public interface IDataTableViewModel : IViewModel
 {
     event EventHandler OnDataUpdated;
+    event EventHandler<(int Min, int Max)> OnCurrentDisplaySpanChanged;
 
     ObservableCollection<StringValueCollection> Data { get; }
     IReadOnlyDictionary<byte, byte> ParameterPositions { get; }
@@ -17,4 +18,5 @@ public interface IDataTableViewModel : IViewModel
 
     Task SetDevice(Device device);
     Task UpdateData();
+    void UpdateCurrentDisplaySpan(int min, int max);
 }

@@ -45,6 +45,13 @@ internal sealed class DeviceFormViewModel : ViewModel, IDeviceFormViewModel
         set => this.RaiseAndSetIfChanged(ref _slaveId, value);
     }
 
+    private bool _dataReadEnabled = false;
+    public bool DataReadEnabled
+    {
+        get => _dataReadEnabled;
+        set => this.RaiseAndSetIfChanged(ref _dataReadEnabled, value);
+    }
+
     private TimeSpan _dataReadInterval = TimeSpan.FromSeconds(5);
     public TimeSpan DataReadInterval
     {
@@ -112,6 +119,7 @@ internal sealed class DeviceFormViewModel : ViewModel, IDeviceFormViewModel
 
             ConnectionType = ConnectionType,
             SlaveId = SlaveId,
+            DataReadEnabled = DataReadEnabled,
             DataReadIntervalTicks = DataReadInterval == TimeSpan.Zero 
                 ? TimeSpan.FromSeconds(5).Ticks 
                 : DataReadInterval.Ticks,

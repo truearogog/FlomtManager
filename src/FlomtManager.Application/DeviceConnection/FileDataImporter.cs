@@ -1,4 +1,5 @@
 ﻿using System.Collections.Frozen;
+using System.Collections.Immutable;
 using FlomtManager.Domain.Abstractions.DeviceConnection;
 using FlomtManager.Domain.Abstractions.DeviceConnection.Events;
 using FlomtManager.Domain.Abstractions.Parsers;
@@ -10,8 +11,10 @@ using FlomtManager.Domain.Extensions;
 using FlomtManager.Domain.Models;
 using FlomtManager.Domain.Models.Collections;
 using FlomtManager.Framework.Extensions;
+using FlomtManager.Framework.Skia.ColorPalletes;
 using FlomtManager.Modbus;
 using HexIO;
+using SkiaSharp;
 using ParameterDictionary = System.Collections.Generic.IReadOnlyDictionary<byte, FlomtManager.Domain.Models.Parameter>;
 
 namespace FlomtManager.Application.DeviceConnection;
@@ -106,8 +109,48 @@ internal sealed class FileDataImporter(
             {
                 await deviceRepository.CreateDefinition(deviceDefinition);
 
-                var parameterDefinitionBytes = bytes.AsSpan(deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * DeviceConstants.PARAMETER_SIZE);
+                var parameterDefinitionBytes = bytes.AsSpan(deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * DeviceConstants.PARAMETER_SIZE).ToArray();
+
+                var previousDevice = await deviceRepository.GetLastCreatedExcept(device.Id);
+                var previousParameterColors = (await parameterRepository.GetAllByDeviceId(previousDevice.Id)).ToImmutableDictionary(x => x.Name, x => x.Color);
+
+                var palette = new VibrantSKColorPalette();
+
+                var knownParameterNameColors = new Dictionary<string, SKColor>
+                {
+                    ["P"] = palette.GetColor(0, 3),
+                    ["G"] = palette.GetColor(1, 3),
+                    ["Q"] = palette.GetColor(4, 3),
+                    ["t"] = palette.GetColor(7, 3),
+                    ["tc"] = palette.GetColor(3, 3),
+                    ["p"] = palette.GetColor(5, 3),
+                };
+
+                var knownParameterTypeColors = new Dictionary<ParameterType, SKColor>
+                {
+                    [ParameterType.WorkingTimeInSecondsInArchiveInterval] = palette.GetColor(8, 3),
+                };
+
                 var parameters = dataParser.ParseParameterDefinition(parameterDefinitionBytes, device.Id);
+                parameters = parameters
+                    .Select(x => {
+                        var color = palette.GetColor(8, 3);
+                        if (previousParameterColors.TryGetValue(x.Name, out var prevColor))
+                        {
+                            color = SKColor.Parse(prevColor);
+                        }
+                        else if (knownParameterNameColors.TryGetValue(x.Name, out var nameColor))
+                        {
+                            color = nameColor;
+                        }
+                        else if (knownParameterTypeColors.TryGetValue(x.Type, out var typeColor))
+                        {
+                            color = typeColor;
+                        }
+
+                        return x with { Color = color.ToString() };
+                    })
+                    .ToList().AsReadOnly();
                 await parameterRepository.Create(parameters);
 
                 deviceStore.Update(device);

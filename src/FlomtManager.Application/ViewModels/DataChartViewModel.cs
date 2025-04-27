@@ -30,7 +30,6 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
 
     public event EventHandler<Parameter> OnParameterUpdated;
     public event EventHandler OnDataUpdated;
-    public event EventHandler<byte> OnParameterToggled;
     public event EventHandler<IntegrationChangedArgs> OnIntegrationChanged;
 
     public IEnumerable<Parameter> VisibleParameters { get; private set; }
@@ -46,18 +45,39 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
 
     public ObservableCollection<IParameterViewModel> Parameters { get; set; } = [];
 
+    private bool _integrationSpanActive;
+    public bool IntegrationSpanActive
+    {
+        get => _integrationSpanActive;
+        set => this.RaiseAndSetIfChanged(ref _integrationSpanActive, value);
+    }
+
     private double _integrationSpanMinDate;
     public double IntegrationSpanMinDate
     {
         get => _integrationSpanMinDate;
-        set => this.RaiseAndSetIfChanged(ref _integrationSpanMinDate, value);
+        private set => this.RaiseAndSetIfChanged(ref _integrationSpanMinDate, value);
     }
 
     private double _integrationSpanMaxDate;
     public double IntegrationSpanMaxDate
     {
         get => _integrationSpanMaxDate;
-        set => this.RaiseAndSetIfChanged(ref _integrationSpanMaxDate, value);
+        private set => this.RaiseAndSetIfChanged(ref _integrationSpanMaxDate, value);
+    }
+
+    private int _integrationSpanMinIndex;
+    public int IntegrationSpanMinIndex
+    {
+        get => _integrationSpanMinIndex;
+        private set => this.RaiseAndSetIfChanged(ref _integrationSpanMinIndex, value);
+    }
+
+    private int _integrationSpanMaxIndex;
+    public int IntegrationSpanMaxIndex
+    {
+        get => _integrationSpanMaxIndex;
+        private set => this.RaiseAndSetIfChanged(ref _integrationSpanMaxIndex, value);
     }
 
     private double _currentDisplayDate;
@@ -65,6 +85,34 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
     {
         get => _currentDisplayDate;
         set => this.RaiseAndSetIfChanged(ref _currentDisplayDate, value);
+    }
+
+    private double _currentDisplaySpanMinDate;
+    public double CurrentDisplaySpanMinDate
+    {
+        get => _currentDisplaySpanMinDate;
+        private set => this.RaiseAndSetIfChanged(ref _currentDisplaySpanMinDate, value);
+    }
+
+    private double _currentDisplaySpanMaxDate;
+    public double CurrentDisplaySpanMaxDate
+    {
+        get => _currentDisplaySpanMaxDate;
+        private set => this.RaiseAndSetIfChanged(ref _currentDisplaySpanMaxDate, value);
+    }
+
+    private int _currentDisplaySpanMinIndex;
+    public int CurrentDisplaySpanMinIndex
+    {
+        get => _currentDisplaySpanMinIndex;
+        private set => this.RaiseAndSetIfChanged(ref _currentDisplaySpanMinIndex, value);
+    }
+
+    private int _currentDisplaySpanMaxIndex;
+    public int CurrentDisplaySpanMaxIndex
+    {
+        get => _currentDisplaySpanMaxIndex;
+        private set => this.RaiseAndSetIfChanged(ref _currentDisplaySpanMaxIndex, value);
     }
 
     public DataChartViewModel(
@@ -81,12 +129,6 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
         _parameterStore = parameterStore;
 
         _parameterStore.Updated += _parameterStore_Updated;
-
-        this.WhenAnyValue(x => x.IntegrationSpanMaxDate, x => x.IntegrationSpanMinDate)
-            .Throttle(TimeSpan.FromMilliseconds(100), RxApp.TaskpoolScheduler)
-            .DistinctUntilChanged()
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Subscribe(x => ChangeIntegration());
 
         this.WhenAnyValue(x => x.CurrentDisplayDate)
             .Throttle(TimeSpan.FromMilliseconds(100), RxApp.TaskpoolScheduler)
@@ -133,13 +175,13 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
             IsAxisVisibleOnChart = false,
             IsAutoScaledOnChart = true,
             ZoomLevelOnChart = 0,
-        }, false);
+        }, false, false);
         Parameters.Add(dateTimeParameterViewModel);
 
         var parameters = await _parameterRepository.GetHourArchiveParametersByDeviceId(Device.Id);
         foreach (var parameter in parameters)
         {
-            var parameterViewModel = _parameterViewModelFactory.Create(parameter, true);
+            var parameterViewModel = _parameterViewModelFactory.Create(parameter, true, true);
             Parameters.Add(parameterViewModel);
         }
 
@@ -175,27 +217,33 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
         OnDataUpdated?.Invoke(this, EventArgs.Empty);
     }
 
-    public void ToggleParameter(byte parameterNumber)
+    public void UpdateCurrentDisplaySpanDates(double min, double max)
     {
-        OnParameterToggled?.Invoke(this, parameterNumber);
+        CurrentDisplaySpanMinDate = min;
+        CurrentDisplaySpanMaxDate = max;
+
+        CurrentDisplaySpanMinIndex = DateTimes.BinarySearchClosestValueIndex(min);
+        CurrentDisplaySpanMaxIndex = DateTimes.BinarySearchClosestValueIndex(max);
     }
 
-    private void ChangeIntegration()
+    public void UpdateIntegration(double min, double max)
     {
-        if (DateTimes is null || DataCollections is null ||
-            IntegrationSpanMinDate == default || IntegrationSpanMaxDate == default)
+        if (DateTimes is null || DataCollections is null || min == default || max == default)
         {
             return;
         }
 
-        var minIndex = DateTimes.BinarySearchClosestValueIndex(IntegrationSpanMinDate);
-        var maxIndex = DateTimes.BinarySearchClosestValueIndex(IntegrationSpanMaxDate) + 1;
+        IntegrationSpanMinDate = min;
+        IntegrationSpanMaxDate = max;
+
+        IntegrationSpanMinIndex = DateTimes.BinarySearchClosestValueIndex(min);
+        IntegrationSpanMaxIndex = DateTimes.BinarySearchClosestValueIndex(max);
 
         Dictionary<byte, string> integrationResults = [];
 
         foreach (var (parameter, integrationParameter) in _integralParameters)
         {
-            if (minIndex > maxIndex || maxIndex > DataCollections[parameter.Number].Count - 1)
+            if (IntegrationSpanMinIndex > IntegrationSpanMaxIndex || IntegrationSpanMaxIndex > DataCollections[parameter.Number].Count - 1)
             {
                 integrationResults[integrationParameter.Number] = string.Empty;
                 continue;
@@ -204,19 +252,22 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
             if (DataCollections[parameter.Number] is DataCollection<float> floatDataCollection)
             {
                 var sum = MathHelper.Integrate(
-                    floatDataCollection.Values.AsSpan(minIndex, maxIndex - minIndex), _workingTimeCollectionFloat.AsSpan(minIndex, maxIndex - minIndex));
+                    floatDataCollection.Values.AsSpan(IntegrationSpanMinIndex, IntegrationSpanMaxIndex - IntegrationSpanMinIndex), 
+                    _workingTimeCollectionFloat.AsSpan(IntegrationSpanMinIndex, IntegrationSpanMaxIndex - IntegrationSpanMinIndex));
                 integrationResults[integrationParameter.Number] = _dataFormatter.FormatFloat(sum, integrationParameter);
             }
             else if (DataCollections[parameter.Number] is DataCollection<uint> uintDataCollection)
             {
                 var sum = MathHelper.Integrate(
-                    uintDataCollection.Values.AsSpan(minIndex, maxIndex - minIndex), _workingTimeCollectionUint.AsSpan(minIndex, maxIndex - minIndex));
+                    uintDataCollection.Values.AsSpan(IntegrationSpanMinIndex, IntegrationSpanMaxIndex - IntegrationSpanMinIndex), 
+                    _workingTimeCollectionUint.AsSpan(IntegrationSpanMinIndex, IntegrationSpanMaxIndex - IntegrationSpanMinIndex));
                 integrationResults[integrationParameter.Number] = _dataFormatter.FormatUInt32(sum);
             }
             else if (DataCollections[parameter.Number] is DataCollection<ushort> ushortDataCollection)
             {
                 var sum = MathHelper.Integrate(
-                    ushortDataCollection.Values.AsSpan(minIndex, maxIndex - minIndex), _workingTimeCollectionUshort.AsSpan(minIndex, maxIndex - minIndex));
+                    ushortDataCollection.Values.AsSpan(IntegrationSpanMinIndex, IntegrationSpanMaxIndex - IntegrationSpanMinIndex), 
+                    _workingTimeCollectionUshort.AsSpan(IntegrationSpanMinIndex, IntegrationSpanMaxIndex - IntegrationSpanMinIndex));
                 integrationResults[integrationParameter.Number] = _dataFormatter.FormatUInt16(sum);
             }
         }

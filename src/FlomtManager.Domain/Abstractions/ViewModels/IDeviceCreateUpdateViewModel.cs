@@ -19,7 +19,8 @@ public interface IDeviceCreateUpdateViewModel : IViewModel
     ObservableCollection<int> DataBits { get; set; }
     ObservableCollection<StopBits> StopBits { get; set; }
 
-    void SetDevice(Device device);
+    Task ActivateCreate();
+    void ActivateUpdate(Device device);
 
     void RefreshPortNames();
     void RequestClose();

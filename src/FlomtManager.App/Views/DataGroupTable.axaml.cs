@@ -1,14 +1,7 @@
-using System.ComponentModel;
 using Avalonia;
-using Avalonia.Collections;
 using Avalonia.Controls;
-using Avalonia.Data;
 using Avalonia.Threading;
-using FlomtManager.Domain.Abstractions.Parsers;
 using FlomtManager.Domain.Abstractions.ViewModels;
-using FlomtManager.Domain.Models.Collections;
-using Microsoft.Extensions.DependencyInjection;
-using ReactiveUI;
 
 namespace FlomtManager.App.Views
 {
@@ -28,6 +21,7 @@ namespace FlomtManager.App.Views
             if (DataContext is IDataTableViewModel viewModel)
             {
                 viewModel.OnDataUpdated += _OnDataUpdated;
+                viewModel.OnCurrentDisplaySpanChanged += _OnCurrentDisplaySpanChanged;
 
                 _viewModel = viewModel;
                 Task.Run(_viewModel.UpdateData);
@@ -41,6 +35,7 @@ namespace FlomtManager.App.Views
             if (DataContext is IDataTableViewModel viewModel)
             {
                 viewModel.OnDataUpdated -= _OnDataUpdated;
+                viewModel.OnCurrentDisplaySpanChanged -= _OnCurrentDisplaySpanChanged;
 
                 _viewModel = null;
             }
@@ -48,8 +43,6 @@ namespace FlomtManager.App.Views
 
         private void _OnDataUpdated(object sender, EventArgs eventArgs)
         {
-            var dataFormatter = App.Services.GetRequiredService<IDataFormatter>();
-
             Dispatcher.UIThread.Invoke(() =>
             {
                 if (this.FindControl<ItemsControl>("ParameterGrid") is { } parameterGrid)
@@ -61,6 +54,18 @@ namespace FlomtManager.App.Views
                 {
                     dataGrid.ItemsSource = _viewModel.Data;
                     dataGrid.UpdateLayout();
+                }
+            });
+        }
+
+        private void _OnCurrentDisplaySpanChanged(object sender, (int Min, int Max) e)
+        {
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                if (this.FindControl<ListBox>("DataGrid") is { } dataGrid)
+                {
+                    dataGrid.SelectedIndex = 0;
+                    dataGrid.SelectedIndex = Math.Clamp(0, dataGrid.ItemCount - e.Min - 1, dataGrid.ItemCount - 1);
                 }
             });
         }

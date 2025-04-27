@@ -21,6 +21,7 @@ internal sealed class Initial : Migration
 
                 ConnectionType {SqlTypes.Int},
                 SlaveId {SqlTypes.Int},
+                DataReadEnabled {SqlTypes.Int},
                 DataReadIntervalTicks {SqlTypes.Int},
 
                 IpAddress NVARCHAR(30),
@@ -99,6 +100,7 @@ internal sealed class Initial : Migration
                 Unit CHAR(6),
                 Color TEXT,
 
+                IsEnabled {SqlTypes.Int},
                 IsAxisVisibleOnChart {SqlTypes.Int},
                 IsAutoScaledOnChart {SqlTypes.Int},
                 ZoomLevelOnChart {SqlTypes.Real},
@@ -110,8 +112,8 @@ internal sealed class Initial : Migration
         static async Task InsertDevice(DbConnection connection, IDbTransaction transaction)
         {
             await connection.ExecuteAsync($"""
-                INSERT INTO Devices (Created, Updated, Name, Address, ConnectionType, SlaveId, DataReadIntervalTicks, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port)
-                VALUES (@Now, @Now, @Name, @Address, @ConnectionType, @SlaveId, @DataReadIntervalTicks, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port);
+                INSERT INTO Devices (Created, Updated, Name, Address, ConnectionType, SlaveId, DataReadEnabled, DataReadIntervalTicks, PortName, BaudRate, Parity, DataBits, StopBits, IpAddress, Port)
+                VALUES (@Now, @Now, @Name, @Address, @ConnectionType, @SlaveId, @DataReadEnabled, @DataReadIntervalTicks, @PortName, @BaudRate, @Parity, @DataBits, @StopBits, @IpAddress, @Port);
                 """, new
             {
                 Now = DateTime.UtcNow,
@@ -121,6 +123,7 @@ internal sealed class Initial : Migration
 
                 ConnectionType = ConnectionType.Network,
                 SlaveId = 1,
+                DataReadEnabled = false,
                 DataReadIntervalTicks = TimeSpan.FromSeconds(5).Ticks,
 
                 PortName = "COM1",

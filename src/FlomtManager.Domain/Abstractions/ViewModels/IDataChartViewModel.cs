@@ -9,7 +9,6 @@ public interface IDataChartViewModel : IViewModel
 {
     event EventHandler<Parameter> OnParameterUpdated;
     event EventHandler OnDataUpdated;
-    event EventHandler<byte> OnParameterToggled;
     event EventHandler<IntegrationChangedArgs> OnIntegrationChanged;
 
     IEnumerable<Parameter> VisibleParameters { get; }
@@ -20,11 +19,21 @@ public interface IDataChartViewModel : IViewModel
 
     ObservableCollection<IParameterViewModel> Parameters { get; set; }
 
-    double IntegrationSpanMinDate { get; set; }
-    double IntegrationSpanMaxDate { get; set; }
+    bool IntegrationSpanActive { get; set; }
+    double IntegrationSpanMinDate { get; }
+    double IntegrationSpanMaxDate { get; }
+    int IntegrationSpanMinIndex { get; }
+    int IntegrationSpanMaxIndex { get; }
+
     double CurrentDisplayDate { get; set; }
+
+    double CurrentDisplaySpanMinDate { get; }
+    double CurrentDisplaySpanMaxDate { get; }
+    int CurrentDisplaySpanMinIndex { get; }
+    int CurrentDisplaySpanMaxIndex { get; }
 
     Task SetDevice(Device device);
     Task UpdateData();
-    void ToggleParameter(byte parameterNumber);
+    void UpdateCurrentDisplaySpanDates(double min, double max);
+    void UpdateIntegration(double min, double max);
 }

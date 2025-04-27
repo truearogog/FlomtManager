@@ -1,7 +1,8 @@
 ﻿using System.Collections.Frozen;
-using System.Diagnostics;
+using System.Collections.Immutable;
 using System.Text;
 using System.Timers;
+using System.Xml.Linq;
 using FlomtManager.Domain.Abstractions.DeviceConnection;
 using FlomtManager.Domain.Abstractions.DeviceConnection.Events;
 using FlomtManager.Domain.Abstractions.Parsers;
@@ -13,7 +14,9 @@ using FlomtManager.Domain.Extensions;
 using FlomtManager.Domain.Models;
 using FlomtManager.Domain.Models.Collections;
 using FlomtManager.Framework.Extensions;
+using FlomtManager.Framework.Skia.ColorPalletes;
 using FlomtManager.Modbus;
+using SkiaSharp;
 using ParameterDictionary = System.Collections.Generic.IReadOnlyDictionary<byte, FlomtManager.Domain.Models.Parameter>;
 using Timer = System.Timers.Timer;
 
@@ -73,7 +76,47 @@ internal sealed class DeviceConnection(
 
                 var parameterDefinitionBytes = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId,
                     _deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * DeviceConstants.PARAMETER_SIZE / 2, cancellationToken: cancellationToken);
+
+                var previousDevice = await deviceRepository.GetLastCreatedExcept(device.Id);
+                var previousParameterColors = (await parameterRepository.GetAllByDeviceId(previousDevice.Id)).ToImmutableDictionary(x => x.Name, x => x.Color);
+
+                var palette = new VibrantSKColorPalette();
+
+                var knownParameterNameColors = new Dictionary<string, SKColor>
+                {
+                    ["P"] = palette.GetColor(0, 3),
+                    ["G"] = palette.GetColor(1, 3),
+                    ["Q"] = palette.GetColor(4, 3),
+                    ["t"] = palette.GetColor(7, 3),
+                    ["tc"] = palette.GetColor(3, 3),
+                    ["p"] = palette.GetColor(5, 3),
+                };
+
+                var knownParameterTypeColors = new Dictionary<ParameterType, SKColor>
+                {
+                    [ParameterType.WorkingTimeInSecondsInArchiveInterval] = palette.GetColor(8, 3),
+                };
+
                 var parameters = dataParser.ParseParameterDefinition(parameterDefinitionBytes, device.Id);
+                parameters = parameters
+                    .Select(x => {
+                        var color = palette.GetColor(8, 3);
+                        if (previousParameterColors.TryGetValue(x.Name, out var prevColor))
+                        {
+                            color = SKColor.Parse(prevColor);
+                        }
+                        else if (knownParameterNameColors.TryGetValue(x.Name, out var nameColor))
+                        {
+                            color = nameColor;
+                        }
+                        else if (knownParameterTypeColors.TryGetValue(x.Type, out var typeColor))
+                        {
+                            color = typeColor;
+                        }
+
+                        return x with { Color = color.ToString() };
+                    })
+                    .ToList().AsReadOnly();
                 await parameterRepository.Create(parameters);
 
                 deviceStore.Update(device);
@@ -95,18 +138,25 @@ internal sealed class DeviceConnection(
             _integralParameters = (await parameterRepository.GetIntegralParametersByDeviceId(device.Id, true)).ToFrozenDictionary(x => x.Number);
 
             await ReadData();
-
-            _dataReadTimer = new Timer(TimeSpan.FromTicks(device.DataReadIntervalTicks));
-            _dataReadTimer.Elapsed += _dataReadTimer_Elapsed;
-            _dataReadTimer.Start();
-
             await ReadHourArchive();
 
-            _hourArchiveReadTimer = new Timer(TimeSpan.FromMinutes(10));
-            _hourArchiveReadTimer.Elapsed += _hourArchiveReadTimer_Elapsed;
-            _hourArchiveReadTimer.Start();
-
             RaiseConnectionStateChanged(ConnectionState.Connected);
+
+            if (device.DataReadEnabled)
+            {
+                _dataReadTimer = new Timer(TimeSpan.FromTicks(device.DataReadIntervalTicks));
+                _dataReadTimer.Elapsed += _dataReadTimer_Elapsed;
+                _dataReadTimer.Start();
+
+                _hourArchiveReadTimer = new Timer(TimeSpan.FromMinutes(10));
+                _hourArchiveReadTimer.Elapsed += _hourArchiveReadTimer_Elapsed;
+                _hourArchiveReadTimer.Start();
+            }
+            else
+            {
+                await Disconnect(cancellationToken);
+                RaiseConnectionStateChanged(ConnectionState.Disconnected);
+            }
         }
         catch (Exception ex)
         {
@@ -186,7 +236,16 @@ internal sealed class DeviceConnection(
                 }
                 else
                 {
-                    lineCount = (ushort)int.Clamp((int)(readStartTime - _deviceDefinition.LastArchiveRead.Value).TotalHours, 0, _deviceDefinition.AveragePerHourBlockLineCount);
+                    var timeDiff = readStartTime - _deviceDefinition.LastArchiveRead.Value;
+                    // border case
+                    if (timeDiff.Hours < 1 && readStartTime.Hour != _deviceDefinition.LastArchiveRead.Value.Hour)
+                    {
+                        lineCount = 1;
+                    }
+                    else
+                    {
+                        lineCount = (ushort)int.Clamp((int)timeDiff.TotalHours, 0, _deviceDefinition.AveragePerHourBlockLineCount);
+                    }
                 }
             }
 

@@ -47,7 +47,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         set => this.RaiseAndSetIfChanged(ref _isEditable, value);
     }
 
-    private DeviceViewMode _archiveDisplayMode = DeviceViewMode.Table;
+    private DeviceViewMode _archiveDisplayMode = DeviceViewMode.Chart;
     public DeviceViewMode DeviceViewMode
     {
         get => _archiveDisplayMode;
@@ -137,7 +137,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         DataIntegration = dataIntegration;
     }
 
-    public async Task SetDevice(Device device)
+    public async Task Activate(Device device)
     {
         Device = device;
         IsEditable = !_deviceIsEditableStore.TryGetDeviceIsEditable(Device.Id, out var isEditable) || isEditable;
@@ -162,7 +162,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         var currentParameters = await _parameterRepository.GetCurrentParametersByDeviceId(Device.Id);
         foreach (var currentParameter in currentParameters)
         {
-            var parameterViewModel = _parameterViewModelFactory.Create(currentParameter, false);
+            var parameterViewModel = _parameterViewModelFactory.Create(currentParameter);
             if (currentValues.TryGetValue(currentParameter.Number, out var currentValue))
             {
                 parameterViewModel.Value = currentValue;
@@ -174,7 +174,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         var integralParameters = await _parameterRepository.GetIntegralParametersByDeviceId(Device.Id);
         foreach (var integralParameter in integralParameters)
         {
-            var parameterViewModel = _parameterViewModelFactory.Create(integralParameter, false);
+            var parameterViewModel = _parameterViewModelFactory.Create(integralParameter);
             if (integralValues.TryGetValue(integralParameter.Number, out var integralValue))
             {
                 parameterViewModel.Value = integralValue;
@@ -190,6 +190,18 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
 
     public void SetDataDisplayMode(DeviceViewMode mode)
     {
+        if (DeviceViewMode == DeviceViewMode.Chart && mode == DeviceViewMode.Table)
+        {
+            if (DataChart.IntegrationSpanActive)
+            {
+                DataTable.UpdateCurrentDisplaySpan(DataChart.IntegrationSpanMinIndex, DataChart.IntegrationSpanMaxIndex);
+            }
+            else
+            {
+                DataTable.UpdateCurrentDisplaySpan(DataChart.CurrentDisplaySpanMinIndex, DataChart.CurrentDisplaySpanMaxIndex);
+            }
+        }
+
         DeviceViewMode = mode;
     }
 
@@ -368,7 +380,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
     {
         if (Device.Id == device.Id)
         {
-            await SetDevice(device);
+            await Activate(device);
         }
     }
 

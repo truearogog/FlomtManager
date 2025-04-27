@@ -43,7 +43,7 @@ internal sealed class DeviceDeleteViewModel(IDeviceRepository deviceRepository, 
 
     private const int DeleteDelay = 3;
 
-    public void SetDevice(Device device)
+    public void Activate(Device device)
     {
         Device = device;
         Task.Run(async () =>

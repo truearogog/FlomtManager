@@ -65,7 +65,7 @@
 			</Border>
 
 			<!--content-->
-			<ListBox Grid.Row="1" x:Name="DataGrid">
+			<ListBox Grid.Row="1" x:Name="DataGrid" AutoScrollToSelectedItem="True">
 				<ListBox.Styles>
 					<Style Selector="ListBoxItem">
 						<Setter Property="BorderThickness" Value="0,1,0,0" />

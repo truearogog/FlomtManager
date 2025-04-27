@@ -7,6 +7,8 @@ namespace FlomtManager.Domain.Abstractions.Repositories
         Task<IEnumerable<Device>> GetAll();
         Task<IAsyncEnumerable<Device>> GetAllAsync();
         Task<Device> GetById(int id);
+        Task<Device> GetLastCreated();
+        Task<Device> GetLastCreatedExcept(int id);
         Task<DeviceDefinition> GetDefinitionByDeviceId(int id);
         Task<int> Create(Device device);
         Task<int> CreateDefinition(DeviceDefinition deviceDefinition);

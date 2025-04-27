@@ -47,6 +47,7 @@ namespace FlomtManager.App.Pages
         private async void viewModel_DeviceCreateRequested(object sender, EventArgs e)
         {
             var viewModel = App.Services.GetRequiredService<IDeviceCreateUpdateViewModel>();
+            await viewModel.ActivateCreate();
 
             var window = new DeviceCreateUpdateWindow
             {
@@ -59,7 +60,7 @@ namespace FlomtManager.App.Pages
         private async void viewModel_DeviceUpdateRequested(object sender, Device device)
         {
             var viewModel = App.Services.GetRequiredService<IDeviceCreateUpdateViewModel>();
-            viewModel.SetDevice(device);
+            viewModel.ActivateUpdate(device);
 
             var window = new DeviceCreateUpdateWindow
             {
@@ -72,7 +73,7 @@ namespace FlomtManager.App.Pages
         private async void viewModel_DeviceDeleteRequested(object sender, Device device)
         {
             var viewModel = App.Services.GetRequiredService<IDeviceDeleteViewModel>();
-            viewModel.SetDevice(device);
+            viewModel.Activate(device);
 
             var window = new DeviceDeleteWindow
             {
@@ -92,7 +93,7 @@ namespace FlomtManager.App.Pages
             }
 
             var viewModel = App.Services.GetRequiredService<IDeviceViewModel>();
-            await viewModel.SetDevice(device);
+            await viewModel.Activate(device);
 
             var newWindow = new DeviceWindow
             {

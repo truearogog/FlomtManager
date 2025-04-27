@@ -5,7 +5,8 @@ using FlomtManager.Domain.Abstractions.Parsers;
 using FlomtManager.Domain.Constants;
 using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
-using FlomtManager.Framework.Skia;
+using FlomtManager.Framework.Skia.ColorPalletes;
+using SkiaSharp;
 
 namespace FlomtManager.Application.Parsers;
 
@@ -26,29 +27,30 @@ internal sealed class DataParser(IDataFormatter dataFormatter) : IDataParser
     */
     public ReadOnlyCollection<Parameter> ParseParameterDefinition(ReadOnlySpan<byte> bytes, int deviceId)
     {
-        var hues = new List<float>();
+        
 
         var parameters = new List<Parameter>();
         for (var i = 0; i < DeviceConstants.MAX_PARAMETER_COUNT; ++i)
         {
-            var parameterBytes = bytes.Slice(i * 16, 16).ToArray();
+            var parameterBytes = bytes.Slice(i * DeviceConstants.PARAMETER_SIZE, DeviceConstants.PARAMETER_SIZE).ToArray();
             if (parameterBytes[0] != 0)
             {
                 var (type, comma) = ParseParameterTypeByte(parameterBytes[1]);
+                var name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray());
 
-                var color = RandomColor.Next(hues);
-                hues.Add(color.Hue);
                 var parameter = new Parameter
                 {
                     DeviceId = deviceId,
+
                     Number = parameterBytes[0],
                     Type = type,
                     Comma = comma,
                     ErrorMask = (ushort)(parameterBytes[2] + parameterBytes[3] << 8),
                     IntegrationNumber = parameterBytes[4],
-                    Name = Encoding.ASCII.GetString(parameterBytes.Skip(6).TakeWhile(x => x != '\0').ToArray()),
+                    Name = name,
                     Unit = Encoding.ASCII.GetString(parameterBytes.Skip(10).TakeWhile(x => x != '\0').ToArray()),
-                    Color = color.ToString(),
+
+                    IsEnabled = true,
                     IsAxisVisibleOnChart = false,
                     IsAutoScaledOnChart = true,
                     ZoomLevelOnChart = 0,

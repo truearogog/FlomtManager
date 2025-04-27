@@ -32,7 +32,7 @@ public interface IDeviceViewModel : IViewModel
     IDataTableViewModel DataTable { get; set; }
     IDataIntegrationViewModel DataIntegration { get; set; }
 
-    Task SetDevice(Device device);
+    Task Activate(Device device);
     void RequestDeviceUpdate(Device device);
     void SetDataDisplayMode(DeviceViewMode mode);
     Task TryConnect();

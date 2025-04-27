@@ -24,6 +24,7 @@ internal static class DbConnectionParameterExtensions
             Unit, 
             Color, 
 
+            IsEnabled,
             IsAxisVisibleOnChart,
             IsAutoScaledOnChart, 
             ZoomLevelOnChart
@@ -42,6 +43,7 @@ internal static class DbConnectionParameterExtensions
             @Unit, 
             @Color, 
             
+            @IsEnabled,
             @IsAxisVisibleOnChart,
             @IsAutoScaledOnChart, 
             @ZoomLevelOnChart
@@ -59,6 +61,17 @@ internal static class DbConnectionParameterExtensions
     public static async Task CreateParameters(this DbConnection connection, IEnumerable<Parameter> parameters)
     {
         await connection.ExecuteAsync(InsertSql, parameters);
+    }
+
+    public static async Task UpdateIsEnabled(this DbConnection connection, int id, bool isEnabled, DateTime now)
+    {
+        await connection.ExecuteAsync("""
+            UPDATE Parameters 
+            SET 
+                IsEnabled = @IsEnabled,
+                Updated = @Now
+            WHERE Id = @Id;
+            """, new { Id = id, IsEnabled = isEnabled, Now = now });
     }
 
     public static async Task UpdateIsAxisVisibleOnChart(this DbConnection connection, int id, bool isAxisVisibleOnChart, DateTime now)

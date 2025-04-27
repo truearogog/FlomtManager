@@ -24,6 +24,13 @@ internal sealed class ParameterRepository(IDbConnectionFactory connectionFactory
         await connection.CreateParameters(parameters);
     }
 
+    public async Task UpdateIsEnabled(int id, bool isEnabled)
+    {
+        var now = dateTimeProvider.Now;
+        await using var connection = connectionFactory.CreateConnection();
+        await connection.UpdateIsEnabled(id, isEnabled, now);
+    }
+
     public async Task UpdateIsAxisVisibleOnChart(int id, bool isAxisVisibleOnChart)
     {
         var now = dateTimeProvider.Now;

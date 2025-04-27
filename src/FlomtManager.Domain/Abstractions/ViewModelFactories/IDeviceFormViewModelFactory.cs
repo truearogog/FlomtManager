@@ -5,6 +5,6 @@ namespace FlomtManager.Domain.Abstractions.ViewModelFactories;
 
 public interface IDeviceFormViewModelFactory
 {
-    IDeviceFormViewModel Create();
+    Task<IDeviceFormViewModel> Create();
     IDeviceFormViewModel Create(Device device);
 }

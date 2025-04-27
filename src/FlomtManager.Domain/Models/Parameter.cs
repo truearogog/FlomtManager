@@ -18,6 +18,7 @@ public readonly record struct Parameter(
     string Unit,
     string Color,
 
+    bool IsEnabled,
     bool IsAxisVisibleOnChart,
     bool IsAutoScaledOnChart,
     double ZoomLevelOnChart);

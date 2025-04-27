@@ -18,6 +18,7 @@ internal sealed class DataTableViewModel(
     IParameterViewModelFactory parameterViewModelFactory) : ViewModel, IDataTableViewModel
 {
     public event EventHandler OnDataUpdated;
+    public event EventHandler<(int Min, int Max)> OnCurrentDisplaySpanChanged;
 
     private ObservableCollection<StringValueCollection> _data;
     public ObservableCollection<StringValueCollection> Data
@@ -75,13 +76,13 @@ internal sealed class DataTableViewModel(
             IsAxisVisibleOnChart = false,
             IsAutoScaledOnChart = true,
             ZoomLevelOnChart = 0,
-        }, false);
+        });
 
         Parameters.Clear();
         var parameters = await parameterRepository.GetHourArchiveParametersByDeviceId(Device.Id);
         foreach (var parameter in parameters)
         {
-            var viewModel = parameterViewModelFactory.Create(parameter, false);
+            var viewModel = parameterViewModelFactory.Create(parameter);
             Parameters.Add(viewModel);
         }
     }
@@ -157,5 +158,10 @@ internal sealed class DataTableViewModel(
         Data = new(data.OrderByDescending(x => x.DateTime));
         ParameterPositions = parameterPositions;
         OnDataUpdated?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void UpdateCurrentDisplaySpan(int min, int max)
+    {
+        OnCurrentDisplaySpanChanged?.Invoke(this, (min, max));
     }
 }

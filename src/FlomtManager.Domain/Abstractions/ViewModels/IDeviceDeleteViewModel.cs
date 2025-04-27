@@ -11,7 +11,7 @@ public interface IDeviceDeleteViewModel : IViewModel
     bool CanDelete { get; }
     int CanDeleteCount { get; }
 
-    void SetDevice(Device device);
+    void Activate(Device device);
     void RequestClose();
     void DeleteDevice();
 }

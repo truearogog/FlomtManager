@@ -12,11 +12,11 @@ using Serilog;
 
 namespace FlomtManager.Application.ViewModels;
 
-internal sealed class DeviceCreateUpdateViewModel : ViewModel, IDeviceCreateUpdateViewModel
+internal sealed class DeviceCreateUpdateViewModel(
+    IDeviceRepository deviceRepository,
+    IDeviceStore deviceStore,
+    IDeviceFormViewModelFactory formViewModelFactory) : ViewModel, IDeviceCreateUpdateViewModel
 {
-    private readonly IDeviceRepository _deviceRepository;
-    private readonly IDeviceStore _deviceStore;
-    private readonly IDeviceFormViewModelFactory _formViewModelFactory;
     private readonly ILogger _logger = Log.ForContext<DeviceCreateUpdateViewModel>();
 
     public event EventHandler CloseRequested;
@@ -37,24 +37,16 @@ internal sealed class DeviceCreateUpdateViewModel : ViewModel, IDeviceCreateUpda
     public ObservableCollection<int> DataBits { get; set; } = [5, 6, 7, 8];
     public ObservableCollection<StopBits> StopBits { get; set; } = new(Enum.GetValues<StopBits>());
 
-    public DeviceCreateUpdateViewModel(
-        IDeviceRepository deviceRepository,
-        IDeviceStore deviceStore,
-        IDeviceFormViewModelFactory formViewModelFactory)
+    public async Task ActivateCreate()
     {
-        _deviceRepository = deviceRepository;
-        _deviceStore = deviceStore;
-        _formViewModelFactory = formViewModelFactory;
-
-        Form = _formViewModelFactory.Create();
-
+        Form = await formViewModelFactory.Create();
         RefreshPortNames();
     }
 
-    public void SetDevice(Device device)
+    public void ActivateUpdate(Device device)
     {
-        Form = _formViewModelFactory.Create(device);
-        PortNames = [Form.PortName];
+        Form = formViewModelFactory.Create(device);
+        RefreshPortNames();
     }
 
     public void RefreshPortNames()
@@ -89,9 +81,9 @@ internal sealed class DeviceCreateUpdateViewModel : ViewModel, IDeviceCreateUpda
         try
         {
             var device = Form.GetDevice();
-            var id = await _deviceRepository.Create(device);
+            var id = await deviceRepository.Create(device);
             device = device with { Id = id };
-            _deviceStore.Add(device);
+            deviceStore.Add(device);
 
             RequestClose();
         }
@@ -113,8 +105,8 @@ internal sealed class DeviceCreateUpdateViewModel : ViewModel, IDeviceCreateUpda
         try
         {
             var device = Form.GetDevice();
-            await _deviceRepository.Update(device);
-            _deviceStore.Update(device);
+            await deviceRepository.Update(device);
+            deviceStore.Update(device);
 
             RequestClose();
         }

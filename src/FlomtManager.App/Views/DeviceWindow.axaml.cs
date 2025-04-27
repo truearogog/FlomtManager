@@ -72,7 +72,7 @@ namespace FlomtManager.App.Views
         private async void viewModel_DeviceUpdateRequested(object sender, Device device)
         {
             var viewModel = App.Services.GetRequiredService<IDeviceCreateUpdateViewModel>();
-            viewModel.SetDevice(device);
+            viewModel.ActivateUpdate(device);
 
             var window = new DeviceCreateUpdateWindow
             {

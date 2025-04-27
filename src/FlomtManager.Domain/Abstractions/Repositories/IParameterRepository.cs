@@ -6,6 +6,7 @@ namespace FlomtManager.Domain.Abstractions.Repositories
     {
         Task<int> Create(Parameter parameter);
         Task Create(IEnumerable<Parameter> parameters);
+        Task UpdateIsEnabled(int id, bool isEnabled);
         Task UpdateIsAxisVisibleOnChart(int id, bool isAxisVisibleOnChart);
         Task UpdateIsAutoScaledOnChart(int id, bool isAutoScaledOnChart);
         Task UpdateZoomLevelOnChart(int id, double zoomLevelOnChart);

@@ -13,6 +13,7 @@ public readonly record struct Device(
 
     ConnectionType ConnectionType,
     byte SlaveId,
+    bool DataReadEnabled,
     long DataReadIntervalTicks,
 
     string PortName,

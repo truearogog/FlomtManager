@@ -26,6 +26,18 @@ public sealed class DeviceRepository(IDbConnectionFactory connectionFactory, IDa
         return await connection.GetDeviceById(id);
     }
 
+    public async Task<Device> GetLastCreated()
+    {
+        await using var connection = connectionFactory.CreateConnection();
+        return await connection.GetLastCreatedDevice();
+    }
+
+    public async Task<Device> GetLastCreatedExcept(int id)
+    {
+        await using var connection = connectionFactory.CreateConnection();
+        return await connection.GetLastCreatedDeviceExcept(id);
+    }
+
     public async Task<int> Create(Device device)
     {
         var now = dateTimeProvider.Now;

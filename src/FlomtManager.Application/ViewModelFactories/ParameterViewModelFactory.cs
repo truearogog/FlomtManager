@@ -10,11 +10,11 @@ namespace FlomtManager.Application.ViewModelFactories;
 
 internal sealed class ParameterViewModelFactory(IServiceProvider serviceProvider) : IParameterViewModelFactory
 {
-    public IParameterViewModel Create(Parameter parameter, bool editable)
+    public IParameterViewModel Create(Parameter parameter, bool editable = false, bool toggleable = false)
     {
         var parameterStore = serviceProvider.GetRequiredService<IParameterStore>();
         var parameterRepository = serviceProvider.GetRequiredService<IParameterRepository>();
 
-        return new ParameterViewModel(parameter, editable, parameterStore, parameterRepository);
+        return new ParameterViewModel(parameterStore, parameterRepository, parameter, editable, toggleable);
     }
 }

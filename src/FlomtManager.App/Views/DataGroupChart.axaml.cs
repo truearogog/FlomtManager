@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -61,7 +60,6 @@ namespace FlomtManager.App.Views
             {
                 viewModel.OnParameterUpdated += _OnParameterUpdated;
                 viewModel.OnDataUpdated += _OnDataUpdated;
-                viewModel.OnParameterToggled += _OnParameterToggled;
 
                 Task.Run(viewModel.UpdateData);
                 _viewModel = viewModel;
@@ -74,8 +72,8 @@ namespace FlomtManager.App.Views
 
             if (DataContext is IDataChartViewModel viewModel)
             {
+                viewModel.OnParameterUpdated -= _OnParameterUpdated;
                 viewModel.OnDataUpdated -= _OnDataUpdated;
-                viewModel.OnParameterToggled -= _OnParameterToggled;
 
                 _viewModel = null;
             }
@@ -90,7 +88,9 @@ namespace FlomtManager.App.Views
                 chart.Color = color;
                 (chart.Axes.YAxis as LeftAxis)?.Color(color);
                 chart.Axes.YAxis.Label.Text = $"{e.Name}, {e.Unit}";
-                chart.Axes.YAxis.IsVisible = e.IsAxisVisibleOnChart && info.Chart.IsVisible;
+
+                chart.IsVisible = e.IsEnabled;
+                chart.Axes.YAxis.IsVisible = e.IsEnabled && e.IsAxisVisibleOnChart;
 
                 if (e.IsAutoScaledOnChart)
                 {
@@ -127,19 +127,19 @@ namespace FlomtManager.App.Views
             foreach (var parameter in _viewModel.VisibleParameters)
             {
                 SignalXY signal;
-                var data = _viewModel.DataCollections[parameter.Number];
+                var dataCollection = _viewModel.DataCollections[parameter.Number];
                 double min, max;
-                if (data is DataCollection<float> floatDataCollection)
+                if (dataCollection is DataCollection<float> floatDataCollection)
                 {
                     signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, floatDataCollection.Values);
                     (min, max) = MathHelper.GetMinMax<float>(floatDataCollection.Values);
                 }
-                else if (data is DataCollection<uint> uintDataCollection)
+                else if (dataCollection is DataCollection<uint> uintDataCollection)
                 {
                     signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, uintDataCollection.Values);
                     (min, max) = MathHelper.GetMinMax<uint>(uintDataCollection.Values);
                 }
-                else if (data is DataCollection<ushort> ushortDataCollection)
+                else if (dataCollection is DataCollection<ushort> ushortDataCollection)
                 {
                     signal = Chart.Plot.Add.SignalXY(_viewModel.DateTimes, ushortDataCollection.Values);
                     (min, max) = MathHelper.GetMinMax<ushort>(ushortDataCollection.Values);
@@ -152,7 +152,7 @@ namespace FlomtManager.App.Views
                 var yAxis = Chart.Plot.Axes.AddLeftAxis();
                 yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
                 yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
-                yAxis.IsVisible = parameter.IsAxisVisibleOnChart;
+                yAxis.IsVisible = parameter.IsEnabled && parameter.IsAxisVisibleOnChart;
                 signal.Axes.YAxis = yAxis;
 
                 var info = new ChartInfo
@@ -173,17 +173,6 @@ namespace FlomtManager.App.Views
 
             Chart.Plot.Axes.SetLimitsX(_minX - 1, _maxX + 1);
             Chart.Refresh();
-        }
-
-        private void _OnParameterToggled(object sender, byte parameterNumber)
-        {
-            if (_chartInfos.TryGetValue(parameterNumber, out var chartInfo))
-            {
-                var chart = chartInfo.Chart;
-                chart.IsVisible = !chart.IsVisible;
-                chart.Axes.YAxis!.IsVisible = chartInfo.Parameter.IsAxisVisibleOnChart && chart.IsVisible;
-                Chart.Refresh();
-            }
         }
 
         private void Chart_PointerPressed(object sender, PointerPressedEventArgs e)
@@ -239,6 +228,7 @@ namespace FlomtManager.App.Views
                     {
                         Chart.Plot.Remove(_selectionSpan);
                         _selectionSpan = null;
+                        _viewModel.IntegrationSpanActive = false;
                     }
                 }
             }
@@ -265,8 +255,8 @@ namespace FlomtManager.App.Views
 
                 if (_viewModel != null && _selectionSpan != null)
                 {
-                    _viewModel.IntegrationSpanMinDate = _selectionSpan.XRange.Min;
-                    _viewModel.IntegrationSpanMaxDate = _selectionSpan.XRange.Max;
+                    _viewModel.IntegrationSpanActive = true;
+                    _viewModel.UpdateIntegration(_selectionSpan.XRange.Min, _selectionSpan.XRange.Max);
                 }
             }
             else
@@ -371,6 +361,8 @@ namespace FlomtManager.App.Views
             Pixel mouseNow = new(_lockX ? drag.From.X : drag.To.X, _lockY ? drag.From.Y : drag.To.Y);
             control.Plot.MousePan(drag.InitialLimits, drag.From, mouseNow);
             control.Refresh();
+
+            _viewModel?.UpdateCurrentDisplaySpanDates(Chart.Plot.Axes.Bottom.Min, Chart.Plot.Axes.Bottom.Max);
         }
 
         public void ZoomIn(IPlotControl control, Pixel pixel, LockedAxes locked) => Zoom(ZoomInFactor, control, pixel);
@@ -393,6 +385,8 @@ namespace FlomtManager.App.Views
             }
 
             control.Refresh();
+
+            _viewModel?.UpdateCurrentDisplaySpanDates(Chart.Plot.Axes.Bottom.Min, Chart.Plot.Axes.Bottom.Max);
         }
 
         private AxisSpanUnderMouse GetSpanUnderMouse(float x, float y)
