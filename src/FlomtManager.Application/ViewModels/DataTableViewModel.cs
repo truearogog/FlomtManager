@@ -155,7 +155,7 @@ internal sealed class DataTableViewModel(
             data[i] = collection;
         }
 
-        Data = new(data.OrderByDescending(x => x.DateTime));
+        Data = new(data.OrderBy(x => x.DateTime));
         ParameterPositions = parameterPositions;
         OnDataUpdated?.Invoke(this, EventArgs.Empty);
     }

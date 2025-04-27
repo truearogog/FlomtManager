@@ -15,6 +15,7 @@ internal sealed class DeviceFormViewModelFactory(IDeviceRepository repository) :
         {
             return new DeviceFormViewModel
             {
+                ConnectionType = lastDevice.ConnectionType,
                 PortName = lastDevice.PortName,
                 BaudRate = lastDevice.BaudRate,
                 Parity = lastDevice.Parity,

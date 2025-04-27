@@ -64,8 +64,10 @@ namespace FlomtManager.App.Views
             {
                 if (this.FindControl<ListBox>("DataGrid") is { } dataGrid)
                 {
-                    dataGrid.SelectedIndex = 0;
-                    dataGrid.SelectedIndex = Math.Clamp(0, dataGrid.ItemCount - e.Min - 1, dataGrid.ItemCount - 1);
+                    dataGrid.IsVisible = false;
+                    dataGrid.SelectedIndex = dataGrid.ItemCount - 1;
+                    dataGrid.SelectedIndex = Math.Clamp(0, e.Min, dataGrid.ItemCount - 1);
+                    dataGrid.IsVisible = true;
                 }
             });
         }
