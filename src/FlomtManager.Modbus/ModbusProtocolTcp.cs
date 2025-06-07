@@ -11,7 +11,10 @@ namespace FlomtManager.Modbus
 
         public override async ValueTask DisposeAsync()
         {
-            await CloseAsync();
+            if (IsOpen)
+            {
+                await CloseAsync();
+            }
             GC.SuppressFinalize(this);
         }
 

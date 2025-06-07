@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -150,6 +151,7 @@ namespace FlomtManager.App.Views
                 signal.LineWidth = 2.5f;
 
                 var yAxis = Chart.Plot.Axes.AddLeftAxis();
+
                 yAxis.Label.Text = $"{parameter.Name}, {parameter.Unit}";
                 yAxis.Color(Color.FromSKColor(SKColor.Parse(parameter.Color)));
                 yAxis.IsVisible = parameter.IsEnabled && parameter.IsAxisVisibleOnChart;
@@ -163,13 +165,18 @@ namespace FlomtManager.App.Views
                     MaxY = max,
                 };
 
-                info.SetYZoom(_yAxisZoom);
-
                 _chartInfos[parameter.Number] = info;
             }
 
             _minX = _viewModel.DateTimes.First();
             _maxX = _viewModel.DateTimes.Last();
+
+            var maxRatios = _chartInfos.Values.Select(x => x.MinY / x.MaxY).Min();
+            foreach (var (number, info) in _chartInfos)
+            {
+                info.MinY = info.MaxY * maxRatios;
+                info.SetYZoom(_yAxisZoom);
+            }
 
             Chart.Plot.Axes.SetLimitsX(_minX - 1, _maxX + 1);
             Chart.Refresh();
@@ -439,7 +446,7 @@ namespace FlomtManager.App.Views
         {
             public SignalXY Chart { get; init; }
             public Parameter Parameter { get; set; }
-            public double MinY { get; init; }
+            public double MinY { get; set; }
             public double MaxY { get; init; }
             public double Range => MaxY - MinY;
 
@@ -447,7 +454,7 @@ namespace FlomtManager.App.Views
             {
                 var margin = Range * ChartMarginMultiplier / zoom;
 
-                Chart.Axes.YAxis.Min = MinY - margin;
+                Chart.Axes.YAxis.Min = MinY / zoom - margin;
                 Chart.Axes.YAxis.Max = MaxY / zoom + margin;
             }
         }

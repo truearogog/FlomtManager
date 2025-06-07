@@ -194,7 +194,6 @@ internal sealed class DeviceConnection(
         }
     }
 
-
     private readonly SemaphoreSlim _hourArchiveReadSemaphore = new(1, 1);
     private async void _hourArchiveReadTimer_Elapsed(object sender, ElapsedEventArgs e) => await ReadHourArchive();
     private async Task ReadHourArchive()
@@ -230,7 +229,7 @@ internal sealed class DeviceConnection(
             var lineCount = _deviceDefinition.AveragePerHourBlockLineCount;
             if (_deviceDefinition.LastArchiveRead is not null)
             {
-                if (readStartTime.Hour == _deviceDefinition.LastArchiveRead.Value.Hour)
+                if (readStartTime.Date == _deviceDefinition.LastArchiveRead.Value.Date && readStartTime.Hour == _deviceDefinition.LastArchiveRead.Value.Hour)
                 {
                     lineCount = 0;
                 }
