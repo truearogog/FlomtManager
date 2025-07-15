@@ -47,11 +47,17 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         set => this.RaiseAndSetIfChanged(ref _isEditable, value);
     }
 
-    private DeviceViewMode _archiveDisplayMode = DeviceViewMode.Chart;
+    private int _currentDeviceViewMode = 0;
+    private readonly DeviceViewMode[] _deviceViewModes = [
+        DeviceViewMode.Chart,
+        DeviceViewMode.Table,
+    ];
+
+    private DeviceViewMode _deviceViewMode = DeviceViewMode.Chart;
     public DeviceViewMode DeviceViewMode
     {
-        get => _archiveDisplayMode;
-        set => this.RaiseAndSetIfChanged(ref _archiveDisplayMode, value);
+        get => _deviceViewMode;
+        set => this.RaiseAndSetIfChanged(ref _deviceViewMode, value);
     }
 
     public ObservableCollection<IParameterViewModel> CurrentParameters { get; set; } = [];
@@ -103,17 +109,17 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
     public IDataIntegrationViewModel DataIntegration { get; set; }
 
     public DeviceViewModel(
-            IDateTimeProvider dateTimeProvider,
-            IDeviceStore deviceStore,
-            IDeviceIsEditableStore deviceIsEditableStore,
-            IDeviceConnectionFactory deviceConnectionFactory,
-            IFileDataImporterFactory fileDataImporterFactory,
-            IParameterViewModelFactory parameterViewModelFactory,
-            IDeviceRepository deviceRepository,
-            IParameterRepository parameterRepository,
-            IDataChartViewModel dataChart,
-            IDataTableViewModel dataTable,
-            IDataIntegrationViewModel dataIntegration)
+        IDateTimeProvider dateTimeProvider,
+        IDeviceStore deviceStore,
+        IDeviceIsEditableStore deviceIsEditableStore,
+        IDeviceConnectionFactory deviceConnectionFactory,
+        IFileDataImporterFactory fileDataImporterFactory,
+        IParameterViewModelFactory parameterViewModelFactory,
+        IDeviceRepository deviceRepository,
+        IParameterRepository parameterRepository,
+        IDataChartViewModel dataChart,
+        IDataTableViewModel dataTable,
+        IDataIntegrationViewModel dataIntegration)
     {
         _dateTimeProvider = dateTimeProvider;
         _deviceStore = deviceStore;
@@ -154,9 +160,9 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
             return;
         }
 
-        var realTimeValuesJson = await _deviceRepository.GetRealTimeValues(Device.Id);
-        var integralValues = string.IsNullOrEmpty(realTimeValuesJson) ? [] : JsonSerializer.Deserialize<Dictionary<byte, string>>(realTimeValuesJson.Split('|')[0]);
-        var currentValues = string.IsNullOrEmpty(realTimeValuesJson) ? [] : JsonSerializer.Deserialize<Dictionary<byte, string>>(realTimeValuesJson.Split('|')[1]);
+        var displayData = await _deviceRepository.GetDisplayData(Device.Id);
+        var integralValues = displayData.IntegralParameters ?? [];
+        var currentValues = displayData.CurrentParameters ?? [];
 
         CurrentParameters.Clear();
         var currentParameters = await _parameterRepository.GetCurrentParametersByDeviceId(Device.Id);
@@ -188,9 +194,12 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         DeviceUpdateRequested?.Invoke(this, device);
     }
 
-    public void SetDataDisplayMode(DeviceViewMode mode)
+    public void CycleDeviceViewMode()
     {
-        if (DeviceViewMode == DeviceViewMode.Chart && mode == DeviceViewMode.Table)
+        _currentDeviceViewMode = (_currentDeviceViewMode + 1) % _deviceViewModes.Length;
+        var deviceViewMode = _deviceViewModes[_currentDeviceViewMode];
+
+        if (DeviceViewMode == DeviceViewMode.Chart && deviceViewMode == DeviceViewMode.Table)
         {
             if (DataChart.IntegrationSpanActive)
             {
@@ -202,7 +211,7 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
             }
         }
 
-        DeviceViewMode = mode;
+        DeviceViewMode = deviceViewMode;
     }
 
     public async Task TryConnect()
@@ -360,19 +369,25 @@ internal sealed class DeviceViewModel : ViewModel, IDeviceViewModel
         }
     }
 
-    public async Task SaveRealtimeParameters()
+    public async Task SaveDisplayData()
     {
         if (Device == default)
         {
             return;
         }
 
-        var json = 
-            JsonSerializer.Serialize(IntegralParameters.ToDictionary(x => x.Parameter.Number, x => x.Value)) +
-            "|" +
-            JsonSerializer.Serialize(CurrentParameters.ToDictionary(x => x.Parameter.Number, x => x.Value));
+        var data = new DeviceDisplayData
+        {
+            IntegralParameters = IntegralParameters.ToDictionary(x => x.Parameter.Number, x => x.Value),
+            CurrentParameters = CurrentParameters.ToDictionary(x => x.Parameter.Number, x => x.Value),
+            IntegrationStart = DataChart.IntegrationSpanMinDate,
+            IntegrationEnd = DataChart.IntegrationSpanMaxDate,
+            MinX = DataChart.CurrentDisplaySpanMinDate,
+            MaxX = DataChart.CurrentDisplaySpanMaxDate,
+            YAxisZoom = DataChart.YAxisZoom
+        };
 
-        await _deviceRepository.SetRealTimeValues(Device.Id, json);
+        await _deviceRepository.SetDisplayData(Device.Id, data);
     }
 
 

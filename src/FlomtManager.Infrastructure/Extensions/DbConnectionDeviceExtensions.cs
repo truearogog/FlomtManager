@@ -216,21 +216,21 @@ internal static class DbConnectionDeviceExtensions
             """, new { DeviceId = deviceId, Time = time });
     }
 
-    public static async Task SetRealTimeValues(this DbConnection connection, int deviceId, string values)
+    public static async Task SetDeviceDisplayData(this DbConnection connection, int deviceId, string json)
     {
         await connection.QueryFirstOrDefaultAsync<string>("""
-            INSERT OR REPLACE INTO DeviceRealTimeValues 
-                (DeviceId, RealTimeValues) 
+            INSERT OR REPLACE INTO DeviceDisplayData 
+                (DeviceId, Data) 
             VALUES
-                (@DeviceId, @Values);
-            """, new { DeviceId = deviceId, Values = values });
+                (@DeviceId, @Data);
+            """, new { DeviceId = deviceId, Data = json });
     }
 
-    public static async Task<string> GetRealTimeValues(this DbConnection connection, int deviceId)
+    public static async Task<string> GetDisplayData(this DbConnection connection, int deviceId)
     {
         return await connection.QueryFirstOrDefaultAsync<string>("""
-            SELECT RealTimeValues 
-            FROM DeviceRealTimeValues 
+            SELECT Data
+            FROM DeviceDisplayData 
             WHERE DeviceId = @DeviceId;
             """, new { DeviceId = deviceId });
     }

@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Data;
-using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 
 namespace FlomtManager.App.Controls;
@@ -32,8 +31,33 @@ public partial class ColorPaletteButton : UserControl
             (o, v) => o.ColorPalette = v);
 
     private Color _selectedColor;
+    public Color SelectedColor
+    {
+        get => _selectedColor;
+        set => SetAndRaise(SelectedColorProperty, ref _selectedColor, value);
+    }
+
     private object _buttonContent;
+    public object ButtonContent
+    {
+        get => _buttonContent;
+        set
+        {
+            SetAndRaise(ButtonContentProperty, ref _buttonContent, value);
+            _button.Content = value;
+        }
+    }
+
     private IColorPalette _colorPalette;
+    public IColorPalette ColorPalette
+    {
+        get => _colorPalette;
+        set
+        {
+            SetAndRaise(ColorPaletteProperty, ref _colorPalette, value);
+            UpdateColorItems();
+        }
+    }
 
     public ColorPaletteButton()
     {
@@ -48,37 +72,6 @@ public partial class ColorPaletteButton : UserControl
         _button.Flyout = _flyout;
 
         UpdateColorItems();
-    }
-
-    public Color SelectedColor
-    {
-        get => _selectedColor;
-        set => SetAndRaise(SelectedColorProperty, ref _selectedColor, value);
-    }
-
-    public object ButtonContent
-    {
-        get => _buttonContent;
-        set
-        {
-            SetAndRaise(ButtonContentProperty, ref _buttonContent, value);
-            _button.Content = value;
-        }
-    }
-
-    public IColorPalette ColorPalette
-    {
-        get => _colorPalette;
-        set
-        {
-            SetAndRaise(ColorPaletteProperty, ref _colorPalette, value);
-            UpdateColorItems();
-        }
-    }
-
-    private void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

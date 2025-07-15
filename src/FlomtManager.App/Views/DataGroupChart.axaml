@@ -34,14 +34,14 @@
 						<Style Selector="^.Enabled">
 							<Setter Property="Background" Value="{Binding Parameter.Color}" />
 							<Style Selector="^:pointerover">
-								<Setter Property="Background" Value="{Binding Parameter.Color, Converter={StaticResource ColorAddLightnessConverter}, ConverterParameter='5'}" />
+								<Setter Property="Background" Value="{Binding Parameter.Color}" />
 							</Style>
 						</Style>
 
 						<Style Selector="^Button.Enabled /template/ ContentPresenter#PART_ContentPresenter">
 							<Setter Property="Background" Value="{Binding Parameter.Color}" />
 							<Style Selector="^:pointerover">
-								<Setter Property="Background" Value="{Binding Parameter.Color, Converter={StaticResource ColorAddLightnessConverter}, ConverterParameter='5'}" />
+								<Setter Property="Background" Value="{Binding Parameter.Color}" />
 							</Style>
 						</Style>
 					</Style>

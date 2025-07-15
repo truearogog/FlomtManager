@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.IO.Ports;
-using FlomtManager.Core.Constants;
-using FlomtManager.Core.Enums;
 using ReactiveUI;
 
 namespace FlomtManager.MemoryReader.ViewModels

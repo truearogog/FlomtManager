@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -115,6 +114,7 @@ namespace FlomtManager.App.Views
             // clean charts
             foreach (var chartInfo in _chartInfos.Values)
             {
+                Chart.Plot.Axes.Remove(chartInfo.Chart.Axes.YAxis);
                 Chart.Plot.Remove(chartInfo.Chart);
                 _chartInfos.Remove(chartInfo.Parameter.Number);
             }
@@ -169,7 +169,24 @@ namespace FlomtManager.App.Views
             }
 
             _minX = _viewModel.DateTimes.First();
-            _maxX = _viewModel.DateTimes.Last();
+            _maxX = _viewModel.DateTimes.Last(); 
+            if (_viewModel.YAxisZoom != default)
+            {
+                _yAxisZoom = _viewModel.YAxisZoom;
+            }
+
+            if (_viewModel.IntegrationSpanMinDate != default && _viewModel.IntegrationSpanMaxDate != default)
+            {
+                _selectionSpan = Chart.Plot.Add.HorizontalSpan(_viewModel.IntegrationSpanMinDate, _viewModel.IntegrationSpanMaxDate);
+                var lineColor = Color.FromSKColor(Avalonia.Media.Colors.Red.ToSKColor()).WithAlpha(0.7);
+                var fillColor = lineColor.WithAlpha(0.1);
+                _selectionSpan.LineStyle.Color = lineColor;
+                _selectionSpan.FillStyle.Color = fillColor;
+                _selectionSpan.IsDraggable = true;
+                _selectionSpan.IsResizable = true;
+                _viewModel.IntegrationSpanActive = true;
+                _viewModel.UpdateIntegration(_selectionSpan.XRange.Min, _selectionSpan.XRange.Max);
+            }
 
             var maxRatios = _chartInfos.Values.Select(x => x.MinY / x.MaxY).Min();
             foreach (var (number, info) in _chartInfos)
@@ -178,7 +195,9 @@ namespace FlomtManager.App.Views
                 info.SetYZoom(_yAxisZoom);
             }
 
-            Chart.Plot.Axes.SetLimitsX(_minX - 1, _maxX + 1);
+            Chart.Plot.Axes.SetLimitsX(
+                (_viewModel.CurrentDisplaySpanMinDate == default ? _minX : _viewModel.CurrentDisplaySpanMinDate) - 1,
+                (_viewModel.CurrentDisplaySpanMaxDate == default ? _maxX : _viewModel.CurrentDisplaySpanMaxDate) + 1);
             Chart.Refresh();
         }
 
@@ -378,8 +397,11 @@ namespace FlomtManager.App.Views
 
         private void Zoom(double frac, IPlotControl control, Pixel pixel)
         {
-            var fracX = _lockX ? 1 : frac;
-            control.Plot.MouseZoom(fracX, 1, pixel);
+            if (!_lockX)
+            {
+                control.Plot.MouseZoom(frac, 1, pixel);
+                _viewModel?.UpdateCurrentDisplaySpanDates(Chart.Plot.Axes.Bottom.Min, Chart.Plot.Axes.Bottom.Max);
+            }
 
             if (!_lockY)
             {
@@ -389,11 +411,10 @@ namespace FlomtManager.App.Views
                 {
                     info.SetYZoom(_yAxisZoom);
                 }
+                _viewModel?.UpdateCurrentYAxisZoom(_yAxisZoom);
             }
-
+            
             control.Refresh();
-
-            _viewModel?.UpdateCurrentDisplaySpanDates(Chart.Plot.Axes.Bottom.Min, Chart.Plot.Axes.Bottom.Max);
         }
 
         private AxisSpanUnderMouse GetSpanUnderMouse(float x, float y)

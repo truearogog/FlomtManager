@@ -8,6 +8,8 @@ namespace FlomtManager.Infrastructure.Data.Migrations;
 
 internal sealed class Initial : Migration
 {
+    public override string Name => nameof(Initial);
+
     protected override async Task Up(DbConnection connection, IDbTransaction transaction)
     {
         await connection.ExecuteAsync($"""
@@ -36,9 +38,11 @@ internal sealed class Initial : Migration
             """, transaction);
 
         await connection.ExecuteAsync($"""
-            CREATE TABLE IF NOT EXISTS DeviceRealTimeValues (
+            CREATE TABLE IF NOT EXISTS DeviceDisplayData (
                 DeviceId {SqlTypes.Int} PRIMARY KEY,
-                RealTimeValues TEXT NOT NULL
+                Data TEXT NOT NULL,
+
+                FOREIGN KEY (DeviceId) REFERENCES Devices(Id) ON DELETE CASCADE
             );
             """, transaction);
 
@@ -145,6 +149,8 @@ internal sealed class Initial : Migration
         await connection.ExecuteAsync("DROP TABLE IF EXISTS Parameters;", transaction);
 
         await connection.ExecuteAsync("DROP TABLE IF EXISTS DeviceDefinitions;", transaction);
+
+        await connection.ExecuteAsync("DROP TABLE IF EXISTS DeviceDisplayData;", transaction);
 
         if ((await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Devices';", transaction)) != 0)
         {

@@ -2,7 +2,6 @@
 using System.Collections.Immutable;
 using System.Text;
 using System.Timers;
-using System.Xml.Linq;
 using FlomtManager.Domain.Abstractions.DeviceConnection;
 using FlomtManager.Domain.Abstractions.DeviceConnection.Events;
 using FlomtManager.Domain.Abstractions.Parsers;
@@ -82,6 +81,7 @@ internal sealed class DeviceConnection(
 
                 var palette = new VibrantSKColorPalette();
 
+                // todo: move to constants
                 var knownParameterNameColors = new Dictionary<string, SKColor>
                 {
                     ["P"] = palette.GetColor(0, 3),

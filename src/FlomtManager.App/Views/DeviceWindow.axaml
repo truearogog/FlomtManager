@@ -23,7 +23,7 @@
 						<ColumnDefinition Width="*" />
 						<ColumnDefinition Width="auto" />
 					</Grid.ColumnDefinitions>
-					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
+					<TextBlock Grid.Column="0" Foreground="{DynamicResource SemiAmber7}" FontWeight="SemiBold" Text="{Binding Parameter.Name}" />
 					<TextBlock Grid.Column="1" Margin="4,0" Text="{Binding Value, TargetNullValue='-'}" />
 					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />
 				</Grid>
@@ -60,54 +60,35 @@
 					</StackPanel>
 				</Button>
 
-				<Border Classes="Shadow" Theme="{StaticResource CardBorder}" Padding="4">
-					<StackPanel Orientation="Horizontal" Spacing="4">
-						<StackPanel.Styles>
-							<Style Selector="RadioButton">
-								<Setter Property="MinWidth" Value="180" />
-								<Setter Property="Padding" Value="8,4" />
-								<Setter Property="Theme" Value="{DynamicResource PureCardRadioButton}" />
-							</Style>
-						</StackPanel.Styles>
-						<RadioButton 
-							IsChecked="{Binding DeviceViewMode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static domainEnums:DeviceViewMode.Chart}}"
-							Command="{Binding SetDataDisplayMode}"
-							CommandParameter="{x:Static domainEnums:DeviceViewMode.Chart}">
-							<StackPanel Orientation="Horizontal" Spacing="4">
-								<PathIcon
-									Theme="{DynamicResource InnerPathIcon}"
-									HorizontalAlignment="Center"
-									Data="{DynamicResource SemiIconHistogram}" />
-								<TextBlock Text="Chart" />
-							</StackPanel>
-						</RadioButton>
-						<RadioButton
-							IsChecked="{Binding DeviceViewMode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static domainEnums:DeviceViewMode.Table}}"
-							Theme="{DynamicResource PureCardRadioButton}"
-							Command="{Binding SetDataDisplayMode}"
-							CommandParameter="{x:Static domainEnums:DeviceViewMode.Table}">
-							<StackPanel Orientation="Horizontal" Spacing="4">
-								<PathIcon
-									Theme="{DynamicResource InnerPathIcon}"
-									HorizontalAlignment="Center"
-									Data="{DynamicResource SemiIconGridSquare}" />
-								<TextBlock Text="Table" />
-							</StackPanel>
-						</RadioButton>
-						<!--<RadioButton
-							IsChecked="{Binding DeviceViewMode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static domainEnums:DeviceViewMode.CurrentParameters}}"
-							Command="{Binding SetDataDisplayMode}"
-							CommandParameter="{x:Static domainEnums:DeviceViewMode.CurrentParameters}">
-							<StackPanel Orientation="Horizontal" Spacing="4">
-								<PathIcon
-									Theme="{DynamicResource InnerPathIcon}"
-									HorizontalAlignment="Center"
-									Data="{DynamicResource SemiIconActivity}" />
-								<TextBlock Text="Current Parameters" />
-							</StackPanel>
-						</RadioButton>-->
-					</StackPanel>
-				</Border>
+				<Panel>
+					<Button
+						Classes="Primary"
+						Theme="{DynamicResource BorderlessButton}"
+						IsVisible="{Binding DeviceViewMode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static domainEnums:DeviceViewMode.Chart}}"
+						Command="{Binding CycleDeviceViewMode}">
+						<StackPanel Orientation="Horizontal" Spacing="4">
+							<PathIcon
+								Theme="{DynamicResource InnerPathIcon}"
+								HorizontalAlignment="Center"
+								Data="{DynamicResource SemiIconHistogram}" />
+							<TextBlock Text="Chart" />
+						</StackPanel>
+					</Button>
+
+					<Button
+						Classes="Primary"
+						Theme="{DynamicResource BorderlessButton}"
+						IsVisible="{Binding DeviceViewMode, Converter={StaticResource EqualsConverter}, ConverterParameter={x:Static domainEnums:DeviceViewMode.Table}}"
+						Command="{Binding CycleDeviceViewMode}">
+						<StackPanel Orientation="Horizontal" Spacing="4">
+							<PathIcon
+								Theme="{DynamicResource InnerPathIcon}"
+								HorizontalAlignment="Center"
+								Data="{DynamicResource SemiIconGridSquare}" />
+							<TextBlock Text="Table" />
+						</StackPanel>
+					</Button>
+				</Panel>
 			</StackPanel>
 		</Border>
 		

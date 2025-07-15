@@ -37,6 +37,10 @@
 				<TextBlock Classes="Tertiary" Text="Integration end time" />
 				<SelectableTextBlock Text="{Binding IntegrationEnd, TargetNullValue='-'}" />
 			</StackPanel>
+			<StackPanel>
+				<TextBlock Classes="Tertiary" Text="Integration span" />
+				<SelectableTextBlock Text="{Binding IntegrationSpan, TargetNullValue='-'}" />
+			</StackPanel>
 			<ItemsControl ItemsSource="{Binding Parameters}" Grid.IsSharedSizeScope="True">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>

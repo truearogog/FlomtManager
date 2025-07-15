@@ -9,6 +9,7 @@ public interface IDataIntegrationViewModel
     Device Device { get; set; }
     DateTime? IntegrationStart { get; set; }
     DateTime? IntegrationEnd { get; set; }
+    string IntegrationSpan { get; }
     ObservableCollection<IParameterViewModel> Parameters { get; set; }
 
     Task SetDevice(Device device);

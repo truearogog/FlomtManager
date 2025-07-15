@@ -1,10 +1,11 @@
-﻿using FlomtManager.Domain.Abstractions.Repositories;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
+using FlomtManager.Domain.Abstractions.Repositories;
+using FlomtManager.Domain.Abstractions.ViewModelFactories;
 using FlomtManager.Domain.Abstractions.ViewModels;
 using FlomtManager.Domain.Abstractions.ViewModels.Events;
 using FlomtManager.Domain.Models;
+using Humanizer;
 using ReactiveUI;
-using FlomtManager.Domain.Abstractions.ViewModelFactories;
 
 namespace FlomtManager.Application.ViewModels;
 
@@ -36,6 +37,13 @@ internal sealed class DataIntegrationViewModel(
         set => this.RaiseAndSetIfChanged(ref _integrationEnd, value);
     }
 
+    private string _integrationSpan = null;
+    public string IntegrationSpan
+    {
+        get => _integrationSpan;
+        private set => this.RaiseAndSetIfChanged(ref _integrationSpan, value);
+    }
+
     public ObservableCollection<IParameterViewModel> Parameters { get; set; } = [];
 
     public async Task SetDevice(Device device)
@@ -65,6 +73,7 @@ internal sealed class DataIntegrationViewModel(
     {
         IntegrationStart = args.IntegrationStart;
         IntegrationEnd = args.IntegrationEnd;
+        IntegrationSpan = (args.IntegrationEnd - args.IntegrationStart).Humanize();
         foreach (var (number, value) in args.IntegratedValues)
         {
             var parameter = Parameters.FirstOrDefault(x => x.Parameter.Number == number);

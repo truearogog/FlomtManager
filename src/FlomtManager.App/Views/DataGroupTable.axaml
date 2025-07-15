@@ -10,18 +10,6 @@
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
     x:Class="FlomtManager.App.Views.DataGroupTable">
 	<Panel>
-		<DataGrid
-			x:Name="Table"
-			IsVisible="False"
-			AutoGenerateColumns="False"
-			IsReadOnly="True">
-			<DataGrid.Styles>
-				<Style Selector="DataGridRow:nth-child(even)">
-					<Setter Property="Background" Value="{DynamicResource SemiGrey0}" />
-				</Style>
-			</DataGrid.Styles>
-		</DataGrid>
-
 		<Grid RowDefinitions="auto, *">
 			<!--header-->
 			<Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SemiColorBorder}">
@@ -44,7 +32,7 @@
 					</Grid.Styles>
 
 					<Border Grid.Column="0" Classes="BorderDateTime">
-						<TextBlock Text="{Binding DateTimeParameter.Header}" />
+						<SelectableTextBlock Text="{Binding DateTimeParameter.Header}" />
 					</Border>
 
 					<ItemsControl Grid.Column="1" x:Name="ParameterGrid">
@@ -55,8 +43,8 @@
 						</ItemsControl.ItemsPanel>
 						<ItemsControl.ItemTemplate>
 							<DataTemplate x:DataType="vm:IParameterViewModel">
-								<Border Classes="BorderParameter">
-									<TextBlock Text="{Binding Header}" />
+								<Border Background="{Binding Color}" Classes="BorderParameter" >
+									<SelectableTextBlock Foreground="White" Text="{Binding Header}" />
 								</Border>
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
@@ -103,7 +91,7 @@
 							</Grid.ColumnDefinitions>
 
 							<Border Grid.Column="0" Classes="BorderDateTime">
-								<TextBlock Text="{Binding DateTimeString}" />
+								<SelectableTextBlock Text="{Binding DateTimeString}" />
 							</Border>
 
 							<ItemsControl Grid.Column="1" ItemsSource="{Binding Values}">
@@ -115,7 +103,7 @@
 								<ItemsControl.ItemTemplate>
 									<DataTemplate>
 										<Border Classes="BorderParameter">
-											<TextBlock Text="{Binding}" />
+											<SelectableTextBlock Text="{Binding}" />
 										</Border>
 									</DataTemplate>
 								</ItemsControl.ItemTemplate>

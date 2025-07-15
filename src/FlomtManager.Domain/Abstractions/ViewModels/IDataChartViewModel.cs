@@ -31,9 +31,11 @@ public interface IDataChartViewModel : IViewModel
     double CurrentDisplaySpanMaxDate { get; }
     int CurrentDisplaySpanMinIndex { get; }
     int CurrentDisplaySpanMaxIndex { get; }
+    double YAxisZoom { get; }
 
     Task SetDevice(Device device);
     Task UpdateData();
     void UpdateCurrentDisplaySpanDates(double min, double max);
+    void UpdateCurrentYAxisZoom(double yAxisZoom);
     void UpdateIntegration(double min, double max);
 }

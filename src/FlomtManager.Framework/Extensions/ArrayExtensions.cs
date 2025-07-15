@@ -6,6 +6,11 @@ namespace FlomtManager.Framework.Extensions
     {
         public static int BinarySearchClosestValueIndex<T>(this T[] sortedArray, T target) where T : INumber<T>
         {
+            if (sortedArray == null)
+            {
+                return 0;
+            }
+
             int index = Array.BinarySearch(sortedArray, target);
             if (index >= 0)
             {

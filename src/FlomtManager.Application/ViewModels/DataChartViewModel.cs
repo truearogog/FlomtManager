@@ -22,6 +22,7 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
     private readonly IParameterViewModelFactory _parameterViewModelFactory;
     private readonly IParameterRepository _parameterRepository;
     private readonly IParameterStore _parameterStore;
+    private readonly IDeviceRepository _deviceRepository;
 
     private IReadOnlyDictionary<Parameter, Parameter> _integralParameters;
     private float[] _workingTimeCollectionFloat;
@@ -115,18 +116,27 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
         private set => this.RaiseAndSetIfChanged(ref _currentDisplaySpanMaxIndex, value);
     }
 
+    private double _yAxisZoom;
+    public double YAxisZoom
+    {
+        get => _yAxisZoom;
+        private set => this.RaiseAndSetIfChanged(ref _yAxisZoom, value);
+    }
+
     public DataChartViewModel(
         IDataFormatter dataFormatter,
         IDataRepository dataRepository,
         IParameterViewModelFactory parameterViewModelFactory,
         IParameterRepository parameterRepository,
-        IParameterStore parameterStore)
+        IParameterStore parameterStore,
+        IDeviceRepository deviceRepository)
     {
         _dataFormatter = dataFormatter;
         _dataRepository = dataRepository;
         _parameterViewModelFactory = parameterViewModelFactory;
         _parameterRepository = parameterRepository;
         _parameterStore = parameterStore;
+        _deviceRepository = deviceRepository;
 
         _parameterStore.Updated += _parameterStore_Updated;
 
@@ -151,6 +161,29 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
     {
         Device = device;
         await UpdateParameters();
+        await LoadDisplayData();
+    }
+
+    private async Task LoadDisplayData()
+    {
+        if (Device == default)
+        {
+            return;
+        }
+
+        var displayData = await _deviceRepository.GetDisplayData(Device.Id);
+
+        if (displayData == default)
+        {
+            return;
+        }
+
+        IntegrationSpanMinDate = displayData.IntegrationStart;
+        IntegrationSpanMaxDate = displayData.IntegrationEnd;
+
+        CurrentDisplaySpanMinDate = displayData.MinX;
+        CurrentDisplaySpanMaxDate = displayData.MaxX;
+        YAxisZoom = displayData.YAxisZoom;
     }
 
     private async Task UpdateParameters()
@@ -224,6 +257,11 @@ internal sealed class DataChartViewModel : ViewModel, IDataChartViewModel
 
         CurrentDisplaySpanMinIndex = DateTimes.BinarySearchClosestValueIndex(min);
         CurrentDisplaySpanMaxIndex = DateTimes.BinarySearchClosestValueIndex(max);
+    }
+
+    public void UpdateCurrentYAxisZoom(double yAxisZoom)
+    {
+        YAxisZoom = yAxisZoom;
     }
 
     public void UpdateIntegration(double min, double max)

@@ -38,7 +38,7 @@ internal sealed class DeviceFormViewModel : ViewModel, IDeviceFormViewModel
         set => this.RaiseAndSetIfChanged(ref _connectionType, value);
     }
 
-    private byte _slaveId = 0;
+    private byte _slaveId = 1;
     public byte SlaveId
     {
         get => _slaveId;

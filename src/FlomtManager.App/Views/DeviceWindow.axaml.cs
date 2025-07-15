@@ -36,7 +36,7 @@ namespace FlomtManager.App.Views
                 deviceWindowStore.RemoveWindow(viewModel.Device.Id);
 
                 viewModel.TryDisconnect().Wait();
-                viewModel.SaveRealtimeParameters().Wait();
+                viewModel.SaveDisplayData().Wait();
             }
         }
 

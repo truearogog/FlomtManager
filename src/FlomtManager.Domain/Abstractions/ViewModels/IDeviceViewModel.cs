@@ -34,10 +34,10 @@ public interface IDeviceViewModel : IViewModel
 
     Task Activate(Device device);
     void RequestDeviceUpdate(Device device);
-    void SetDataDisplayMode(DeviceViewMode mode);
+    void CycleDeviceViewMode();
     Task TryConnect();
     Task TryDisconnect();
     void RequestReadFile();
     Task ReadFile(Stream stream);
-    Task SaveRealtimeParameters();
+    Task SaveDisplayData();
 }

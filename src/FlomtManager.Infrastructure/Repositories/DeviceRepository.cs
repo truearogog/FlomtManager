@@ -1,4 +1,5 @@
-﻿using FlomtManager.Domain.Abstractions.Data;
+﻿using System.Text.Json;
+using FlomtManager.Domain.Abstractions.Data;
 using FlomtManager.Domain.Abstractions.Providers;
 using FlomtManager.Domain.Abstractions.Repositories;
 using FlomtManager.Domain.Models;
@@ -79,15 +80,23 @@ public sealed class DeviceRepository(IDbConnectionFactory connectionFactory, IDa
         await connection.UpdateDefinitionLastArchiveRead(deviceId, dateTime ?? dateTimeProvider.Now);
     }
 
-    public async Task SetRealTimeValues(int deviceId, string values)
+    public async Task SetDisplayData(int deviceId, DeviceDisplayData data)
     {
         await using var connection = connectionFactory.CreateConnection();
-        await connection.SetRealTimeValues(deviceId, values);
+        var json = JsonSerializer.Serialize(data);
+        await connection.SetDeviceDisplayData(deviceId, json);
     }
 
-    public async Task<string> GetRealTimeValues(int deviceId)
+    public async Task<DeviceDisplayData> GetDisplayData(int deviceId)
     {
         await using var connection = connectionFactory.CreateConnection();
-        return await connection.GetRealTimeValues(deviceId);
+        var json = await connection.GetDisplayData(deviceId);
+
+        if (string.IsNullOrEmpty(json))
+        {
+            return default;
+        }
+
+        return JsonSerializer.Deserialize<DeviceDisplayData>(json);
     }
 }

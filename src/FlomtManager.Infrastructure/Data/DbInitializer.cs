@@ -1,4 +1,6 @@
-﻿using FlomtManager.Domain.Abstractions.Data;
+﻿using Dapper;
+using FlomtManager.Domain.Abstractions.Data;
+using FlomtManager.Domain.Constants;
 
 namespace FlomtManager.Infrastructure.Data;
 
@@ -13,9 +15,27 @@ public sealed class DbInitializer(IDbConnectionFactory connectionFactory) : IDbI
         using var connection = connectionFactory.CreateConnection();
         await connection.OpenAsync(cancellationToken);
 
+        await connection.ExecuteAsync($"""
+            CREATE TABLE IF NOT EXISTS Migrations (
+                Name NVARCHAR(100) PRIMARY KEY NOT NULL,
+                AppliedAt {SqlTypes.DateTime} NOT NULL
+            );
+            """);
+
         foreach (var migration in Migrations)
         {
-            await migration.UpInternal(connection, cancellationToken);
+            var exists = await connection.ExecuteScalarAsync<bool>(
+                "SELECT COUNT(*) FROM Migrations WHERE Name = @Name;",
+                new { migration.Name });
+
+            if (!exists)
+            {
+                await migration.UpInternal(connection, cancellationToken);
+
+                await connection.ExecuteAsync(
+                "INSERT INTO Migrations (Name, AppliedAt) VALUES (@Name, @AppliedAt);",
+                new { migration.Name, AppliedAt = DateTime.UtcNow });
+            }
         }
     }
 
@@ -26,7 +46,20 @@ public sealed class DbInitializer(IDbConnectionFactory connectionFactory) : IDbI
 
         foreach (var migration in Migrations.Reverse())
         {
-            await migration.DownInternal(connection, cancellationToken);
+            var exists = await connection.ExecuteScalarAsync<bool>(
+                "SELECT COUNT(*) FROM Migrations WHERE Name = @Name;",
+                new { migration.Name });
+
+            if (exists)
+            {
+                await migration.DownInternal(connection, cancellationToken);
+
+                await connection.ExecuteAsync(
+                    "DELETE FROM Migrations WHERE Name = @Name;",
+                    new { migration.Name });
+            }
         }
+
+        await connection.ExecuteAsync("DROP TABLE IF EXISTS Migrations;");
     }
 }

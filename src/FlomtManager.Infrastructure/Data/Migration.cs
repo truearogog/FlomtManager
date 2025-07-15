@@ -5,6 +5,8 @@ namespace FlomtManager.Infrastructure.Data;
 
 internal abstract class Migration
 {
+    public abstract string Name { get; }
+
     protected abstract Task Up(DbConnection connection, IDbTransaction transaction);
 
     internal async Task UpInternal(DbConnection connection, CancellationToken cancellationToken = default)
