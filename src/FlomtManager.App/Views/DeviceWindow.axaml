@@ -70,8 +70,8 @@
 							<PathIcon
 								Theme="{DynamicResource InnerPathIcon}"
 								HorizontalAlignment="Center"
-								Data="{DynamicResource SemiIconHistogram}" />
-							<TextBlock Text="Chart" />
+								Data="{DynamicResource SemiIconGridSquare}" />
+							<TextBlock Text="Table" />
 						</StackPanel>
 					</Button>
 
@@ -84,8 +84,8 @@
 							<PathIcon
 								Theme="{DynamicResource InnerPathIcon}"
 								HorizontalAlignment="Center"
-								Data="{DynamicResource SemiIconGridSquare}" />
-							<TextBlock Text="Table" />
+								Data="{DynamicResource SemiIconHistogram}" />
+							<TextBlock Text="Chart" />
 						</StackPanel>
 					</Button>
 				</Panel>

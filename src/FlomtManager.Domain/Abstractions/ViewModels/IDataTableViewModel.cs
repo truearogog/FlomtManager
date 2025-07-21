@@ -10,7 +10,6 @@ public interface IDataTableViewModel : IViewModel
     event EventHandler<(int Min, int Max)> OnCurrentDisplaySpanChanged;
 
     ObservableCollection<StringValueCollection> Data { get; }
-    IReadOnlyDictionary<byte, byte> ParameterPositions { get; }
 
     Device Device { get; }
     IParameterViewModel DateTimeParameter { get; }

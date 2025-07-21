@@ -60,6 +60,11 @@ namespace FlomtManager.App.Views
 
         private void _OnCurrentDisplaySpanChanged(object sender, (int Min, int Max) e)
         {
+            if (e.Min == default && e.Max == default)
+            {
+                return;
+            }
+
             Dispatcher.UIThread.Invoke(() =>
             {
                 if (this.FindControl<ListBox>("DataGrid") is { } dataGrid)

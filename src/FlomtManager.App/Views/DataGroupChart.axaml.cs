@@ -196,8 +196,8 @@ namespace FlomtManager.App.Views
             }
 
             Chart.Plot.Axes.SetLimitsX(
-                (_viewModel.CurrentDisplaySpanMinDate == default ? _minX : _viewModel.CurrentDisplaySpanMinDate) - 1,
-                (_viewModel.CurrentDisplaySpanMaxDate == default ? _maxX : _viewModel.CurrentDisplaySpanMaxDate) + 1);
+                _viewModel.CurrentDisplaySpanMinDate == default ? _minX : _viewModel.CurrentDisplaySpanMinDate,
+                _viewModel.CurrentDisplaySpanMaxDate == default ? _maxX : _viewModel.CurrentDisplaySpanMaxDate);
             Chart.Refresh();
         }
 

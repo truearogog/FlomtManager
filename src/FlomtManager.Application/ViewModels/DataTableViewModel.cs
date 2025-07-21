@@ -27,8 +27,6 @@ internal sealed class DataTableViewModel(
         private set => this.RaiseAndSetIfChanged(ref _data, value);
     }
 
-    public IReadOnlyDictionary<byte, byte> ParameterPositions { get; private set; }
-
     private Device _device;
     public Device Device
     {
@@ -94,14 +92,15 @@ internal sealed class DataTableViewModel(
             return;
         }
 
-        var parameters = (await parameterRepository.GetHourArchiveParametersByDeviceId(Device.Id)).ToFrozenDictionary(x => x.Number);
+        var parameters = await parameterRepository.GetHourArchiveParametersByDeviceId(Device.Id);
+        var parameterDictionary = parameters.ToFrozenDictionary(x => x.Number);
         var dataCollections = (await dataRepository.GetHourData(Device.Id))
-            .Where(x => x.Key == 0 || parameters.ContainsKey(x.Key)).ToFrozenDictionary();
+            .Where(x => x.Key == 0 || parameterDictionary.ContainsKey(x.Key)).ToFrozenDictionary();
         var size = dataCollections.First().Value.Count;
 
         var parameterPositions = new Dictionary<byte, byte>();
         byte index = 0;
-        foreach (var (number, parameter) in parameters.Where(x => x.Key != 0))
+        foreach (var parameter in parameters.Where(x => x.Number != 0))
         {
             parameterPositions.Add(parameter.Number, index);
             index++;
@@ -111,11 +110,11 @@ internal sealed class DataTableViewModel(
 
         for (var i = 0; i < size; ++i)
         {
-            index = 0;
             var collection = new StringValueCollection
             {
                 Values = new string[dataCollections.Count - 1]
             };
+
             foreach (var (parameterNumber, dataCollection) in dataCollections)
             {
                 if (parameterNumber == 0)
@@ -128,35 +127,38 @@ internal sealed class DataTableViewModel(
                 }
                 else
                 {
+                    if (!parameterPositions.TryGetValue(parameterNumber, out var position))
+                    {
+                        continue;
+                    }
+
                     if (dataCollection is DataCollection<float> floatDataCollection)
                     {
-                        var parameter = parameters[parameterNumber];
-                        collection.Values[index] = dataFormatter.FormatFloat(floatDataCollection.Values[i], parameter);
+                        var parameter = parameterDictionary[parameterNumber];
+                        collection.Values[position] = dataFormatter.FormatFloat(floatDataCollection.Values[i], parameter);
                     }
                     if (dataCollection is DataCollection<uint> uintDataCollection)
                     {
-                        collection.Values[index] = dataFormatter.FormatUInt32(uintDataCollection.Values[i]);
+                        collection.Values[position] = dataFormatter.FormatUInt32(uintDataCollection.Values[i]);
                     }
                     if (dataCollection is DataCollection<ushort> ushortDataCollection)
                     {
-                        collection.Values[index] = dataFormatter.FormatUInt16(ushortDataCollection.Values[i]);
+                        collection.Values[position] = dataFormatter.FormatUInt16(ushortDataCollection.Values[i]);
                     }
                     if (dataCollection is DataCollection<TimeSpan> timeSpanDataCollection)
                     {
-                        collection.Values[index] = dataFormatter.FormatTimeSpan(timeSpanDataCollection.Values[i]);
+                        collection.Values[position] = dataFormatter.FormatTimeSpan(timeSpanDataCollection.Values[i]);
                     }
                     if (dataCollection is DataCollection<DateTime> dateTimeDataCollection)
                     {
-                        collection.Values[index] = dataFormatter.FormatDateTime(dateTimeDataCollection.Values[i]);
+                        collection.Values[position] = dataFormatter.FormatDateTime(dateTimeDataCollection.Values[i]);
                     }
-                    ++index;
                 }
             }
             data[i] = collection;
         }
 
         Data = new(data.OrderBy(x => x.DateTime));
-        ParameterPositions = parameterPositions;
         OnDataUpdated?.Invoke(this, EventArgs.Empty);
     }
 
