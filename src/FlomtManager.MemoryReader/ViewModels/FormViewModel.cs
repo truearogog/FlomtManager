@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.IO.Ports;
+using FlomtManager.Domain.Constants;
+using FlomtManager.Domain.Enums;
 using ReactiveUI;
 
 namespace FlomtManager.MemoryReader.ViewModels
@@ -23,15 +25,15 @@ namespace FlomtManager.MemoryReader.ViewModels
         }
 
         private int _start = 0;
-        [Range(0, DeviceConstants.MEMORY_SIZE_BYTES - 1), DefaultValue(0)]
+        [Range(0, DeviceConstants.MEMORY_SIZE - 1), DefaultValue(0)]
         public int Start
         {
             get => _start;
             set => this.RaiseAndSetIfChanged(ref _start, value);
         }
 
-        private int _count = (int)DeviceConstants.MEMORY_SIZE_BYTES;
-        [Range(2, DeviceConstants.MEMORY_SIZE_BYTES), DefaultValue(DeviceConstants.MEMORY_SIZE_BYTES)]
+        private int _count = (int)DeviceConstants.MEMORY_SIZE;
+        [Range(2, DeviceConstants.MEMORY_SIZE), DefaultValue(DeviceConstants.MEMORY_SIZE)]
         public int Count
         {
             get => _count;

@@ -73,8 +73,10 @@ internal sealed class DeviceConnection(
             {
                 await deviceRepository.CreateDefinition(_deviceDefinition);
 
-                var parameterDefinitionBytes = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId,
-                    _deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * DeviceConstants.PARAMETER_SIZE / 2, cancellationToken: cancellationToken);
+                var parameterDefinitionBytes = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId, 
+                    _deviceDefinition.ParameterDefinitionStart.ToRegisters(), 
+                    DeviceConstants.MAX_PARAMETER_COUNT * DeviceConstants.PARAMETER_SIZE, 
+                    cancellationToken: cancellationToken);
 
                 var previousDevice = await deviceRepository.GetLastCreatedExcept(device.Id);
                 var previousParameterColors = (await parameterRepository.GetAllByDeviceId(previousDevice.Id)).ToImmutableDictionary(x => x.Name, x => x.Color);
@@ -213,13 +215,14 @@ internal sealed class DeviceConnection(
 
             async Task<DateTime> ReadDeviceTime()
             {
-                var timeBytes = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId, DeviceConstants.CURRENT_DATETIME_START, DeviceConstants.CURRENT_DATETIME_SIZE_REGISTERS);
+                var timeBytes = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId, DeviceConstants.CURRENT_DATETIME_START, DeviceConstants.CURRENT_DATETIME_SIZE);
                 return dataParser.ParseDateTime(timeBytes);
             }
 
             async Task<ReadOnlyMemory<byte>> ReadHourArchive(ushort lineCount) =>
                 await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId, 
-                    _deviceDefinition.AveragePerHourBlockStart, (ushort)(lineCount * _deviceDefinition.AverageParameterArchiveLineLength),
+                    _deviceDefinition.AveragePerHourBlockStart.ToRegisters(), 
+                    ((ushort)(lineCount * _deviceDefinition.AverageParameterArchiveLineLength)).ToRegisters(),
                     RaiseConnectionArchiveReadingProgressChangedArgs);
 
             RaiseConnectionArchiveReadingStateChanged(ArchiveReadingState.Reading);
@@ -384,7 +387,10 @@ internal sealed class DeviceConnection(
     private async Task<DeviceDefinition> GetDeviceDefinition(CancellationToken cancellationToken = default)
     {
         var deviceDefinitionRegisters = await _modbusProtocol.ReadRegistersAsync(device.SlaveId, 
-            DeviceConstants.MEMORY_DEFINITION_START, DeviceConstants.MEMORY_DEFINITION_LENGTH_REGISTERS, cancellationToken: cancellationToken);
+            DeviceConstants.MEMORY_DEFINITION_START, 
+            DeviceConstants.MEMORY_DEFINITION_LENGTH, 
+            cancellationToken: cancellationToken);
+
         var deviceDefinition = new DeviceDefinition
         {
             DeviceId = device.Id,
@@ -413,11 +419,19 @@ internal sealed class DeviceConnection(
         };
 
         var currentParameterDefinition = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId,
-            deviceDefinition.CurrentParameterLineDefinitionStart, (ushort)(deviceDefinition.CurrentParameterLineNumber / 2), cancellationToken: cancellationToken);
+            deviceDefinition.CurrentParameterLineDefinitionStart.ToRegisters(), 
+            (ushort)(deviceDefinition.CurrentParameterLineNumber / 2), 
+            cancellationToken: cancellationToken);
+
         var integralParameterDefinition = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId,
-            deviceDefinition.IntegralParameterLineDefinitionStart, (ushort)(deviceDefinition.IntegralParameterLineNumber / 2), cancellationToken: cancellationToken);
+            deviceDefinition.IntegralParameterLineDefinitionStart.ToRegisters(), 
+            (ushort)(deviceDefinition.IntegralParameterLineNumber / 2), 
+            cancellationToken: cancellationToken);
+
         var averageParameterArchiveDefinition = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId,
-            deviceDefinition.AverageParameterArchiveLineDefinitionStart, (ushort)(deviceDefinition.AverageParameterArchiveLineNumber / 2), cancellationToken: cancellationToken);
+            deviceDefinition.AverageParameterArchiveLineDefinitionStart.ToRegisters(), 
+            (ushort)(deviceDefinition.AverageParameterArchiveLineNumber / 2), 
+            cancellationToken: cancellationToken);
 
         deviceDefinition = deviceDefinition with
         {
@@ -439,7 +453,12 @@ internal sealed class DeviceConnection(
             return new Dictionary<byte, ParameterValue>();
         }
 
-        var parameterLine = await _modbusProtocol.ReadRegistersBytesAsync(device.SlaveId, lineStart, (ushort)(lineSize / 2), cancellationToken: cancellationToken);
+        var parameterLine = await _modbusProtocol.ReadRegistersBytesAsync(
+            device.SlaveId, 
+            lineStart.ToRegisters(), 
+            lineSize.ToRegisters(), 
+            cancellationToken: cancellationToken);
+
         var current = 0;
         Dictionary<byte, ParameterValue> result = [];
         ushort error = 0;

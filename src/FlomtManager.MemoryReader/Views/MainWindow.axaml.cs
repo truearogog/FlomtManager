@@ -27,7 +27,7 @@ namespace FlomtManager.MemoryReader.Views
 
             if (DataContext is MainWindowViewModel viewModel)
             {
-                viewModel.CloseConnection();
+                viewModel.Cancel();
             }
         }
 

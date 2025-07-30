@@ -1,10 +1,11 @@
 ﻿using System.Buffers;
+using System.Diagnostics;
 
 namespace FlomtManager.Modbus;
 
 public abstract class ModbusProtocol : IModbusProtocol
 {
-    private const ushort MAX_REQUEST_SIZE = 250;
+    private const ushort MAX_REQUEST_SIZE_BYTES = 250;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     public abstract bool IsOpen { get; }
 
@@ -30,20 +31,22 @@ public abstract class ModbusProtocol : IModbusProtocol
     public async Task<byte[]> ReadRegistersBytesAsync(byte slaveId, ushort start, ushort count,
         Action<int, int> progressHandler = null, CancellationToken cancellationToken = default)
     {
-        int byteCount = count * 2, left = byteCount;
+        int byteCount = count * 2, // total number of bytes to read
+            left = byteCount; // how many bytes left to read
         var result = new byte[byteCount];
         try
         {
             await _semaphore.WaitAsync(cancellationToken);
-            ushort current = start;
+
+            var current = start; // current position in registers
             while (left > 0 && !cancellationToken.IsCancellationRequested)
             {
-                var toRead = int.Min(left, MAX_REQUEST_SIZE);
+                var toRead = int.Min(left, MAX_REQUEST_SIZE_BYTES); // how many bytes to read
                 var read = await ReadRegistersBytesAsyncInternal(slaveId, current, (ushort)(toRead / 2), cancellationToken);
-                read.CopyTo(result, current - start);
+                read.CopyTo(result, (current - start) * 2); // copy read bytes to result array (* 2 because each register is 2 bytes)
                 left -= toRead;
-                current += (ushort)toRead;
-                progressHandler?.Invoke(current, byteCount);
+                current += (ushort)(toRead / 2);
+                progressHandler?.Invoke(current, count);
 
                 if (left > 0)
                 {

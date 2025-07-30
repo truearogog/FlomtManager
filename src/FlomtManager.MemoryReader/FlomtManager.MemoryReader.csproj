@@ -4,7 +4,7 @@
 		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-		<Version>1.0.1</Version>
+		<Version>1.1.0</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -34,6 +34,7 @@
 
     <ItemGroup>
 		<ProjectReference Include="..\FlomtManager.Core\FlomtManager.Core.csproj" />
+		<ProjectReference Include="..\FlomtManager.Domain\FlomtManager.Domain.csproj" />
 		<ProjectReference Include="..\FlomtManager.Modbus\FlomtManager.Modbus.csproj" />
     </ItemGroup>
 

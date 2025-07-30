@@ -91,46 +91,24 @@
 						IsVisible="{Binding !!SuccessMessage}" />
 				</StackPanel>
 
-				<StackPanel
-					Spacing="10">
+				<StackPanel Spacing="10">
 					<StackPanel.Styles>
 						<Style Selector="Button">
 							<Setter Property="Theme" Value="{DynamicResource SolidButton}" />
+							<Setter Property="HorizontalAlignment" Value="Stretch" />
 						</Style>
 					</StackPanel.Styles>
-
-					<Button Content="Open" Classes="Primary" Command="{Binding OpenConnection}">
-						<Button.IsEnabled>
-							<MultiBinding Converter="{x:Static BoolConverters.And}">
-								<Binding Path="ModbusProtocol" Converter="{x:Static ObjectConverters.IsNull}" />
-								<Binding Path="!Reading" />
-							</MultiBinding>
-						</Button.IsEnabled>
-					</Button>
-					<Button Content="Close" Classes="Primary" Command="{Binding CloseConnection}">
-						<Button.IsEnabled>
-							<MultiBinding Converter="{x:Static BoolConverters.And}">
-								<Binding Path="ModbusProtocol" Converter="{x:Static ObjectConverters.IsNotNull}" />
-								<Binding Path="!Reading" />
-							</MultiBinding>
-						</Button.IsEnabled>
-					</Button>
+					
 					<TextBlock IsVisible="{Binding Reading}" Foreground="{DynamicResource SemiColorTertiary}">
 						<Run Text="{Binding CurrentProgress}" />
 						<Run Text="/" />
 						<Run Text="{Binding MaxProgress}" />
-						<Run Text="bytes" />
+						<Run Text="registers" />
 					</TextBlock>
 					<ProgressBar Classes="Primary" Minimum="0" Maximum="{Binding MaxProgress}" ShowProgressText="True" Value="{Binding CurrentProgress}" IsVisible="{Binding Reading}" />
-					<Button Content="Read" Classes="Primary" Command="{Binding Read}">
-						<Button.IsEnabled>
-							<MultiBinding Converter="{x:Static BoolConverters.And}">
-								<Binding Path="ModbusProtocol" Converter="{x:Static ObjectConverters.IsNotNull}" />
-								<Binding Path="!Reading" />
-							</MultiBinding>
-						</Button.IsEnabled>
-					</Button>
-					<Button Content="Stop" Classes="Primary" IsEnabled="{Binding Reading}" Command="{Binding Cancel}" />
+					
+					<Button Content="Read" Classes="Primary" Command="{Binding Read}" IsVisible="{Binding !Reading}" />
+					<Button Content="Stop" Classes="Primary" Command="{Binding Cancel}" IsVisible="{Binding Reading}"  />
 				</StackPanel>
 			</StackPanel>
 

@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using System.Transactions;
+using Dapper;
 using FlomtManager.Domain.Abstractions.Data;
 using FlomtManager.Domain.Constants;
 
@@ -44,22 +45,25 @@ public sealed class DbInitializer(IDbConnectionFactory connectionFactory) : IDbI
         using var connection = connectionFactory.CreateConnection();
         await connection.OpenAsync(cancellationToken);
 
-        foreach (var migration in Migrations.Reverse())
+        if ((await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Migrations';")) != 0)
         {
-            var exists = await connection.ExecuteScalarAsync<bool>(
-                "SELECT COUNT(*) FROM Migrations WHERE Name = @Name;",
-                new { migration.Name });
-
-            if (exists)
+            foreach (var migration in Migrations.Reverse())
             {
-                await migration.DownInternal(connection, cancellationToken);
-
-                await connection.ExecuteAsync(
-                    "DELETE FROM Migrations WHERE Name = @Name;",
+                var exists = await connection.ExecuteScalarAsync<bool>(
+                    "SELECT COUNT(*) FROM Migrations WHERE Name = @Name;",
                     new { migration.Name });
-            }
-        }
 
-        await connection.ExecuteAsync("DROP TABLE IF EXISTS Migrations;");
+                if (exists)
+                {
+                    await migration.DownInternal(connection, cancellationToken);
+
+                    await connection.ExecuteAsync(
+                        "DELETE FROM Migrations WHERE Name = @Name;",
+                        new { migration.Name });
+                }
+            }
+
+            await connection.ExecuteAsync("DROP TABLE IF EXISTS Migrations;");
+        }
     }
 }

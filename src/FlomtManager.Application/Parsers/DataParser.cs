@@ -5,8 +5,6 @@ using FlomtManager.Domain.Abstractions.Parsers;
 using FlomtManager.Domain.Constants;
 using FlomtManager.Domain.Enums;
 using FlomtManager.Domain.Models;
-using FlomtManager.Framework.Skia.ColorPalletes;
-using SkiaSharp;
 
 namespace FlomtManager.Application.Parsers;
 
@@ -27,12 +25,10 @@ internal sealed class DataParser(IDataFormatter dataFormatter) : IDataParser
     */
     public ReadOnlyCollection<Parameter> ParseParameterDefinition(ReadOnlySpan<byte> bytes, int deviceId)
     {
-        
-
         var parameters = new List<Parameter>();
         for (var i = 0; i < DeviceConstants.MAX_PARAMETER_COUNT; ++i)
         {
-            var parameterBytes = bytes.Slice(i * DeviceConstants.PARAMETER_SIZE, DeviceConstants.PARAMETER_SIZE).ToArray();
+            var parameterBytes = bytes.Slice(i * DeviceConstants.PARAMETER_SIZE_BYTES, DeviceConstants.PARAMETER_SIZE_BYTES).ToArray();
             if (parameterBytes[0] != 0)
             {
                 var (type, comma) = ParseParameterTypeByte(parameterBytes[1]);

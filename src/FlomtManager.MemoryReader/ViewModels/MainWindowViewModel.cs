@@ -4,8 +4,8 @@ using System.ComponentModel;
 using System.IO.Ports;
 using System.Reflection;
 using Avalonia.Controls.Notifications;
-using FlomtManager.Core.Constants;
-using FlomtManager.Core.Enums;
+using FlomtManager.Domain.Constants;
+using FlomtManager.Domain.Enums;
 using FlomtManager.Modbus;
 using HexIO;
 using ReactiveUI;
@@ -59,7 +59,7 @@ namespace FlomtManager.MemoryReader.ViewModels
             set => this.RaiseAndSetIfChanged(ref _currentProgress, value);
         }
 
-        public ObservableCollection<ConnectionType> ConnectionTypes { get; set; } = new(Enum.GetValues<ConnectionType>());
+        public ObservableCollection<ConnectionType> ConnectionTypes { get; set; } = [ConnectionType.Serial, ConnectionType.Network];
         public ObservableCollection<string> PortNames { get; set; } = [];
         public ObservableCollection<int> BaudRates { get; set; } = [110, 300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 38400, 57600, 115200, 128000, 256000];
         public ObservableCollection<Parity> Parities { get; set; } = new(Enum.GetValues<Parity>());
@@ -86,9 +86,15 @@ namespace FlomtManager.MemoryReader.ViewModels
             NotificationRequested?.Invoke(this, (type, message));
         }
 
-        public async void OpenConnection()
+        public async void Read()
         {
             ErrorMessage = null;
+
+            if (string.IsNullOrEmpty(Form.Directory))
+            {
+                return;
+            }
+
             try
             {
                 ModbusProtocol = Form.ConnectionType switch
@@ -106,32 +112,14 @@ namespace FlomtManager.MemoryReader.ViewModels
                 ErrorMessage = "Can't connect to device.";
                 Log.Error(ex, string.Empty);
             }
-        }
-
-        public async void CloseConnection()
-        {
-            _cancellationTokenSource?.Cancel();
-            if (ModbusProtocol != null)
-            {
-                await ModbusProtocol.CloseAsync(CancellationToken.None);
-                ModbusProtocol = null;
-            }
-        }
-
-        public async void Read()
-        {
-            if (ModbusProtocol == null || string.IsNullOrEmpty(Form.Directory))
-            {
-                return;
-            }
 
             if (Form.Count == 0 ||
                 Form.Count < 0 ||
-                Form.Count > DeviceConstants.MEMORY_SIZE_BYTES ||
+                Form.Count > DeviceConstants.MEMORY_SIZE ||
                 Form.Start < 0 ||
-                Form.Start + Form.Count > DeviceConstants.MEMORY_SIZE_BYTES)
+                Form.Start + Form.Count > DeviceConstants.MEMORY_SIZE)
             {
-                ErrorMessage = "Invalid start address and length in bytes.";
+                ErrorMessage = "Invalid start address and length in registers.";
                 return;
             }
 
@@ -139,13 +127,18 @@ namespace FlomtManager.MemoryReader.ViewModels
             ErrorMessage = null;
             SuccessMessage = null;
             Reading = true;
-            _cancellationTokenSource = new();
+
             try
             {
                 var fileName = Form.FileName;
                 if (string.IsNullOrEmpty(fileName))
                 {
-                    var deviceNumber = (await ModbusProtocol.ReadRegistersAsync(Form.SlaveId, 100, 1, cancellationToken: _cancellationTokenSource.Token)).First();
+                    var deviceNumber = (await ModbusProtocol.ReadRegistersAsync(
+                        Form.SlaveId,
+                        DeviceConstants.DEVICE_NUMBER_START,
+                        DeviceConstants.DEVICE_NUMBER_SIZE,
+                        cancellationToken: _cancellationTokenSource.Token)).First();
+
                     if (Form.DateTime.Date != DateTime.Now.Date)
                     {
                         Form.DateTime = DateTime.Now;
@@ -158,18 +151,18 @@ namespace FlomtManager.MemoryReader.ViewModels
                     fileName = $"flomt_{deviceNumber}_{Form.DateTime:yyMMdd}_{Form.Number:D2}_S{Form.Start}_L{Form.Count}.hex";
                 }
 
-                var time = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, 102, 3);
+                var time = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, DeviceConstants.CURRENT_DATETIME_START, DeviceConstants.CURRENT_DATETIME_SIZE);
                 var hour = time[2];
-                var bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)(Form.Count / 2), (current, total) =>
+                var bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)Form.Count, (current, total) =>
                 {
                     CurrentProgress = current;
                     MaxProgress = total;
                 }, _cancellationTokenSource.Token);
-                var time2 = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, 102, 3);
+                var time2 = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, DeviceConstants.CURRENT_DATETIME_START, DeviceConstants.CURRENT_DATETIME_SIZE);
                 var hour2 = time[2];
                 if (hour != hour2)
                 {
-                    bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)(Form.Count / 2), (current, total) =>
+                    bytes = await ModbusProtocol.ReadRegistersBytesAsync(Form.SlaveId, (ushort)Form.Start, (ushort)Form.Count, (current, total) =>
                     {
                         CurrentProgress = current;
                         MaxProgress = total;
@@ -188,7 +181,7 @@ namespace FlomtManager.MemoryReader.ViewModels
                 }
                 writer.Write(":00000001FF");
                 RequestNotification(NotificationType.Success, $"Created {fileName}");
-                SuccessMessage = $"Read {Form.Count} bytes starting from {Form.Start}.";
+                SuccessMessage = $"Read {Form.Count} registers starting from {Form.Start}.";
             }
             catch (ModbusException ex)
             {
@@ -208,6 +201,12 @@ namespace FlomtManager.MemoryReader.ViewModels
             finally
             {
                 Reading = false;
+
+                if (ModbusProtocol != null)
+                {
+                    await ModbusProtocol.CloseAsync(CancellationToken.None);
+                    ModbusProtocol = null;
+                }
             }
         }
 

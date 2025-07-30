@@ -17,7 +17,7 @@
 						<ColumnDefinition Width="*" />
 						<ColumnDefinition Width="auto" />
 					</Grid.ColumnDefinitions>
-					<TextBlock Grid.Column="0" Classes="Tertiary" Text="{Binding Parameter.Name}" />
+					<TextBlock Grid.Column="0" Foreground="{DynamicResource SemiAmber7}" FontWeight="SemiBold" Text="{Binding Parameter.Name}" />
 					<TextBlock Grid.Column="1" Margin="4,0" 
 						Text="{Binding Value, TargetNullValue='-'}" />
 					<TextBlock Grid.Column="2" Text="{Binding Parameter.Unit}" />

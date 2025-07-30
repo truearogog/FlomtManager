@@ -52,7 +52,7 @@ internal sealed class FileDataImporter(
                 total += record.RecordLength;
             }
 
-            var definitionBytes = bytes.AsMemory(DeviceConstants.MEMORY_DEFINITION_START, DeviceConstants.MEMORY_DEFINITION_LENGTH_BYTES);
+            var definitionBytes = bytes.AsMemory(DeviceConstants.MEMORY_DEFINITION_START.ToBytes(), DeviceConstants.MEMORY_DEFINITION_LENGTH.ToBytes());
             var deviceDefinitionRegisterCount = definitionBytes.Length / 2;
             var deviceDefinitionRegisters = new ushort[deviceDefinitionRegisterCount];
             for (int i = 0; i < deviceDefinitionRegisterCount; i++)
@@ -109,7 +109,7 @@ internal sealed class FileDataImporter(
             {
                 await deviceRepository.CreateDefinition(deviceDefinition);
 
-                var parameterDefinitionBytes = bytes.AsSpan(deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * DeviceConstants.PARAMETER_SIZE).ToArray();
+                var parameterDefinitionBytes = bytes.AsSpan(deviceDefinition.ParameterDefinitionStart, DeviceConstants.MAX_PARAMETER_COUNT * DeviceConstants.PARAMETER_SIZE_BYTES).ToArray();
 
                 var previousDevice = await deviceRepository.GetLastCreatedExcept(device.Id);
                 var previousParameterColors = (await parameterRepository.GetAllByDeviceId(previousDevice.Id)).ToImmutableDictionary(x => x.Name, x => x.Color);
@@ -251,7 +251,7 @@ internal sealed class FileDataImporter(
 
         try
         {
-            var readTimeBytes = bytes.Slice(DeviceConstants.CURRENT_DATETIME_START, DeviceConstants.CURRENT_DATETIME_SIZE_REGISTERS * 2);
+            var readTimeBytes = bytes.Slice(DeviceConstants.CURRENT_DATETIME_START.ToBytes(), DeviceConstants.CURRENT_DATETIME_SIZE.ToBytes());
             var readTime = dataParser.ParseDateTime(readTimeBytes.Span);
 
             var lineCount = deviceDefinition.AveragePerHourBlockLineCount;
